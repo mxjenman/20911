@@ -18,7 +18,7 @@
         body { margin: 0; font-family: -apple-system, sans-serif; height: 100svh; overflow: hidden; background: #000; }
         .phone-screen { width: 100%; height: 100%; background: var(--bg-image) no-repeat center center; background-size: cover; position: relative; display: flex; flex-direction: column; padding-bottom: env(safe-area-inset-bottom); }
 
-        .widget-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(15px); border-radius: 30px; margin: 19px 20px 10px; padding: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid rgba(255,255,255,0.3); }
+        .widget-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(15px); border-radius: 30px; margin: 19px 20px 10px; padding: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 1px solid rgba(255,255,255,0.3); }
         .avatar-wrap { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
         .avatar-img { width: 62px; height: 62px; border-radius: 50%; border: 2.5px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); object-fit: cover; background: #eee; }
         .name-tag { background: #fff; padding: 2px 14px; border-radius: 12px; font-size: 13px; font-weight: 800; margin-bottom: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); position: relative; color: #333; }
@@ -36,7 +36,7 @@
         .nav-item { flex: 1; height: 100%; display: flex; justify-content: center; align-items: center; font-size: 16px; font-weight: 500; color: #1a1a1a; transition: all 0.2s; padding-top: 3px; }
         .nav-item.active { color: #07c160; font-weight: 800; }
 
-        .msg-bubble { max-width: 75%; padding: 10px 14px; border-radius: 6px; font-size: 16px; margin: 4px 0; position: relative; word-break: break-all; }
+        .msg-bubble { max-width: 75%; padding: 10px 14px; border-radius: 6px; font-size: 16px; margin: 4px 0; position: relative; }
         .msg-user { background: #95ec69; align-self: flex-end; margin-right: 12px; }
         .msg-user::after { content: ''; position: absolute; right: -5px; top: 12px; border-left: 6px solid #95ec69; border-top: 6px solid transparent; border-bottom: 6px solid transparent; }
         .msg-ai { background: #ffffff; align-self: flex-start; margin-left: 12px; }
@@ -45,6 +45,7 @@
         .cell-item { background: white; padding: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 0.5px solid #f0f0f0; }
         .cell-item:active { background: #f5f5f5; }
 
+        /* 钱包界面专用样式 */
         .wallet-page { background: #f6f6f6; position: absolute; inset: 0; z-index: 200; display: flex; flex-direction: column; }
         .wallet-header-bg { background: linear-gradient(to bottom, var(--theme-color), #f6f6f6); height: 260px; position: absolute; top: 0; left: 0; right: 0; z-index: 0; }
         .wallet-nav-bar { height: 88px; display: flex; align-items: flex-end; justify-content: space-between; padding: 0 16px 12px; color: white; position: relative; z-index: 10; }
@@ -57,6 +58,37 @@
         .badge-bubble { position: absolute; top: -12px; right: 0; background: #e8e8e8; color: var(--theme-color); font-size: 10px; padding: 2px 8px; border-radius: 10px; border: 1px solid #ddd; }
         
         .sub-page { position: absolute; inset: 0; background: #ededed; z-index: 150; display: flex; flex-direction: column; }
+
+        /* 旋转动画样式 */
+        .inventory-icon {
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .inventory-rotate {
+            animation: twist 0.6s ease-in-out;
+        }
+        @keyframes twist {
+            0% { transform: rotate(0deg); }
+            33% { transform: rotate(-90deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        /* 物品栏小窗口 */
+        .inventory-panel {
+            position: absolute;
+            bottom: 70px;
+            left: 12px;
+            width: 200px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            z-index: 50;
+            border: 1px solid rgba(0,0,0,0.05);
+            transform-origin: bottom left;
+            animation: popIn 0.2s ease-out;
+        }
+        @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body>
@@ -109,7 +141,7 @@
                 </div>
                 <div class="flex flex-col items-center mt-4">
                     <div class="text-gray-600 text-[13px] flex items-center gap-1">可用余额(元) <img src="https://test.fukit.cn/autoupload/fr/qakEfOhNRG6o06DQb0_mtuPxZ2O0bsQcfNmgZJT0wpmyl5f0KlZfm6UsKj-HyTuv/20260225/ACrj/1000X1000/IMG_2974.png" class="w-4 h-4 object-contain"></div>
-                    <div class="text-[44px] font-medium mt-3 leading-none cursor-pointer" @click="editBalance">{{ formattedBalance }}</div>
+                    <div class="text-[44px] font-medium mt-3 leading-none cursor-pointer" @click="editBalance">{{ widget.balance || '19.77' }}</div>
                 </div>
                 <div class="wallet-btn-group">
                     <div class="wallet-btn wallet-btn-outline" @click="developingTip">提现</div>
@@ -120,9 +152,22 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg mt-3 mx-4 p-4 flex justify-between items-center text-sm text-gray-400">
-                <span></span>
-                <span class="flex items-center">全部 〉</span>
+            <div class="mt-4 flex-1 overflow-y-auto px-4">
+                <div class="bg-white rounded-lg p-4 flex justify-between items-center text-sm text-gray-400 mb-2">
+                    <span class="text-gray-800 font-bold">全部记录</span>
+                    <span class="flex items-center">全部 〉</span>
+                </div>
+                <div v-for="(record, idx) in billRecords" :key="idx" class="bg-white rounded-xl p-3 mb-2 flex items-center shadow-sm">
+                    <img :src="record.avatar" class="w-10 h-10 rounded-lg mr-3">
+                    <div class="flex-1">
+                        <div class="font-bold text-gray-800">{{ record.name }}</div>
+                        <div class="text-[10px] text-gray-400">{{ record.time }}</div>
+                    </div>
+                    <div :class="['font-bold text-lg', record.amount > 0 ? 'text-[#07c160]' : 'text-black']">
+                        {{ record.amount > 0 ? '+' : '' }}{{ record.amount }}
+                    </div>
+                </div>
+                <div v-if="billRecords.length === 0" class="text-center py-10 text-gray-300 text-sm">暂无转账记录</div>
             </div>
         </div>
 
@@ -173,10 +218,26 @@
                     </div>
                 </div>
                 <div v-else class="flex flex-col h-full bg-[#ededed]">
-                    <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-2" id="msg-box">
+                    <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-2" id="msg-box" @click="inventoryOpen = false">
                         <div v-for="m in currentMessages" :class="['msg-bubble', m.role==='user'?'msg-user':'msg-ai']">{{m.content}}</div>
                     </div>
-                    <div class="p-3 bg-[#f7f7f7] border-t flex gap-2 items-center">
+                    
+                    <div v-if="inventoryOpen" class="inventory-panel">
+                        <div class="text-xs font-bold text-gray-400 mb-2 border-b pb-1">快捷物品</div>
+                        <div class="grid grid-cols-4 gap-2">
+                            <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">🎁</div>
+                            <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">🧧</div>
+                            <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">💰</div>
+                            <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center text-gray-300">＋</div>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-[#f7f7f7] border-t flex gap-2 items-center relative">
+                        <img src="https://test.fukit.cn/autoupload/fr/qakEfOhNRG6o06DQb0_mtuPxZ2O0bsQcfNmgZJT0wpmyl5f0KlZfm6UsKj-HyTuv/20260225/PRR6/1000X1000/IMG_2985.png" 
+                             @click="toggleInventory"
+                             class="w-7 h-7 inventory-icon cursor-pointer"
+                             :class="{'inventory-rotate': isRotating}">
+                        
                         <input v-model="userInput" @keyup.enter="sendMsg" placeholder="输入内容..." class="flex-1 bg-white p-2.5 rounded-md text-sm border-none outline-none">
                         <button @click="sendMsg" class="bg-[#07c160] text-white px-4 py-2 rounded-md text-sm font-bold">发送</button>
                     </div>
@@ -251,7 +312,7 @@ createApp({
             rightName: '雨', rightAvatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png',
             signature: '我不想隔着屏幕和你说话',
             wxId: 'AI_Habibi',
-            balance: 19.77
+            balance: '19.77'
         });
         
         const chatVisible = ref(false);
@@ -261,7 +322,12 @@ createApp({
         const userInput = ref('');
         const currentEditSide = ref('');
 
-        const formattedBalance = computed(() => Number(widget.value.balance).toFixed(2));
+        // 物品栏相关
+        const inventoryOpen = ref(false);
+        const isRotating = ref(false);
+
+        // 账单记录相关
+        const billRecords = ref([]);
 
         const friendsList = ref([
             { id: 'left', name: '雨雨雨～', avatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png', isTop: false },
@@ -357,16 +423,24 @@ createApp({
             if (s) { widget.value.signature = s; saveWidget(); }
         };
 
+        // 钱包相关
         const developingTip = () => { alert("正在开发中"); };
         const editBalance = () => {
             const b = prompt("设置余额：", widget.value.balance);
-            if (b !== null && !isNaN(parseFloat(b))) { 
-                widget.value.balance = parseFloat(b); 
-                saveWidget(); 
-            }
+            if (b !== null) { widget.value.balance = b; saveWidget(); }
         };
 
-        const saveWidget = () => { localStorage.setItem('widget_v5', JSON.stringify(widget.value)); };
+        // 物品栏切换与旋转动画
+        const toggleInventory = () => {
+            isRotating.value = true;
+            inventoryOpen.value = !inventoryOpen.value;
+            setTimeout(() => { isRotating.value = false; }, 600);
+        };
+
+        const saveWidget = () => { 
+            localStorage.setItem('widget_v5', JSON.stringify(widget.value)); 
+            localStorage.setItem('bill_records', JSON.stringify(billRecords.value));
+        };
         const save = () => { 
             localStorage.setItem('ai_config_v4', JSON.stringify(config.value)); 
             const styleEl = document.getElementById('user-custom-css');
@@ -374,62 +448,67 @@ createApp({
             activeModal.value = null; 
         };
 
-        // 记账逻辑
-        const updateBalanceFromMsg = (content, isAI) => {
-            const reg = /(转账|红包)\s*([0-9.]+)/;
-            const match = content.match(reg);
-            if (match) {
-                const amount = parseFloat(match[2]);
-                if (!isNaN(amount)) {
-                    // 如果是用户发送(isAI为false)，扣钱；如果是AI发送，加钱
-                    if (isAI) {
-                        widget.value.balance += amount;
-                    } else {
-                        widget.value.balance -= amount;
-                    }
-                    saveWidget();
-                }
-            }
-        };
-
         const sendMsg = async () => {
             if (!userInput.value || !currentChatPartner.value) return;
             const partnerId = currentChatPartner.value.id;
-            const text = userInput.value;
+            const msgContent = userInput.value;
             
-            chatHistory.value[partnerId].push({ role: 'user', content: text });
-            updateBalanceFromMsg(text, false); // 记录支出
-            
+            // 账单捕捉逻辑：如果输入包含数字和转账关键字
+            const amountMatch = msgContent.match(/(\d+(\.\d+)?)/);
+            if (amountMatch && (msgContent.includes('转账') || msgContent.includes('红包'))) {
+                const amount = parseFloat(amountMatch[0]);
+                billRecords.value.unshift({
+                    name: currentChatPartner.value.name,
+                    avatar: friendsList.value.find(f => f.id === partnerId)?.avatar,
+                    amount: -amount,
+                    time: new Date().toLocaleString()
+                });
+                widget.value.balance = (parseFloat(widget.value.balance) - amount).toFixed(2);
+                saveWidget();
+            }
+
+            chatHistory.value[partnerId].push({ role: 'user', content: msgContent });
             userInput.value = '';
             await nextTick();
             const box = document.getElementById('msg-box');
             if(box) box.scrollTop = box.scrollHeight;
-            
+
             try {
                 const res = await fetch(`${config.value.baseUrl}/chat/completions`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${config.value.apiKey}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         model: config.value.model, 
-                        messages: [
-                            {role:'system', content:`你现在是${currentChatPartner.value.name}，对方叫雨。如果对方提到转账或红包，你可以回复确认收到或回赠。回复格式包含“转账 数字”或“红包 数字”可以触发系统加减余额。`}, 
-                            ...chatHistory.value[partnerId].slice(-5)
-                        ] 
+                        messages: [{role:'system', content:`你现在是${currentChatPartner.value.name}，对方叫雨。`}, ...chatHistory.value[partnerId].slice(-5)] 
                     })
                 });
                 const data = await res.json();
                 const aiMsg = data.choices[0].message.content;
                 chatHistory.value[partnerId].push({ role: 'assistant', content: aiMsg });
-                updateBalanceFromMsg(aiMsg, true); // 记录收入
-                
+
+                // AI 转账捕捉逻辑
+                const aiAmountMatch = aiMsg.match(/(\d+(\.\d+)?)/);
+                if (aiAmountMatch && (aiMsg.includes('转账') || aiMsg.includes('收下'))) {
+                    const amount = parseFloat(aiAmountMatch[0]);
+                    billRecords.value.unshift({
+                        name: currentChatPartner.value.name,
+                        avatar: friendsList.value.find(f => f.id === partnerId)?.avatar,
+                        amount: amount,
+                        time: new Date().toLocaleString()
+                    });
+                    widget.value.balance = (parseFloat(widget.value.balance) + amount).toFixed(2);
+                    saveWidget();
+                }
+
                 await nextTick();
                 if(box) box.scrollTop = box.scrollHeight;
-            } catch (e) { chatHistory.value[partnerId].push({ role: 'assistant', content: '发送失败。' }); }
+            } catch (e) { chatHistory.value[partnerId].push({ role: 'assistant', content: '连接超时，请检查配置。' }); }
         };
 
         onMounted(() => {
             const s = localStorage.getItem('ai_config_v4'); if (s) config.value = JSON.parse(s);
             const w = localStorage.getItem('widget_v5'); if (w) widget.value = JSON.parse(w);
+            const b = localStorage.getItem('bill_records'); if (b) billRecords.value = JSON.parse(b);
             save();
             friendsList.value[0].name = widget.value.leftName;
             friendsList.value[0].avatar = widget.value.leftAvatar;
@@ -438,11 +517,12 @@ createApp({
         return { 
             config, widget, chatVisible, activeTab, activeModal, meSubPage,
             userInput, currentChatPartner, currentMessages, navTitle, modalTitle,
-            filteredFriends, showMenu, menuPos, formattedBalance,
+            filteredFriends, showMenu, menuPos,
             editName, editWxId, handleAvatarClick, onPhotoSelected, editSign, 
             save, sendMsg, openWechat, enterChat,
             handleTouchStart, handleTouchEnd, handleMouseDown, handleMouseUp, closeMenu,
-            toggleTop, deleteFriend, developingTip, editBalance
+            toggleTop, deleteFriend, developingTip, editBalance,
+            inventoryOpen, isRotating, toggleInventory, billRecords
         };
     }
 }).mount('#app');
