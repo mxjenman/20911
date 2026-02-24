@@ -7,8 +7,8 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 基础全屏设置 */
-        html, body, #app { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
+        /* 基础样式重置 */
+        html, body, #app { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: -apple-system, sans-serif; }
         
         .desktop { 
             width: 100%; height: 100%; 
@@ -16,60 +16,60 @@
             background-size: cover; position: relative; 
             display: flex; flex-direction: column;
             padding-top: env(safe-area-inset-top);
-            z-index: 1;
+            z-index: 10;
         }
 
-        /* 小组件 - 保持黄金坐标 (15px) */
+        /* 小组件 - 锁定黄金坐标 */
         .widget-card { 
             margin: 15px 20px 0; padding: 22px; border-radius: 28px;
             backdrop-filter: blur(20px); border: 1.5px solid rgba(255,255,255,0.3);
+            transition: 0.3s;
         }
-        .day-mode .widget-card { background: rgba(255, 255, 255, 0.8); color: #000; }
-        .dark-mode .widget-card { background: rgba(30, 30, 32, 0.9); color: #fff; }
+        .day-mode .widget-card { background: rgba(255, 255, 255, 0.85); color: #000; }
+        .dark-mode .widget-card { background: rgba(30, 30, 32, 0.9); color: #fff; border-color: rgba(255,255,255,0.1); }
         .avatar-img { width: 64px; height: 64px; border-radius: 50%; border: 3px solid #fff; object-fit: cover; background: #eee; }
 
-        /* 底部 Dock - 保持黄金坐标 (-12px) */
+        /* 底部 Dock - 锁定黄金坐标 */
         .dock { 
             position: absolute; 
             bottom: calc(-12px + env(safe-area-inset-bottom)); 
             left: 20px; right: 20px; height: 86px; 
-            background: rgba(255, 255, 255, 0.3); backdrop-filter: blur(30px); 
+            background: rgba(255, 255, 255, 0.3); 
+            backdrop-filter: blur(30px); 
             border-radius: 38px; display: flex; justify-content: space-around; align-items: center;
             border: 1px solid rgba(255,255,255,0.25); z-index: 100;
         }
 
-        /* 【核心修复】全屏 App 容器 */
-        .full-page {
-            position: fixed; inset: 0; width: 100vw; height: 100vh;
-            z-index: 9999; transform: translateY(100%); 
-            transition: transform 0.3s ease-out;
-            visibility: hidden;
-        }
-        .full-page.active { transform: translateY(0); visibility: visible; }
-
-        /* 私聊 App 特殊处理：直接展示你的截图 */
+        /* ==================== 重点：私聊专用全屏页面 ==================== */
         .chat-page {
-            background: #ededed; /* 微信底色 */
+            position: fixed; inset: 0; z-index: 9999; /* 最高的层级 */
+            transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            /* 这里直接插入你指定的图片作为背景 */
+            background: url('https://test.fukit.cn/autoupload/fr/PUOzIkT_hEAqz4elPzgm9kg93R44cerOKVobYyu6bmqyl5f0KlZfm6UsKj-HyTuv/20260224/lNRu/1206X2622/IMG_2906.jpeg') no-repeat center center;
+            background-size: cover; 
+            display: flex; flex-direction: column;
         }
-        .chat-screenshot {
-            width: 100%; height: 100%;
-            object-fit: cover; /* 保证图片铺满且不变形 */
-        }
+        .chat-page.active { transform: translateY(0); }
 
-        /* 退出按钮：在图片上浮动一个返回按钮，方便你退出来 */
-        .back-btn {
-            position: absolute; top: 60px; left: 20px;
-            background: rgba(0,0,0,0.2); color: white;
-            padding: 8px 16px; border-radius: 20px; font-weight: bold;
-            z-index: 10001;
+        /* 通用全屏页面（设置、美化等）- 保持纯实色 */
+        .full-page {
+            position: fixed; inset: 0; z-index: 2000;
+            transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex; flex-direction: column;
         }
+        .full-page.active { transform: translateY(0); }
+        .day-mode .full-page { background: #FFFFFF !important; color: #000; }
+        .dark-mode .full-page { background: #000000 !important; color: #FFF; }
 
-        /* 外观设置页面：纯实色不透明 */
-        .setting-page { display: flex; flex-direction: column; }
-        .day-mode .setting-page { background: #FFFFFF !important; color: #000; }
-        .dark-mode .setting-page { background: #000000 !important; color: #FFF; }
-        .nav-header { padding: calc(50px + env(safe-area-inset-top)) 24px 20px; display: flex; justify-content: space-between; align-items: center; }
-        .list-item { background: #f2f2f7; padding: 20px; margin: 0 16px 1px; display: flex; justify-content: space-between; align-items: center; border-radius: 12px; }
+        /* 统一标题栏样式 */
+        .nav-header { 
+            padding: calc(45px + env(safe-area-inset-top)) 24px 20px; 
+            display: flex; justify-content: space-between; align-items: center; 
+        }
+        .close-btn { background: rgba(0,0,0,0.1); backdrop-filter: blur(10px); color: #3b82f6; padding: 8px 18px; border-radius: 20px; font-weight: bold; }
+        .dark-mode .close-btn { background: rgba(255,255,255,0.1); }
+
+        .list-item { background: #f2f2f7; padding: 20px; margin: 0 16px 1px; display: flex; justify-content: space-between; align-items: center; }
         .dark-mode .list-item { background: #1c1c1e; }
     </style>
 </head>
@@ -92,41 +92,55 @@
         </div>
 
         <div class="px-10 py-10 flex gap-10">
-            <div @click="activePage = 'chat'" class="flex flex-col items-center">
+            <div @click="activePage = 'chat'" class="flex flex-col items-center active:scale-90 transition-transform">
                 <div class="w-16 h-16 bg-[#07c160] rounded-2xl flex items-center justify-center text-3xl shadow-xl">💬</div>
                 <span class="text-white text-xs mt-2 font-bold drop-shadow-md">私聊</span>
             </div>
-            <div @click="activePage = 'appearance'" class="flex flex-col items-center">
+            <div @click="activePage = 'appearance'" class="flex flex-col items-center active:scale-90 transition-transform">
                 <div class="w-16 h-16 bg-gradient-to-br from-pink-400 to-orange-400 rounded-2xl flex items-center justify-center text-3xl shadow-xl">🎨</div>
                 <span class="text-white text-xs mt-2 font-bold drop-shadow-md">外观设置</span>
             </div>
         </div>
 
         <div class="dock">
-            <div @click="activePage = 'config'" class="flex flex-col items-center"><span class="text-2xl">⚙️</span><span class="text-[10px] mt-1 font-black">设置</span></div>
-            <div @click="activePage = 'beauty'" class="flex flex-col items-center"><span class="text-2xl">✨</span><span class="text-[10px] mt-1 font-black">美化</span></div>
-            <div @click="activePage = 'preset'" class="flex flex-col items-center"><span class="text-2xl">✍️</span><span class="text-[10px] mt-1 font-black">预设</span></div>
+            <div @click="activePage = 'config'" class="flex flex-col items-center"><span class="text-2xl">⚙️</span><span class="text-[10px] mt-1 font-black opacity-60">设置</span></div>
+            <div @click="activePage = 'beauty'" class="flex flex-col items-center"><span class="text-2xl">✨</span><span class="text-[10px] mt-1 font-black opacity-60">美化</span></div>
+            <div @click="activePage = 'preset'" class="flex flex-col items-center"><span class="text-2xl">✍️</span><span class="text-[10px] mt-1 font-black opacity-60">预设</span></div>
         </div>
     </div>
 
-    <div class="full-page chat-page" :class="{'active': activePage === 'chat'}">
-        <div class="back-btn" @click="activePage = null">返回桌面</div>
-        <img src="https://test.fukit.cn/autoupload/fr/PUOzIkT_hEAqz4elPzgm9kg93R44cerOKVobYyu6bmqyl5f0KlZfm6UsKj-HyTuv/20260224/lNRu/1206X2622/IMG_2906.jpeg" class="chat-screenshot">
-    </div>
-
-    <div class="full-page setting-page" :class="{'active': activePage === 'appearance'}">
+    <div class="chat-page" :class="{'active': activePage === 'chat'}">
         <div class="nav-header">
-            <h2 class="text-3xl font-black">外观设置</h2>
-            <button @click="activePage = null" class="bg-blue-500 text-white px-6 py-2 rounded-full font-bold">完成</button>
+            <h2 class="text-2xl font-black text-white"></h2> <button @click="activePage = null" class="close-btn shadow-lg">退出私聊</button>
         </div>
-        <div class="list-item" @click="toggleDark">
-            <span class="font-bold">夜间模式</span>
-            <div :class="isDark ? 'bg-green-500' : 'bg-gray-300'" class="w-12 h-6 rounded-full relative transition-all">
-                <div :class="isDark ? 'translate-x-6' : 'translate-x-1'" class="absolute top-1 w-4 h-4 bg-white rounded-full"></div>
+        </div>
+
+    <div v-for="p in ['appearance', 'config', 'beauty', 'preset']" :key="p" class="full-page" :class="{'active': activePage === p}">
+        <div class="nav-header">
+            <h2 class="text-3xl font-black">{{ {appearance:'外观设置',config:'设置中心',beauty:'界面美化',preset:'人格预设'}[p] }}</h2>
+            <button @click="activePage = null" class="bg-blue-500 text-white px-5 py-2 rounded-full font-bold text-sm">完成</button>
+        </div>
+        <div class="flex-1 overflow-y-auto pt-4">
+            <template v-if="p === 'appearance'">
+                <div class="list-item" @click="toggleDark">
+                    <span class="font-bold">夜间模式</span>
+                    <div :class="isDark ? 'bg-green-500' : 'bg-gray-300'" class="w-12 h-6 rounded-full relative transition-all">
+                        <div :class="isDark ? 'translate-x-6' : 'translate-x-1'" class="absolute top-1 w-4 h-4 bg-white rounded-full transition-all"></div>
+                    </div>
+                </div>
+                <div class="list-item" @click="pickBg">
+                    <span class="font-bold">更换桌面壁纸</span>
+                    <span class="text-gray-400">〉</span>
+                </div>
+            </template>
+            <div v-else class="p-10 text-center opacity-30 text-xl font-bold">
+                内容加载中...
             </div>
         </div>
     </div>
 
+    <input type="file" id="bgInput" style="display:none" @change="onFileChange($event, 'bg')">
+    <input type="file" id="avatarInput" style="display:none" @change="onFileChange($event, 'avatar')">
 </div>
 
 <script>
@@ -141,19 +155,39 @@ createApp({
             rightName: '萌', rightAvatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png',
             signature: '卖萌偶尔失手 嘴甜从未出错 =￣ω￣='
         });
+        let curSide = 'left';
 
-        const toggleDark = () => { isDark.value = !isDark.value; localStorage.setItem('dark_v16', isDark.value); };
+        const toggleDark = () => { isDark.value = !isDark.value; localStorage.setItem('dark_v15', isDark.value); };
         const pickBg = () => document.getElementById('bgInput').click();
-        const save = () => {
-            localStorage.setItem('bg_v16', customBg.value);
-            localStorage.setItem('widget_v16', JSON.stringify(widget.value));
+        const pickAvatar = (s) => { curSide = s; document.getElementById('avatarInput').click(); };
+        const editName = (s) => { const n = prompt("名字", widget.value[s+'Name']); if(n) widget.value[s+'Name']=n; save(); };
+        const editSign = () => { const s = prompt("签名", widget.value.signature); if(s) widget.value.signature=s; save(); };
+
+        const onFileChange = (e, type) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                if(type === 'bg') customBg.value = ev.target.result;
+                else widget.value[curSide+'Avatar'] = ev.target.result;
+                save();
+            };
+            reader.readAsDataURL(file);
         };
+
+        const save = () => {
+            localStorage.setItem('bg_v15', customBg.value);
+            localStorage.setItem('widget_v15', JSON.stringify(widget.value));
+        };
+
         onMounted(() => {
-            isDark.value = localStorage.getItem('dark_v16') === 'true';
-            customBg.value = localStorage.getItem('bg_v16') || '';
-            const w = localStorage.getItem('widget_v16'); if(w) widget.value = JSON.parse(w);
+            isDark.value = localStorage.getItem('dark_v15') === 'true';
+            customBg.value = localStorage.getItem('bg_v15') || '';
+            const w = localStorage.getItem('widget_v15');
+            if(w) widget.value = JSON.parse(w);
         });
-        return { activePage, isDark, customBg, widget, toggleDark };
+
+        return { activePage, isDark, customBg, widget, toggleDark, pickBg, pickAvatar, onFileChange, editName, editSign };
     }
 }).mount('#app');
 </script>
