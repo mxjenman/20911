@@ -4,190 +4,174 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>AI 桌面</title>
+    
+    <link rel="apple-touch-icon" href="https://test.fukit.cn/autoupload/fr/PUOzIkT_hEAqz4elPzgm9kg93R44cerOKVobYyu6bmqyl5f0KlZfm6UsKj-HyTuv/20260224/IR8x/1206X1168/IMG_2714.jpeg">
+    <link rel="icon" type="image/jpeg" href="https://test.fukit.cn/autoupload/fr/PUOzIkT_hEAqz4elPzgm9kg93R44cerOKVobYyu6bmqyl5f0KlZfm6UsKj-HyTuv/20260224/IR8x/1206X1168/IMG_2714.jpeg">
+    <meta name="apple-mobile-web-app-title" content="我的桌面">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
     <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style id="user-custom-css">/* 用户美化注入 */</style>
     <style>
-        /* 基础样式重置 */
-        html, body, #app { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: -apple-system, sans-serif; }
-        
-        .desktop { 
-            width: 100%; height: 100%; 
-            background: var(--bg-url, linear-gradient(to bottom, #ff9a9e, #fad0c4)) no-repeat center center; 
-            background-size: cover; position: relative; 
-            display: flex; flex-direction: column;
-            padding-top: env(safe-area-inset-top);
-            z-index: 10;
-        }
+        :root { --bg-image: url('https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2070'); }
+        body { margin: 0; font-family: -apple-system, sans-serif; height: 100svh; overflow: hidden; background: #000; }
+        .phone-screen { width: 100%; height: 100%; background: var(--bg-image) no-repeat center center; background-size: cover; position: relative; display: flex; flex-direction: column; padding-bottom: env(safe-area-inset-bottom); }
 
-        /* 小组件 - 锁定黄金坐标 */
+        /* 组件位置：维持在 29px */
         .widget-card { 
-            margin: 15px 20px 0; padding: 22px; border-radius: 28px;
-            backdrop-filter: blur(20px); border: 1.5px solid rgba(255,255,255,0.3);
-            transition: 0.3s;
+            background: rgba(255, 255, 255, 0.85); 
+            backdrop-filter: blur(15px); 
+            border-radius: 30px; 
+            margin: 29px 20px 10px; 
+            padding: 18px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            border: 1px solid rgba(255,255,255,0.3);
         }
-        .day-mode .widget-card { background: rgba(255, 255, 255, 0.85); color: #000; }
-        .dark-mode .widget-card { background: rgba(30, 30, 32, 0.9); color: #fff; border-color: rgba(255,255,255,0.1); }
-        .avatar-img { width: 64px; height: 64px; border-radius: 50%; border: 3px solid #fff; object-fit: cover; background: #eee; }
+        .avatar-wrap { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+        .avatar-img { width: 62px; height: 62px; border-radius: 50%; border: 2.5px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); object-fit: cover; background: #eee; }
+        .name-tag { background: #fff; padding: 2px 14px; border-radius: 12px; font-size: 13px; font-weight: 800; margin-bottom: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); position: relative; color: #333; }
+        .name-tag::after { content: ''; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 5px solid #fff; }
 
-        /* 底部 Dock - 锁定黄金坐标 */
-        .dock { 
-            position: absolute; 
-            bottom: calc(-12px + env(safe-area-inset-bottom)); 
-            left: 20px; right: 20px; height: 86px; 
-            background: rgba(255, 255, 255, 0.3); 
-            backdrop-filter: blur(30px); 
-            border-radius: 38px; display: flex; justify-content: space-around; align-items: center;
-            border: 1px solid rgba(255,255,255,0.25); z-index: 100;
-        }
-
-        /* ==================== 重点：私聊专用全屏页面 ==================== */
-        .chat-page {
-            position: fixed; inset: 0; z-index: 9999; /* 最高的层级 */
-            transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            /* 这里直接插入你指定的图片作为背景 */
-            background: url('https://test.fukit.cn/autoupload/fr/PUOzIkT_hEAqz4elPzgm9kg93R44cerOKVobYyu6bmqyl5f0KlZfm6UsKj-HyTuv/20260224/lNRu/1206X2622/IMG_2906.jpeg') no-repeat center center;
-            background-size: cover; 
-            display: flex; flex-direction: column;
-        }
-        .chat-page.active { transform: translateY(0); }
-
-        /* 通用全屏页面（设置、美化等）- 保持纯实色 */
-        .full-page {
-            position: fixed; inset: 0; z-index: 2000;
-            transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            display: flex; flex-direction: column;
-        }
-        .full-page.active { transform: translateY(0); }
-        .day-mode .full-page { background: #FFFFFF !important; color: #000; }
-        .dark-mode .full-page { background: #000000 !important; color: #FFF; }
-
-        /* 统一标题栏样式 */
-        .nav-header { 
-            padding: calc(45px + env(safe-area-inset-top)) 24px 20px; 
-            display: flex; justify-content: space-between; align-items: center; 
-        }
-        .close-btn { background: rgba(0,0,0,0.1); backdrop-filter: blur(10px); color: #3b82f6; padding: 8px 18px; border-radius: 20px; font-weight: bold; }
-        .dark-mode .close-btn { background: rgba(255,255,255,0.1); }
-
-        .list-item { background: #f2f2f7; padding: 20px; margin: 0 16px 1px; display: flex; justify-content: space-between; align-items: center; }
-        .dark-mode .list-item { background: #1c1c1e; }
+        .dock { position: absolute; bottom: calc(10px + env(safe-area-inset-bottom)); left: 20px; right: 20px; height: 75px; background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(30px); border-radius: 30px; display: flex; justify-content: space-around; align-items: center; border: 1px solid rgba(255,255,255,0.25); }
+        .chat-window { position: fixed; inset: 0; background: #ededed; z-index: 100; display: flex; flex-direction: column; padding-bottom: env(safe-area-inset-bottom); }
+        .msg-bubble { max-width: 75%; padding: 10px 14px; border-radius: 12px; font-size: 16px; margin: 4px 0; }
+        .msg-user { background: #95ec69; align-self: flex-end; margin-right: 10px; }
+        .msg-ai { background: #ffffff; align-self: flex-start; margin-left: 10px; }
     </style>
 </head>
 <body>
-<div id="app" :class="isDark ? 'dark-mode' : 'day-mode'">
-    
-    <div class="desktop" :style="{'--bg-url': customBg ? `url(${customBg})` : ''}">
-        <div class="widget-card">
-            <div class="flex gap-10 mb-4 px-2">
-                <div class="flex flex-col items-center">
-                    <div class="text-[13px] font-black mb-2 px-3 py-1 bg-white/60 rounded-lg shadow-sm" @click="editName('left')">{{ widget.leftName }}</div>
-                    <img :src="widget.leftAvatar" class="avatar-img" @click="pickAvatar('left')">
-                </div>
-                <div class="flex flex-col items-center">
-                    <div class="text-[13px] font-black mb-2 px-3 py-1 bg-white/60 rounded-lg shadow-sm" @click="editName('right')">{{ widget.rightName }}</div>
-                    <img :src="widget.rightAvatar" class="avatar-img" @click="pickAvatar('right')">
-                </div>
-            </div>
-            <p class="text-[11px] text-right italic font-bold pr-2 opacity-70" @click="editSign">{{ widget.signature }}</p>
-        </div>
+<div id="app" class="phone-screen">
+    <input type="file" id="avatarPicker" accept="image/*" style="display: none" @change="onPhotoSelected">
 
-        <div class="px-10 py-10 flex gap-10">
-            <div @click="activePage = 'chat'" class="flex flex-col items-center active:scale-90 transition-transform">
-                <div class="w-16 h-16 bg-[#07c160] rounded-2xl flex items-center justify-center text-3xl shadow-xl">💬</div>
-                <span class="text-white text-xs mt-2 font-bold drop-shadow-md">私聊</span>
+    <div class="widget-card">
+        <div class="flex gap-6 mb-3 px-2">
+            <div class="avatar-wrap" @click="handleAvatarClick('left')">
+                <div class="name-tag" @click.stop="editName('left')">{{ widget.leftName }}</div>
+                <img :src="widget.leftAvatar" class="avatar-img">
             </div>
-            <div @click="activePage = 'appearance'" class="flex flex-col items-center active:scale-90 transition-transform">
-                <div class="w-16 h-16 bg-gradient-to-br from-pink-400 to-orange-400 rounded-2xl flex items-center justify-center text-3xl shadow-xl">🎨</div>
-                <span class="text-white text-xs mt-2 font-bold drop-shadow-md">外观设置</span>
+            <div class="avatar-wrap" @click="handleAvatarClick('right')">
+                <div class="name-tag" @click.stop="editName('right')">{{ widget.rightName }}</div>
+                <img :src="widget.rightAvatar" class="avatar-img">
             </div>
         </div>
-
-        <div class="dock">
-            <div @click="activePage = 'config'" class="flex flex-col items-center"><span class="text-2xl">⚙️</span><span class="text-[10px] mt-1 font-black opacity-60">设置</span></div>
-            <div @click="activePage = 'beauty'" class="flex flex-col items-center"><span class="text-2xl">✨</span><span class="text-[10px] mt-1 font-black opacity-60">美化</span></div>
-            <div @click="activePage = 'preset'" class="flex flex-col items-center"><span class="text-2xl">✍️</span><span class="text-[10px] mt-1 font-black opacity-60">预设</span></div>
+        <div class="w-full text-right pr-2" @click="editSign">
+            <p class="text-gray-500 text-[12px] font-bold tracking-tight italic">{{ widget.signature }}</p>
         </div>
     </div>
 
-    <div class="chat-page" :class="{'active': activePage === 'chat'}">
-        <div class="nav-header">
-            <h2 class="text-2xl font-black text-white"></h2> <button @click="activePage = null" class="close-btn shadow-lg">退出私聊</button>
-        </div>
-        </div>
-
-    <div v-for="p in ['appearance', 'config', 'beauty', 'preset']" :key="p" class="full-page" :class="{'active': activePage === p}">
-        <div class="nav-header">
-            <h2 class="text-3xl font-black">{{ {appearance:'外观设置',config:'设置中心',beauty:'界面美化',preset:'人格预设'}[p] }}</h2>
-            <button @click="activePage = null" class="bg-blue-500 text-white px-5 py-2 rounded-full font-bold text-sm">完成</button>
-        </div>
-        <div class="flex-1 overflow-y-auto pt-4">
-            <template v-if="p === 'appearance'">
-                <div class="list-item" @click="toggleDark">
-                    <span class="font-bold">夜间模式</span>
-                    <div :class="isDark ? 'bg-green-500' : 'bg-gray-300'" class="w-12 h-6 rounded-full relative transition-all">
-                        <div :class="isDark ? 'translate-x-6' : 'translate-x-1'" class="absolute top-1 w-4 h-4 bg-white rounded-full transition-all"></div>
-                    </div>
-                </div>
-                <div class="list-item" @click="pickBg">
-                    <span class="font-bold">更换桌面壁纸</span>
-                    <span class="text-gray-400">〉</span>
-                </div>
-            </template>
-            <div v-else class="p-10 text-center opacity-30 text-xl font-bold">
-                内容加载中...
+    <div class="px-10 py-6">
+        <div @click="chatVisible = true" class="flex flex-col items-center w-14 active:scale-90 transition-all">
+            <div class="w-14 h-14 bg-gradient-to-br from-[#09d36a] to-[#07c160] rounded-2xl flex items-center justify-center shadow-lg">
+                <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
             </div>
+            <span class="text-white text-[10px] mt-2 font-bold shadow-sm">私聊</span>
         </div>
     </div>
 
-    <input type="file" id="bgInput" style="display:none" @change="onFileChange($event, 'bg')">
-    <input type="file" id="avatarInput" style="display:none" @change="onFileChange($event, 'avatar')">
+    <div class="dock">
+        <div @click="activeModal = 'config'" class="flex flex-col items-center"><span class="text-2xl">⚙️</span><span class="text-[9px] mt-1 font-extrabold text-gray-800">设置</span></div>
+        <div @click="activeModal = 'beauty'" class="flex flex-col items-center"><span class="text-2xl">✨</span><span class="text-[9px] mt-1 font-extrabold text-gray-800">美化</span></div>
+        <div @click="activeModal = 'preset'" class="flex flex-col items-center"><span class="text-2xl">✍️</span><span class="text-[9px] mt-1 font-extrabold text-gray-800">预设</span></div>
+    </div>
+
+    <div v-if="chatVisible" class="chat-window">
+        <div class="h-16 bg-gray-100 flex items-end justify-between px-4 pb-3 border-b border-gray-200">
+            <button @click="chatVisible = false" class="text-blue-600 text-sm font-bold">返回</button>
+            <span class="font-bold">智友</span><div class="w-10"></div>
+        </div>
+        <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-2" id="msg-box">
+            <div v-for="m in messages" :class="['msg-bubble', m.role==='user'?'msg-user':'msg-ai']">{{m.content}}</div>
+        </div>
+        <div class="p-3 bg-white border-t flex gap-2 pb-10">
+            <input v-model="userInput" @keyup.enter="sendMsg" placeholder="发消息..." class="flex-1 bg-gray-100 p-2.5 rounded-xl text-sm border-none outline-none">
+            <button @click="sendMsg" class="bg-[#07c160] text-white px-5 rounded-xl text-sm font-bold">发送</button>
+        </div>
+    </div>
+
+    <div v-if="activeModal" class="fixed inset-0 bg-black/40 z-[200] flex items-end" @click.self="activeModal = null">
+        <div class="bg-white w-full rounded-t-[30px] p-6 pb-12">
+            <div class="flex justify-between items-center mb-6"><h3 class="font-extrabold">{{modalTitle}}</h3><button @click="activeModal = null">✕</button></div>
+            <div v-if="activeModal==='config'" class="space-y-4">
+                <input v-model="config.baseUrl" placeholder="API 地址" class="w-full p-4 bg-gray-50 rounded-2xl border-none text-sm">
+                <input v-model="config.apiKey" type="password" placeholder="API Key" class="w-full p-4 bg-gray-50 rounded-2xl border-none text-sm">
+                <input v-model="config.model" placeholder="模型名称" class="w-full p-4 bg-gray-50 rounded-2xl border-none text-sm">
+            </div>
+            <div v-else class="space-y-3">
+                <textarea v-model="activeModal==='beauty'?config.beautyCss:config.presetCss" rows="6" class="w-full p-4 bg-gray-50 rounded-2xl border-none font-mono text-xs"></textarea>
+            </div>
+            <button @click="save" class="w-full bg-black text-white py-4 rounded-2xl mt-6 font-bold shadow-lg">保存并应用</button>
+        </div>
+    </div>
 </div>
 
 <script>
-const { createApp, ref, onMounted } = Vue;
+const { createApp, ref, onMounted, computed } = Vue;
 createApp({
     setup() {
-        const activePage = ref(null);
-        const isDark = ref(false);
-        const customBg = ref('');
+        const config = ref({ baseUrl: '', apiKey: '', model: 'gpt-4o', beautyCss: '', presetCss: '' });
         const widget = ref({
-            leftName: '雅', leftAvatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png',
-            rightName: '萌', rightAvatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png',
-            signature: '卖萌偶尔失手 嘴甜从未出错 =￣ω￣='
+            leftName: '雨雨雨～', leftAvatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png',
+            rightName: '哦哦哦～', rightAvatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png',
+            signature: '我不想隔着屏幕和你说话'
         });
-        let curSide = 'left';
+        const currentEditSide = ref('');
+        const chatVisible = ref(false); const activeModal = ref(null);
+        const userInput = ref(''); const messages = ref([{ role: 'assistant', content: '图标设置好啦！请删除旧的桌面快捷方式，重新“添加到主屏幕”试试。' }]);
 
-        const toggleDark = () => { isDark.value = !isDark.value; localStorage.setItem('dark_v15', isDark.value); };
-        const pickBg = () => document.getElementById('bgInput').click();
-        const pickAvatar = (s) => { curSide = s; document.getElementById('avatarInput').click(); };
-        const editName = (s) => { const n = prompt("名字", widget.value[s+'Name']); if(n) widget.value[s+'Name']=n; save(); };
-        const editSign = () => { const s = prompt("签名", widget.value.signature); if(s) widget.value.signature=s; save(); };
-
-        const onFileChange = (e, type) => {
+        const modalTitle = computed(() => ({ config: '参数配置', beauty: '界面美化', preset: '人格预设' }[activeModal.value]));
+        const editName = (side) => {
+            const newName = prompt("编辑名称：", widget.value[side + 'Name']);
+            if (newName) widget.value[side + 'Name'] = newName;
+            saveWidget();
+        };
+        const handleAvatarClick = (side) => {
+            currentEditSide.value = side;
+            document.getElementById('avatarPicker').click();
+        };
+        const onPhotoSelected = (e) => {
             const file = e.target.files[0];
-            if(!file) return;
+            if (!file) return;
             const reader = new FileReader();
-            reader.onload = (ev) => {
-                if(type === 'bg') customBg.value = ev.target.result;
-                else widget.value[curSide+'Avatar'] = ev.target.result;
-                save();
+            reader.onload = (event) => {
+                widget.value[currentEditSide.value + 'Avatar'] = event.target.result;
+                saveWidget();
             };
             reader.readAsDataURL(file);
         };
-
-        const save = () => {
-            localStorage.setItem('bg_v15', customBg.value);
-            localStorage.setItem('widget_v15', JSON.stringify(widget.value));
+        const editSign = () => {
+            const s = prompt("编辑签名：", widget.value.signature);
+            if (s) widget.value.signature = s;
+            saveWidget();
+        };
+        const saveWidget = () => { localStorage.setItem('widget_v5', JSON.stringify(widget.value)); };
+        const save = () => { 
+            localStorage.setItem('ai_config_v4', JSON.stringify(config.value)); 
+            document.getElementById('user-custom-css').innerHTML = config.value.beautyCss + config.value.presetCss;
+            activeModal.value = null; 
+        };
+        const sendMsg = async () => {
+            if (!userInput.value) return;
+            messages.value.push({ role: 'user', content: userInput.value });
+            const input = userInput.value; userInput.value = '';
+            try {
+                const res = await fetch(`${config.value.baseUrl}/chat/completions`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${config.value.apiKey}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ model: config.value.model, messages: [{role:'system', content:'极简回复'}, ...messages.value.slice(-5)] })
+                });
+                const data = await res.json();
+                messages.value.push({ role: 'assistant', content: data.choices[0].message.content });
+            } catch (e) { messages.value.push({ role: 'assistant', content: '连接失败。' }); }
         };
 
         onMounted(() => {
-            isDark.value = localStorage.getItem('dark_v15') === 'true';
-            customBg.value = localStorage.getItem('bg_v15') || '';
-            const w = localStorage.getItem('widget_v15');
-            if(w) widget.value = JSON.parse(w);
+            const s = localStorage.getItem('ai_config_v4'); if (s) config.value = JSON.parse(s);
+            const w = localStorage.getItem('widget_v5'); if (w) widget.value = JSON.parse(w);
+            save();
         });
 
-        return { activePage, isDark, customBg, widget, toggleDark, pickBg, pickAvatar, onFileChange, editName, editSign };
+        return { config, widget, chatVisible, activeModal, userInput, messages, editName, handleAvatarClick, onPhotoSelected, editSign, save, sendMsg };
     }
 }).mount('#app');
 </script>
