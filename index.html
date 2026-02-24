@@ -7,7 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 基础样式 */
+        /* 基础全屏 */
         html, body, #app { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
         
         .desktop { 
@@ -16,9 +16,10 @@
             background-size: cover; position: relative; 
             display: flex; flex-direction: column;
             padding-top: env(safe-area-inset-top);
+            z-index: 10;
         }
 
-        /* 1. 小组件 - 再次上移 10px (从 25px 改为 15px) */
+        /* 小组件 - 保持你最喜欢的坐标 */
         .widget-card { 
             margin: 15px 20px 0; padding: 22px; border-radius: 28px;
             backdrop-filter: blur(20px); border: 1.5px solid rgba(255,255,255,0.3);
@@ -29,10 +30,9 @@
 
         .avatar-img { width: 64px; height: 64px; border-radius: 50%; border: 3px solid #fff; object-fit: cover; background: #eee; }
 
-        /* 2. 底部 Dock - 再次下移 2px */
+        /* 底部 Dock - 保持你最喜欢的坐标 */
         .dock { 
             position: absolute; 
-            /* 在安全区基础上再次下压 12px (原 -10px - 2px) */
             bottom: calc(-12px + env(safe-area-inset-bottom)); 
             left: 20px; right: 20px; height: 86px; 
             background: rgba(255, 255, 255, 0.3); 
@@ -43,17 +43,37 @@
             z-index: 100;
         }
 
-        /* 全屏页面 */
+        /* 【核心修复】全屏页面：彻底告别透明 */
         .full-page {
-            position: fixed; inset: 0; z-index: 2000;
-            transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: fixed; 
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 2000; /* 确保在最前面 */
+            transform: translateY(100%); 
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+            /* 适配底部手势横条 */
+            padding-bottom: env(safe-area-inset-bottom);
         }
         .full-page.active { transform: translateY(0); }
-        .day-mode .full-page { background: #f2f2f7 !important; color: #000; }
-        .dark-mode .full-page { background: #000000 !important; color: #fff; }
 
-        .list-item { background: white; padding: 18px 20px; margin-bottom: 1px; display: flex; justify-content: space-between; align-items: center; }
+        /* 强制实色背景：日间纯白，夜间纯黑 */
+        .day-mode .full-page { background-color: #FFFFFF !important; color: #000; }
+        .dark-mode .full-page { background-color: #000000 !important; color: #fff; }
+
+        .list-item { 
+            background: #f9f9f9; padding: 20px; margin: 0 16px 1px; 
+            display: flex; justify-content: space-between; align-items: center; 
+        }
         .dark-mode .list-item { background: #1c1c1e; }
+        .list-item:first-child { border-radius: 16px 16px 0 0; }
+        .list-item:last-child { border-radius: 0 0 16px 16px; }
+
+        /* 统一标题栏 */
+        .nav-header {
+            padding: calc(40px + env(safe-area-inset-top)) 24px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
     </style>
 </head>
 <body>
@@ -75,11 +95,11 @@
         </div>
 
         <div class="px-10 py-10 flex gap-10">
-            <div @click="activePage = 'chat'" class="flex flex-col items-center">
+            <div @click="activePage = 'chat'" class="flex flex-col items-center active:scale-90 transition-transform">
                 <div class="w-16 h-16 bg-[#07c160] rounded-2xl flex items-center justify-center text-3xl shadow-xl">💬</div>
                 <span class="text-white text-xs mt-2 font-bold drop-shadow-md">私聊</span>
             </div>
-            <div @click="activePage = 'appearance'" class="flex flex-col items-center">
+            <div @click="activePage = 'appearance'" class="flex flex-col items-center active:scale-90 transition-transform">
                 <div class="w-16 h-16 bg-gradient-to-br from-pink-400 to-orange-400 rounded-2xl flex items-center justify-center text-3xl shadow-xl">🎨</div>
                 <span class="text-white text-xs mt-2 font-bold drop-shadow-md">外观设置</span>
             </div>
@@ -93,25 +113,28 @@
     </div>
 
     <div v-for="p in ['appearance', 'chat', 'config', 'beauty', 'preset']" :key="p" class="full-page" :class="{'active': activePage === p}">
-        <div class="px-6 pt-16 pb-6 flex justify-between items-center border-b border-gray-100 dark:border-zinc-800">
-            <h2 class="text-2xl font-black">{{ {appearance:'外观设置',chat:'私聊',config:'设置中心',beauty:'界面美化',preset:'人格预设'}[p] }}</h2>
-            <button @click="activePage = null" class="text-blue-500 font-bold text-lg">完成</button>
+        <div class="nav-header">
+            <h2 class="text-3xl font-black">{{ {appearance:'外观设置',chat:'私聊',config:'设置中心',beauty:'界面美化',preset:'人格预设'}[p] }}</h2>
+            <button @click="activePage = null" class="bg-gray-100 dark:bg-zinc-800 px-4 py-2 rounded-full font-bold text-sm text-blue-500">完成</button>
         </div>
         
-        <div class="p-4" v-if="p === 'appearance'">
-            <div class="list-item rounded-t-2xl" @click="toggleDark">
-                <span class="font-bold">夜间模式</span>
-                <div :class="isDark ? 'bg-green-500' : 'bg-gray-300'" class="w-12 h-6 rounded-full relative transition-all">
-                    <div :class="isDark ? 'translate-x-6' : 'translate-x-1'" class="absolute top-1 w-4 h-4 bg-white rounded-full transition-all"></div>
+        <div class="flex-1 overflow-y-auto pt-4">
+            <template v-if="p === 'appearance'">
+                <div class="list-item" @click="toggleDark">
+                    <span class="font-bold">深色模式</span>
+                    <div :class="isDark ? 'bg-green-500' : 'bg-gray-300'" class="w-12 h-6 rounded-full relative transition-all">
+                        <div :class="isDark ? 'translate-x-6' : 'translate-x-1'" class="absolute top-1 w-4 h-4 bg-white rounded-full transition-all"></div>
+                    </div>
                 </div>
+                <div class="list-item" @click="pickBg">
+                    <span class="font-bold">更换桌面壁纸</span>
+                    <span class="text-gray-400">〉</span>
+                </div>
+            </template>
+            <div v-else class="p-10 text-center">
+                <div class="text-6xl mb-6">🛰️</div>
+                <p class="opacity-30 font-bold text-lg">正在接入数据模块...</p>
             </div>
-            <div class="list-item rounded-b-2xl" @click="pickBg">
-                <span class="font-bold">更换桌面背景图</span>
-                <span class="text-gray-400">去相册 〉</span>
-            </div>
-        </div>
-        <div class="p-20 text-center opacity-30 font-bold" v-else>
-            页面内容加载中...
         </div>
     </div>
 
@@ -133,7 +156,7 @@ createApp({
         });
         let curSide = 'left';
 
-        const toggleDark = () => { isDark.value = !isDark.value; localStorage.setItem('dark_v12', isDark.value); };
+        const toggleDark = () => { isDark.value = !isDark.value; localStorage.setItem('dark_v13', isDark.value); };
         const pickBg = () => document.getElementById('bgInput').click();
         const pickAvatar = (s) => { curSide = s; document.getElementById('avatarInput').click(); };
         const editName = (s) => { const n = prompt("名字", widget.value[s+'Name']); if(n) widget.value[s+'Name']=n; save(); };
@@ -152,14 +175,14 @@ createApp({
         };
 
         const save = () => {
-            localStorage.setItem('bg_v12', customBg.value);
-            localStorage.setItem('widget_v12', JSON.stringify(widget.value));
+            localStorage.setItem('bg_v13', customBg.value);
+            localStorage.setItem('widget_v13', JSON.stringify(widget.value));
         };
 
         onMounted(() => {
-            isDark.value = localStorage.getItem('dark_v12') === 'true';
-            customBg.value = localStorage.getItem('bg_v12') || '';
-            const w = localStorage.getItem('widget_v12');
+            isDark.value = localStorage.getItem('dark_v13') === 'true';
+            customBg.value = localStorage.getItem('bg_v13') || '';
+            const w = localStorage.getItem('widget_v13');
             if(w) widget.value = JSON.parse(w);
         });
 
