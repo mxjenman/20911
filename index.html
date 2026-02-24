@@ -12,12 +12,12 @@
         body { margin: 0; font-family: -apple-system, sans-serif; height: 100svh; overflow: hidden; background: #000; }
         .phone-screen { width: 100%; height: 100%; background: var(--bg-image) no-repeat center center; background-size: cover; position: relative; display: flex; flex-direction: column; padding-bottom: env(safe-area-inset-bottom); }
 
-        /* 顶部组件：已精准再次上移 15px (目前 margin-top 为 34px) */
+        /* 顶部组件：已精准再次上移 5px (目前 margin-top 为 29px) */
         .widget-card { 
             background: rgba(255, 255, 255, 0.85); 
             backdrop-filter: blur(15px); 
             border-radius: 30px; 
-            margin: 34px 20px 10px; 
+            margin: 29px 20px 10px; 
             padding: 18px; 
             box-shadow: 0 10px 30px rgba(0,0,0,0.08);
             border: 1px solid rgba(255,255,255,0.3);
@@ -84,7 +84,7 @@
     </div>
 
     <div v-if="activeModal" class="fixed inset-0 bg-black/40 z-[200] flex items-end" @click.self="activeModal = null">
-        <div class="bg-white w-full rounded-t-[30px] p-6 pb-12 animate-slide-up">
+        <div class="bg-white w-full rounded-t-[30px] p-6 pb-12">
             <div class="flex justify-between items-center mb-6"><h3 class="font-extrabold">{{modalTitle}}</h3><button @click="activeModal = null">✕</button></div>
             <div v-if="activeModal==='config'" class="space-y-4">
                 <input v-model="config.baseUrl" placeholder="API 地址" class="w-full p-4 bg-gray-50 rounded-2xl border-none text-sm">
@@ -111,11 +111,11 @@ createApp({
         });
         const currentEditSide = ref('');
         const chatVisible = ref(false); const activeModal = ref(null);
-        const userInput = ref(''); const messages = ref([{ role: 'assistant', content: '位置已再次上移 15px，亲爱的看看效果～' }]);
+        const userInput = ref(''); const messages = ref([{ role: 'assistant', content: '位置已再次上移 5px。' }]);
 
         const modalTitle = computed(() => ({ config: '参数配置', beauty: '界面美化', preset: '人格预设' }[activeModal.value]));
         const editName = (side) => {
-            const newName = prompt("改个什么名儿？", widget.value[side + 'Name']);
+            const newName = prompt("编辑名称：", widget.value[side + 'Name']);
             if (newName) widget.value[side + 'Name'] = newName;
             saveWidget();
         };
@@ -134,7 +134,7 @@ createApp({
             reader.readAsDataURL(file);
         };
         const editSign = () => {
-            const s = prompt("换个心情签名？", widget.value.signature);
+            const s = prompt("编辑签名：", widget.value.signature);
             if (s) widget.value.signature = s;
             saveWidget();
         };
@@ -152,11 +152,11 @@ createApp({
                 const res = await fetch(`${config.value.baseUrl}/chat/completions`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${config.value.apiKey}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ model: config.value.model, messages: [{role:'system', content:'极简好朋友'}, ...messages.value.slice(-5)] })
+                    body: JSON.stringify({ model: config.value.model, messages: [{role:'system', content:'极简回复'}, ...messages.value.slice(-5)] })
                 });
                 const data = await res.json();
                 messages.value.push({ role: 'assistant', content: data.choices[0].message.content });
-            } catch (e) { messages.value.push({ role: 'assistant', content: 'API还没设置好哟～' }); }
+            } catch (e) { messages.value.push({ role: 'assistant', content: '检查连接设置。' }); }
         };
 
         onMounted(() => {
