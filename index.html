@@ -18,12 +18,12 @@
         body { margin: 0; font-family: -apple-system, sans-serif; height: 100svh; overflow: hidden; background: #000; }
         .phone-screen { width: 100%; height: 100%; background: var(--bg-image) no-repeat center center; background-size: cover; position: relative; display: flex; flex-direction: column; padding-bottom: env(safe-area-inset-bottom); }
 
-        /* 组件位置：维持在 29px */
+        /* 组件位置：已往上挪 10px (29px -> 19px) */
         .widget-card { 
             background: rgba(255, 255, 255, 0.85); 
             backdrop-filter: blur(15px); 
             border-radius: 30px; 
-            margin: 29px 20px 10px; 
+            margin: 19px 20px 10px; 
             padding: 18px; 
             box-shadow: 0 10px 30px rgba(0,0,0,0.08);
             border: 1px solid rgba(255,255,255,0.3);
@@ -33,7 +33,9 @@
         .name-tag { background: #fff; padding: 2px 14px; border-radius: 12px; font-size: 13px; font-weight: 800; margin-bottom: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); position: relative; color: #333; }
         .name-tag::after { content: ''; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 5px solid #fff; }
 
-        .dock { position: absolute; bottom: calc(10px + env(safe-area-inset-bottom)); left: 20px; right: 20px; height: 75px; background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(30px); border-radius: 30px; display: flex; justify-content: space-around; align-items: center; border: 1px solid rgba(255,255,255,0.25); }
+        /* Dock位置：已往下挪 20px (10px -> -10px) */
+        .dock { position: absolute; bottom: calc(-10px + env(safe-area-inset-bottom)); left: 20px; right: 20px; height: 75px; background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(30px); border-radius: 30px; display: flex; justify-content: space-around; align-items: center; border: 1px solid rgba(255,255,255,0.25); }
+        
         .chat-window { position: fixed; inset: 0; background: #ededed; z-index: 100; display: flex; flex-direction: column; padding-bottom: env(safe-area-inset-bottom); }
         .msg-bubble { max-width: 75%; padding: 10px 14px; border-radius: 12px; font-size: 16px; margin: 4px 0; }
         .msg-user { background: #95ec69; align-self: flex-end; margin-right: 10px; }
