@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>AI 桌面</title>
+    
+    <link rel="apple-touch-icon" href="https://test.fukit.cn/autoupload/fr/PUOzIkT_hEAqz4elPzgm9kg93R44cerOKVobYyu6bmqyl5f0KlZfm6UsKj-HyTuv/20260224/IR8x/1206X1168/IMG_2714.jpeg">
+    <link rel="icon" type="image/jpeg" href="https://test.fukit.cn/autoupload/fr/PUOzIkT_hEAqz4elPzgm9kg93R44cerOKVobYyu6bmqyl5f0KlZfm6UsKj-HyTuv/20260224/IR8x/1206X1168/IMG_2714.jpeg">
+    <meta name="apple-mobile-web-app-title" content="我的桌面">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
     <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style id="user-custom-css">/* 用户美化注入 */</style>
@@ -12,7 +18,7 @@
         body { margin: 0; font-family: -apple-system, sans-serif; height: 100svh; overflow: hidden; background: #000; }
         .phone-screen { width: 100%; height: 100%; background: var(--bg-image) no-repeat center center; background-size: cover; position: relative; display: flex; flex-direction: column; padding-bottom: env(safe-area-inset-bottom); }
 
-        /* 顶部组件：已精准再次上移 5px (目前 margin-top 为 29px) */
+        /* 组件位置：维持在 29px */
         .widget-card { 
             background: rgba(255, 255, 255, 0.85); 
             backdrop-filter: blur(15px); 
@@ -111,7 +117,7 @@ createApp({
         });
         const currentEditSide = ref('');
         const chatVisible = ref(false); const activeModal = ref(null);
-        const userInput = ref(''); const messages = ref([{ role: 'assistant', content: '位置已再次上移 5px。' }]);
+        const userInput = ref(''); const messages = ref([{ role: 'assistant', content: '图标设置好啦！请删除旧的桌面快捷方式，重新“添加到主屏幕”试试。' }]);
 
         const modalTitle = computed(() => ({ config: '参数配置', beauty: '界面美化', preset: '人格预设' }[activeModal.value]));
         const editName = (side) => {
@@ -156,7 +162,7 @@ createApp({
                 });
                 const data = await res.json();
                 messages.value.push({ role: 'assistant', content: data.choices[0].message.content });
-            } catch (e) { messages.value.push({ role: 'assistant', content: '检查连接设置。' }); }
+            } catch (e) { messages.value.push({ role: 'assistant', content: '连接失败。' }); }
         };
 
         onMounted(() => {
