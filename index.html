@@ -7,7 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 1. 基础全屏：禁止滚动 */
+        /* 基础样式 */
         html, body, #app { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
         
         .desktop { 
@@ -16,51 +16,42 @@
             background-size: cover; position: relative; 
             display: flex; flex-direction: column;
             padding-top: env(safe-area-inset-top);
-            z-index: 10;
         }
 
-        /* 2. 小组件：保持你的黄金坐标 (15px) */
+        /* 小组件 - 锁定位置 */
         .widget-card { 
             margin: 15px 20px 0; padding: 22px; border-radius: 28px;
             backdrop-filter: blur(20px); border: 1.5px solid rgba(255,255,255,0.3);
-            transition: 0.3s;
         }
         .day-mode .widget-card { background: rgba(255, 255, 255, 0.85); color: #000; }
-        .dark-mode .widget-card { background: rgba(30, 30, 32, 0.9); color: #fff; border-color: rgba(255,255,255,0.1); }
+        .dark-mode .widget-card { background: rgba(30, 30, 32, 0.9); color: #fff; }
 
         .avatar-img { width: 64px; height: 64px; border-radius: 50%; border: 3px solid #fff; object-fit: cover; background: #eee; }
 
-        /* 3. 底部 Dock：保持你的黄金坐标 (-12px) */
+        /* 底部 Dock - 锁定位置 */
         .dock { 
             position: absolute; 
             bottom: calc(-12px + env(safe-area-inset-bottom)); 
             left: 20px; right: 20px; height: 86px; 
             background: rgba(255, 255, 255, 0.3); 
             backdrop-filter: blur(30px); 
-            border-radius: 38px; 
-            display: flex; justify-content: space-around; align-items: center;
-            border: 1px solid rgba(255,255,255,0.25);
-            z-index: 100;
+            border-radius: 38px; display: flex; justify-content: space-around; align-items: center;
+            border: 1px solid rgba(255,255,255,0.25); z-index: 100;
         }
 
-        /* 4. 【核心修复】全屏页面：100% 纯色不透明 */
+        /* 【彻底修复】100% 不透明实色页面 */
         .full-page {
             position: fixed; inset: 0; z-index: 2000;
-            transform: translateY(100%); 
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             display: flex; flex-direction: column;
         }
         .full-page.active { transform: translateY(0); }
 
-        /* 强制背景色：绝对不透明！ */
+        /* 纯色背景控制 - 拒绝任何透明度 */
         .day-mode .full-page { background: #FFFFFF !important; color: #000; }
-        .dark-mode .full-page { background: #000000 !important; color: #FFFFFF; }
+        .dark-mode .full-page { background: #000000 !important; color: #FFF; }
 
-        .nav-header {
-            padding: calc(50px + env(safe-area-inset-top)) 24px 20px;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-
+        /* 列表项适配不透明背景 */
         .list-item { 
             background: #f2f2f7; padding: 20px; margin: 0 16px 1px; 
             display: flex; justify-content: space-between; align-items: center; 
@@ -68,6 +59,8 @@
         .dark-mode .list-item { background: #1c1c1e; }
         .list-item:first-child { border-radius: 16px 16px 0 0; }
         .list-item:last-child { border-radius: 0 0 16px 16px; }
+
+        .nav-header { padding: calc(40px + env(safe-area-inset-top)) 24px 20px; display: flex; justify-content: space-between; align-items: center; }
     </style>
 </head>
 <body>
@@ -88,13 +81,13 @@
             <p class="text-[11px] text-right italic font-bold pr-2 opacity-70" @click="editSign">{{ widget.signature }}</p>
         </div>
 
-        <div class="px-10 py-10 flex gap-8">
+        <div class="px-10 py-10 flex gap-10">
             <div @click="activePage = 'chat'" class="flex flex-col items-center">
                 <div class="w-16 h-16 bg-[#07c160] rounded-2xl flex items-center justify-center text-3xl shadow-xl">💬</div>
                 <span class="text-white text-xs mt-2 font-bold drop-shadow-md">私聊</span>
             </div>
             <div @click="activePage = 'appearance'" class="flex flex-col items-center">
-                <div class="w-16 h-16 bg-gradient-to-br from-pink-400 to-rose-500 rounded-2xl flex items-center justify-center text-3xl shadow-xl">🎨</div>
+                <div class="w-16 h-16 bg-gradient-to-br from-pink-400 to-orange-400 rounded-2xl flex items-center justify-center text-3xl shadow-xl">🎨</div>
                 <span class="text-white text-xs mt-2 font-bold drop-shadow-md">外观设置</span>
             </div>
         </div>
@@ -109,13 +102,13 @@
     <div v-for="p in ['appearance', 'chat', 'config', 'beauty', 'preset']" :key="p" class="full-page" :class="{'active': activePage === p}">
         <div class="nav-header">
             <h2 class="text-3xl font-black">{{ {appearance:'外观设置',chat:'私聊',config:'设置中心',beauty:'界面美化',preset:'人格预设'}[p] }}</h2>
-            <button @click="activePage = null" class="bg-blue-500 text-white px-5 py-1.5 rounded-full font-bold text-sm">完成</button>
+            <button @click="activePage = null" class="bg-blue-500 text-white px-5 py-2 rounded-full font-bold text-sm">完成</button>
         </div>
         
-        <div class="flex-1 overflow-y-auto">
+        <div class="flex-1 overflow-y-auto pt-4">
             <template v-if="p === 'appearance'">
                 <div class="list-item" @click="toggleDark">
-                    <span class="font-bold">纯色黑白切换 (不透明)</span>
+                    <span class="font-bold">夜间模式</span>
                     <div :class="isDark ? 'bg-green-500' : 'bg-gray-300'" class="w-12 h-6 rounded-full relative transition-all">
                         <div :class="isDark ? 'translate-x-6' : 'translate-x-1'" class="absolute top-1 w-4 h-4 bg-white rounded-full transition-all"></div>
                     </div>
@@ -125,8 +118,8 @@
                     <span class="text-gray-400">〉</span>
                 </div>
             </template>
-            <div v-else class="mt-20 text-center opacity-20 font-black text-xl">
-                THIS PAGE IS OPAQUE<br>此页面不透明
+            <div v-else class="p-10 text-center opacity-30 text-xl font-bold">
+                内容加载中...
             </div>
         </div>
     </div>
