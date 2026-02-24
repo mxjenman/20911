@@ -7,7 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 1. 基础全屏 */
+        /* 基础样式 */
         html, body, #app { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
         
         .desktop { 
@@ -18,9 +18,9 @@
             padding-top: env(safe-area-inset-top);
         }
 
-        /* 2. 小组件 - 再次上移 5px (从 30px 改为 25px) */
+        /* 1. 小组件 - 再次上移 10px (从 25px 改为 15px) */
         .widget-card { 
-            margin: 25px 20px 0; padding: 22px; border-radius: 28px;
+            margin: 15px 20px 0; padding: 22px; border-radius: 28px;
             backdrop-filter: blur(20px); border: 1.5px solid rgba(255,255,255,0.3);
             transition: 0.3s;
         }
@@ -29,11 +29,11 @@
 
         .avatar-img { width: 64px; height: 64px; border-radius: 50%; border: 3px solid #fff; object-fit: cover; background: #eee; }
 
-        /* 3. 底部 Dock - 再次下移 10px */
+        /* 2. 底部 Dock - 再次下移 2px */
         .dock { 
             position: absolute; 
-            /* 在安全区域基础上再往下压 10px */
-            bottom: calc(-10px + env(safe-area-inset-bottom)); 
+            /* 在安全区基础上再次下压 12px (原 -10px - 2px) */
+            bottom: calc(-12px + env(safe-area-inset-bottom)); 
             left: 20px; right: 20px; height: 86px; 
             background: rgba(255, 255, 255, 0.3); 
             backdrop-filter: blur(30px); 
@@ -43,7 +43,7 @@
             z-index: 100;
         }
 
-        /* 4. 全屏页面 - 实色不透明 */
+        /* 全屏页面 */
         .full-page {
             position: fixed; inset: 0; z-index: 2000;
             transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -133,7 +133,7 @@ createApp({
         });
         let curSide = 'left';
 
-        const toggleDark = () => { isDark.value = !isDark.value; localStorage.setItem('dark_v11', isDark.value); };
+        const toggleDark = () => { isDark.value = !isDark.value; localStorage.setItem('dark_v12', isDark.value); };
         const pickBg = () => document.getElementById('bgInput').click();
         const pickAvatar = (s) => { curSide = s; document.getElementById('avatarInput').click(); };
         const editName = (s) => { const n = prompt("名字", widget.value[s+'Name']); if(n) widget.value[s+'Name']=n; save(); };
@@ -152,14 +152,14 @@ createApp({
         };
 
         const save = () => {
-            localStorage.setItem('bg_v11', customBg.value);
-            localStorage.setItem('widget_v11', JSON.stringify(widget.value));
+            localStorage.setItem('bg_v12', customBg.value);
+            localStorage.setItem('widget_v12', JSON.stringify(widget.value));
         };
 
         onMounted(() => {
-            isDark.value = localStorage.getItem('dark_v11') === 'true';
-            customBg.value = localStorage.getItem('bg_v11') || '';
-            const w = localStorage.getItem('widget_v11');
+            isDark.value = localStorage.getItem('dark_v12') === 'true';
+            customBg.value = localStorage.getItem('bg_v12') || '';
+            const w = localStorage.getItem('widget_v12');
             if(w) widget.value = JSON.parse(w);
         });
 
