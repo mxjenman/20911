@@ -10,11 +10,11 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 1. 基础全屏修复 */
-        * { -webkit-tap-highlight-color: transparent; }
-        html, body, #app { margin: 0; padding: 0; width: 100%; height: 100vh; overflow: hidden; background: #000; }
+        /* 基础重置 */
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        html, body, #app { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
         
-        /* 桌面背景 */
+        /* 桌面主页面 */
         .desktop { 
             width: 100%; height: 100%; 
             background: var(--bg-url, linear-gradient(to bottom, #ff9a9e, #fad0c4)) no-repeat center center; 
@@ -22,51 +22,48 @@
             display: flex; flex-direction: column; padding-top: env(safe-area-inset-top);
         }
 
-        /* 2. 小组件适配修复 */
+        /* 小组件 - 确保日夜模式配色正确 */
         .widget-card { 
-            margin: 29px 20px 0; padding: 22px; border-radius: 32px;
+            margin: 35px 20px 0; padding: 22px; border-radius: 32px;
             backdrop-filter: blur(25px); border: 1.5px solid rgba(255,255,255,0.3);
             box-shadow: 0 10px 40px rgba(0,0,0,0.1); transition: 0.3s;
         }
-        /* 日间：白底黑字 */
         .day-mode .widget-card { background: rgba(255, 255, 255, 0.85); color: #000; }
-        /* 夜间：深灰底白字 */
-        .dark-mode .widget-card { background: rgba(30, 30, 32, 0.85); color: #fff; border-color: rgba(255,255,255,0.1); }
+        .dark-mode .widget-card { background: rgba(30, 30, 32, 0.9); color: #fff; border-color: rgba(255,255,255,0.1); }
 
-        .name-tag { padding: 3px 14px; border-radius: 12px; font-weight: 800; font-size: 13px; margin-bottom: 8px; cursor: pointer; }
+        .name-tag { padding: 3px 14px; border-radius: 12px; font-weight: 800; font-size: 13px; margin-bottom: 8px; }
         .day-mode .name-tag { background: #fff; color: #000; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
         .dark-mode .name-tag { background: #444; color: #fff; }
+        .avatar-img { width: 64px; height: 64px; border-radius: 50%; border: 3px solid #fff; object-fit: cover; }
 
-        .avatar-img { width: 64px; height: 64px; border-radius: 50%; border: 3px solid #fff; object-fit: cover; cursor: pointer; }
-
-        /* 3. 全屏子页面修复（解决透明和层级问题） */
+        /* 全屏子页面 - 拒绝透明 */
         .full-page {
             position: fixed; inset: 0; z-index: 2000;
             transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             display: flex; flex-direction: column;
         }
         .full-page.active { transform: translateY(0); }
-        
-        /* 强制设置不透明背景 */
-        .day-mode .full-page { background: #f2f2f7; color: #000; }
-        .dark-mode .full-page { background: #000000; color: #ffffff; }
+        /* 关键修复：设置背景为实色 */
+        .day-mode .full-page { background: #f2f2f7 !important; color: #000; }
+        .dark-mode .full-page { background: #000000 !important; color: #ffffff; }
 
-        /* 4. 点击项 */
+        /* 列表条目 */
         .list-item { 
-            margin: 0 16px 1px; padding: 18px; display: flex; justify-content: space-between; align-items: center; 
-            background: white; cursor: pointer;
+            margin: 0 16px 1px; padding: 20px; display: flex; justify-content: space-between; align-items: center; 
+            background: white;
         }
         .dark-mode .list-item { background: #1c1c1e; }
         .list-item:first-child { border-radius: 15px 15px 0 0; }
         .list-item:last-child { border-radius: 0 0 15px 15px; }
 
-        /* 5. 底部 Dock */
+        /* 底部 Dock - 往上挪动 */
         .dock { 
-            position: absolute; bottom: calc(20px + env(safe-area-inset-bottom)); 
-            left: 20px; right: 20px; height: 84px; 
-            background: rgba(255, 255, 255, 0.35); backdrop-filter: blur(30px); 
-            border-radius: 38px; display: flex; justify-content: space-around; align-items: center;
-            border: 1px solid rgba(255,255,255,0.2); z-index: 50;
+            position: absolute; 
+            bottom: calc(40px + env(safe-area-inset-bottom)); /* 增加底部间距确保完全露出来 */
+            left: 20px; right: 20px; height: 86px; 
+            background: rgba(255, 255, 255, 0.3); backdrop-filter: blur(30px); 
+            border-radius: 40px; display: flex; justify-content: space-around; align-items: center;
+            border: 1px solid rgba(255,255,255,0.25); z-index: 50;
         }
     </style>
 </head>
@@ -90,30 +87,30 @@
             </div>
         </div>
 
-        <div class="px-10 py-10 flex gap-8">
+        <div class="px-10 py-12 flex gap-10">
             <div @click="activePage = 'chat'" class="flex flex-col items-center active:scale-90 transition-all">
                 <div class="w-16 h-16 bg-[#07c160] rounded-2xl flex items-center justify-center shadow-xl text-3xl">💬</div>
                 <span class="text-white text-xs mt-2 font-bold">私聊</span>
             </div>
             <div @click="activePage = 'appearance'" class="flex flex-col items-center active:scale-90 transition-all">
-                <div class="w-16 h-16 bg-gradient-to-br from-pink-400 to-orange-400 rounded-2xl flex items-center justify-center shadow-xl text-3xl">🎨</div>
+                <div class="w-16 h-16 bg-gradient-to-br from-pink-400 to-rose-500 rounded-2xl flex items-center justify-center shadow-xl text-3xl">🎨</div>
                 <span class="text-white text-xs mt-2 font-bold">外观设置</span>
             </div>
         </div>
 
         <div class="dock">
-            <div @click="activePage = 'config'" class="text-3xl">⚙️</div>
-            <div @click="activePage = 'beauty'" class="text-3xl">✨</div>
-            <div @click="activePage = 'preset'" class="text-3xl">✍️</div>
+            <div @click="activePage = 'config'" class="flex flex-col items-center"><span class="text-3xl">⚙️</span><span class="text-[10px] font-bold mt-1 opacity-60">设置</span></div>
+            <div @click="activePage = 'beauty'" class="flex flex-col items-center"><span class="text-3xl">✨</span><span class="text-[10px] font-bold mt-1 opacity-60">美化</span></div>
+            <div @click="activePage = 'preset'" class="flex flex-col items-center"><span class="text-3xl">✍️</span><span class="text-[10px] font-bold mt-1 opacity-60">预设</span></div>
         </div>
     </div>
 
     <div class="full-page" :class="{'active': activePage === 'appearance'}">
-        <div class="px-6 pt-16 pb-6 flex justify-between items-center">
+        <div class="px-6 pt-16 pb-6 flex justify-between items-center bg-transparent">
             <h2 class="text-3xl font-extrabold">外观设置</h2>
             <button @click="activePage = null" class="text-blue-500 font-bold text-lg">完成</button>
         </div>
-        <div class="mt-4">
+        <div class="mt-4 flex-1">
             <div class="list-item" @click="toggleDark">
                 <span class="font-bold text-lg">夜间模式</span>
                 <div :class="isDark ? 'bg-green-500' : 'bg-gray-300'" class="w-14 h-7 rounded-full relative transition-all">
@@ -122,7 +119,7 @@
             </div>
             <div class="list-item" @click="pickBg">
                 <span class="font-bold text-lg">更换桌面壁纸</span>
-                <span class="text-gray-400">去相册 〉</span>
+                <span class="text-gray-400 text-sm">去相册 〉</span>
             </div>
         </div>
     </div>
@@ -132,9 +129,9 @@
             <h2 class="text-2xl font-bold">{{ {chat:'私聊',config:'参数设置',beauty:'界面美化',preset:'人格预设'}[p] }}</h2>
             <button @click="activePage = null" class="text-blue-500 font-bold">关闭</button>
         </div>
-        <div class="flex-1 p-6 overflow-y-auto">
-            <p v-if="p==='chat'" class="text-center mt-20 opacity-30">功能开发中...</p>
-            <textarea v-else placeholder="输入内容..." class="w-full h-64 p-4 bg-gray-100 dark:bg-zinc-900 rounded-2xl border-none outline-none font-mono text-sm"></textarea>
+        <div class="flex-1 p-6">
+            <p v-if="p==='chat'" class="text-center mt-20 opacity-30 text-lg">此处正在装修...</p>
+            <textarea v-else class="w-full h-80 p-5 bg-gray-100 dark:bg-zinc-900 rounded-3xl border-none outline-none font-mono text-sm" placeholder="请输入内容..."></textarea>
         </div>
     </div>
 
@@ -156,9 +153,8 @@ createApp({
         });
         let currentSide = 'left';
 
-        // 逻辑函数
-        const editName = (side) => { const n = prompt("名字:", widget.value[side+'Name']); if(n) widget.value[side+'Name']=n; saveW(); };
-        const editSign = () => { const s = prompt("签名:", widget.value.signature); if(s) widget.value.signature=s; saveW(); };
+        const editName = (side) => { const n = prompt("名字:", widget.value[side+'Name']); if(n) widget.value[side+'Name']=n; saveAll(); };
+        const editSign = () => { const s = prompt("签名:", widget.value.signature); if(s) widget.value.signature=s; saveAll(); };
         const pickAvatar = (side) => { currentSide = side; document.getElementById('avatarInput').click(); };
         const pickBg = () => { document.getElementById('bgInput').click(); };
         
@@ -169,21 +165,21 @@ createApp({
             reader.onload = (ev) => {
                 if(type === 'avatar') widget.value[currentSide+'Avatar'] = ev.target.result;
                 else customBg.value = ev.target.result;
-                saveW();
+                saveAll();
             };
             reader.readAsDataURL(file);
         };
 
-        const toggleDark = () => { isDark.value = !isDark.value; localStorage.setItem('is_dark', isDark.value); };
-        const saveW = () => { 
-            localStorage.setItem('widget_v6', JSON.stringify(widget.value)); 
-            localStorage.setItem('custom_bg', customBg.value);
+        const toggleDark = () => { isDark.value = !isDark.value; localStorage.setItem('pref_dark', isDark.value); };
+        const saveAll = () => { 
+            localStorage.setItem('phone_widget_v7', JSON.stringify(widget.value)); 
+            localStorage.setItem('phone_bg_v7', customBg.value);
         };
 
         onMounted(() => {
-            const d = localStorage.getItem('is_dark'); if(d) isDark.value = d === 'true';
-            const b = localStorage.getItem('custom_bg'); if(b) customBg.value = b;
-            const w = localStorage.getItem('widget_v6'); if(w) widget.value = JSON.parse(w);
+            const d = localStorage.getItem('pref_dark'); if(d) isDark.value = d === 'true';
+            const b = localStorage.getItem('phone_bg_v7'); if(b) customBg.value = b;
+            const w = localStorage.getItem('phone_widget_v7'); if(w) widget.value = JSON.parse(w);
         });
 
         return { activePage, isDark, customBg, widget, editName, editSign, pickAvatar, pickBg, onFileChange, toggleDark };
