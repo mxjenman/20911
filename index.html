@@ -9,142 +9,91 @@
     <style id="user-custom-css">/* 用户美化注入 */</style>
     <style>
         :root { --bg-image: url('https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2070'); }
-        body { margin: 0; font-family: -apple-system, sans-serif; height: 100vh; height: 100svh; overflow: hidden; background: #000; }
-        
-        .phone-screen { 
-            width: 100%; 
-            height: 100%; 
-            background: var(--bg-image) no-repeat center center; 
-            background-size: cover; 
-            position: relative; 
-            display: flex; 
-            flex-direction: column;
-            padding-bottom: env(safe-area-inset-bottom);
-        }
+        body { margin: 0; font-family: -apple-system, sans-serif; height: 100svh; overflow: hidden; background: #000; }
+        .phone-screen { width: 100%; height: 100%; background: var(--bg-image) no-repeat center center; background-size: cover; position: relative; display: flex; flex-direction: column; padding-bottom: env(safe-area-inset-bottom); }
 
-        /* 顶部云朵往下拉了一点 */
-        .cloud-header { 
-            background: rgba(255, 255, 255, 0.7); 
-            backdrop-filter: blur(25px); 
+        /* 新版精致看板样式 */
+        .widget-card { 
+            background: rgba(255, 255, 255, 0.9); 
+            backdrop-filter: blur(10px); 
             border-radius: 35px; 
-            margin: 80px 20px 10px; 
-            padding: 25px; 
-            text-align: center; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
-            border: 1px solid rgba(255,255,255,0.4);
+            margin: 70px 20px 10px; 
+            padding: 20px; 
+            box-shadow: 0 8px 32px rgba(0,0,0,0.05);
         }
+        .avatar-wrap { position: relative; display: flex; flex-direction: column; align-items: center; }
+        .avatar-img { width: 65px; height: 65px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); object-fit: cover; }
+        .name-tag { background: #fff; padding: 2px 12px; border-radius: 12px; font-size: 14px; font-weight: bold; margin-bottom: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; }
+        .name-tag::after { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid #fff; }
 
-        /* 优化后的 Dock 栏：位置更靠下，增加悬浮精致感 */
-        .dock { 
-            position: absolute; 
-            bottom: calc(10px + env(safe-area-inset-bottom)); /* 贴近底部安全区 */
-            left: 20px; 
-            right: 20px; 
-            height: 80px; 
-            background: rgba(255, 255, 255, 0.4); 
-            backdrop-filter: blur(30px); 
-            border-radius: 30px; 
-            display: flex; 
-            justify-content: space-around; 
-            align-items: center; 
-            border: 1px solid rgba(255,255,255,0.25);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
-
-        .dock-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            transition: transform 0.2s;
-        }
-        .dock-item:active { transform: scale(0.9); }
-
+        .dock { position: absolute; bottom: calc(10px + env(safe-area-inset-bottom)); left: 20px; right: 20px; height: 75px; background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(30px); border-radius: 30px; display: flex; justify-content: space-around; align-items: center; border: 1px solid rgba(255,255,255,0.2); }
         .chat-window { position: fixed; inset: 0; background: #ededed; z-index: 100; display: flex; flex-direction: column; padding-bottom: env(safe-area-inset-bottom); }
-        .msg-bubble { max-width: 75%; padding: 10px 14px; border-radius: 12px; font-size: 16px; margin: 4px 0; word-break: break-all; position: relative; }
+        .msg-bubble { max-width: 75%; padding: 10px 14px; border-radius: 12px; font-size: 16px; margin: 4px 0; }
         .msg-user { background: #95ec69; align-self: flex-end; margin-right: 10px; }
         .msg-ai { background: #ffffff; align-self: flex-start; margin-left: 10px; }
-
-        .modal-box {
-            background: white;
-            width: 100%;
-            border-radius: 30px 30px 0 0;
-            padding: 24px;
-            padding-bottom: calc(40px + env(safe-area-inset-bottom));
-            max-height: 80vh;
-            overflow-y: auto;
-        }
     </style>
 </head>
 <body>
 <div id="app" class="phone-screen">
-    <div class="cloud-header animate-fade-in">
-        <div class="text-4xl font-bold text-gray-800 tracking-tight">{{ currentTime }}</div>
-        <div class="text-xs text-gray-500 mt-1 font-medium">{{ currentDate }}</div>
-        <div class="mt-3 text-[11px] font-bold text-gray-600 bg-white/40 inline-block px-4 py-1.5 rounded-full shadow-sm">{{ config.city }} · {{ config.weather }}</div>
+    <div class="widget-card animate-fade-in">
+        <div class="flex gap-6 mb-4 px-2">
+            <div class="avatar-wrap" @click="editField('leftName', 'leftAvatar')">
+                <div class="name-tag">{{ widget.leftName }}</div>
+                <img :src="widget.leftAvatar" class="avatar-img">
+            </div>
+            <div class="avatar-wrap" @click="editField('rightName', 'rightAvatar')">
+                <div class="name-tag">{{ widget.rightName }}</div>
+                <img :src="widget.rightAvatar" class="avatar-img">
+            </div>
+        </div>
+        <div class="w-full text-right pr-4" @click="editSign">
+            <p class="text-gray-600 text-[13px] font-medium tracking-wide">
+                {{ widget.signature }}
+            </p>
+        </div>
     </div>
 
-    <div class="px-8 py-6">
-        <div @click="chatVisible = true" class="flex flex-col items-center w-16">
-            <div class="w-14 h-14 bg-gradient-to-br from-[#09d36a] to-[#07c160] rounded-[1.2rem] flex items-center justify-center shadow-lg active:scale-90 transition-all">
+    <div class="px-10 py-4">
+        <div @click="chatVisible = true" class="flex flex-col items-center w-14">
+            <div class="w-14 h-14 bg-gradient-to-br from-[#09d36a] to-[#07c160] rounded-2xl flex items-center justify-center shadow-lg active:scale-90 transition-all">
                 <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
             </div>
-            <span class="text-white text-[10px] mt-2 font-bold shadow-sm tracking-wide">私聊</span>
+            <span class="text-white text-[10px] mt-2 font-bold shadow-sm">私聊</span>
         </div>
     </div>
 
     <div class="dock">
-        <div @click="activeModal = 'config'" class="dock-item">
-            <span class="text-2xl">⚙️</span>
-            <span class="text-[9px] mt-1 font-bold text-gray-800">设置</span>
-        </div>
-        <div @click="activeModal = 'beauty'" class="dock-item">
-            <span class="text-2xl">✨</span>
-            <span class="text-[9px] mt-1 font-bold text-gray-800">美化</span>
-        </div>
-        <div @click="activeModal = 'preset'" class="dock-item">
-            <span class="text-2xl">✍️</span>
-            <span class="text-[9px] mt-1 font-bold text-gray-800">预设</span>
-        </div>
+        <div @click="activeModal = 'config'" class="flex flex-col items-center"><span class="text-2xl">⚙️</span><span class="text-[9px] mt-1 font-bold">设置</span></div>
+        <div @click="activeModal = 'beauty'" class="flex flex-col items-center"><span class="text-2xl">✨</span><span class="text-[9px] mt-1 font-bold">美化</span></div>
+        <div @click="activeModal = 'preset'" class="flex flex-col items-center"><span class="text-2xl">✍️</span><span class="text-[9px] mt-1 font-bold">预设</span></div>
     </div>
 
-    <div v-if="chatVisible" class="chat-window animate-slide-in">
+    <div v-if="chatVisible" class="chat-window">
         <div class="h-16 bg-gray-100 flex items-end justify-between px-4 pb-3 border-b border-gray-200">
-            <button @click="chatVisible = false" class="text-blue-600 text-sm font-medium">返回</button>
-            <span class="font-bold text-gray-800">智友</span>
-            <div class="w-10"></div>
+            <button @click="chatVisible = false" class="text-blue-600 text-sm">返回</button>
+            <span class="font-bold">智友</span><div class="w-10"></div>
         </div>
         <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-2" id="msg-box">
             <div v-for="m in messages" :class="['msg-bubble', m.role==='user'?'msg-user':'msg-ai']">{{m.content}}</div>
-            <div v-if="isTyping" class="text-xs text-gray-400 ml-4 animate-pulse">对方正在输入...</div>
         </div>
-        <div class="p-3 bg-white border-t flex gap-2 items-center pb-8">
-            <input v-model="userInput" @keyup.enter="sendMsg" placeholder="说点什么吧..." class="flex-1 bg-gray-100 p-2.5 rounded-xl text-sm outline-none border-none">
-            <button @click="sendMsg" class="bg-[#07c160] text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm active:opacity-80">生成</button>
+        <div class="p-3 bg-white border-t flex gap-2 pb-8">
+            <input v-model="userInput" @keyup.enter="sendMsg" placeholder="发消息..." class="flex-1 bg-gray-100 p-2.5 rounded-xl outline-none border-none text-sm">
+            <button @click="sendMsg" class="bg-[#07c160] text-white px-5 rounded-xl text-sm font-bold">生成</button>
         </div>
     </div>
 
     <div v-if="activeModal" class="fixed inset-0 bg-black/40 z-[200] flex items-end" @click.self="activeModal = null">
-        <div class="modal-box animate-modal-up">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="font-extrabold text-lg text-gray-800">{{modalTitle}}</h3>
-                <button @click="activeModal = null" class="bg-gray-100 w-8 h-8 rounded-full flex items-center justify-center text-gray-400">✕</button>
-            </div>
-            
+        <div class="bg-white w-full rounded-t-[30px] p-6 pb-12">
+            <div class="flex justify-between items-center mb-6"><h3 class="font-bold">{{modalTitle}}</h3><button @click="activeModal = null">✕</button></div>
             <div v-if="activeModal==='config'" class="space-y-4">
-                <input v-model="config.baseUrl" placeholder="API Base URL (如 https://api.openai.com/v1)" class="w-full p-3.5 bg-gray-50 rounded-2xl border-none text-sm">
-                <input v-model="config.apiKey" type="password" placeholder="API Key (sk-...)" class="w-full p-3.5 bg-gray-50 rounded-2xl border-none text-sm">
-                <input v-model="config.model" placeholder="模型名称 (gpt-4o / deepseek-chat)" class="w-full p-3.5 bg-gray-50 rounded-2xl border-none text-sm">
-                <div class="flex gap-3">
-                    <input v-model="config.city" placeholder="城市" class="w-1/2 p-3.5 bg-gray-50 rounded-2xl border-none text-sm">
-                    <input v-model="config.weather" placeholder="天气" class="w-1/2 p-3.5 bg-gray-50 rounded-2xl border-none text-sm">
-                </div>
+                <input v-model="config.baseUrl" placeholder="API 地址" class="w-full p-3.5 bg-gray-50 rounded-2xl border-none">
+                <input v-model="config.apiKey" type="password" placeholder="API Key" class="w-full p-3.5 bg-gray-50 rounded-2xl border-none">
+                <input v-model="config.model" placeholder="模型名称" class="w-full p-3.5 bg-gray-50 rounded-2xl border-none">
             </div>
-
             <div v-else class="space-y-3">
-                <textarea v-model="activeModal==='beauty'?config.beautyCss:config.presetCss" rows="8" class="w-full p-4 bg-gray-50 rounded-2xl font-mono text-xs border-none" placeholder="在此粘贴你的 CSS 代码..."></textarea>
+                <textarea v-model="activeModal==='beauty'?config.beautyCss:config.presetCss" rows="6" class="w-full p-4 bg-gray-50 rounded-2xl font-mono text-xs border-none"></textarea>
             </div>
-
-            <button @click="save" class="w-full bg-black text-white py-4.5 rounded-[1.4rem] mt-8 font-bold shadow-xl active:scale-[0.98] transition-all">保存设置</button>
+            <button @click="save" class="w-full bg-black text-white py-4 rounded-2xl mt-6 font-bold">保存设置</button>
         </div>
     </div>
 </div>
@@ -153,61 +102,64 @@
 const { createApp, ref, onMounted, computed } = Vue;
 createApp({
     setup() {
-        const config = ref({ baseUrl: '', apiKey: '', model: 'gpt-4o', city: '上海', weather: '晴', beautyCss: '', presetCss: '' });
-        const currentTime = ref(''); const currentDate = ref('');
-        const chatVisible = ref(false); const activeModal = ref(null);
-        const userInput = ref(''); const isTyping = ref(false);
-        const messages = ref([{ role: 'assistant', content: '嘿！怎么才来找我玩呀？🥺' }]);
+        const config = ref({ baseUrl: '', apiKey: '', model: 'gpt-4o', beautyCss: '', presetCss: '' });
+        // 组件数据
+        const widget = ref({
+            leftName: '雅',
+            leftAvatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png',
+            rightName: '萌',
+            rightAvatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png',
+            signature: '卖萌偶尔失手 嘴甜从未出错 =￣ω￣='
+        });
 
-        const modalTitle = computed(() => ({ config: '参数配置', beauty: '界面美化', preset: '人格预设' }[activeModal.value]));
-        const tick = () => {
-            const d = new Date();
-            currentTime.value = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-            currentDate.value = d.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' });
+        const chatVisible = ref(false); const activeModal = ref(null);
+        const userInput = ref(''); const messages = ref([{ role: 'assistant', content: '嘿！点点上面的头像可以改名字哦~' }]);
+
+        const editField = (nameKey, avatarKey) => {
+            const newName = prompt("请输入新的名字：", widget.value[nameKey]);
+            if (newName) widget.value[nameKey] = newName;
+            const newAvatar = prompt("请输入头像网址（留空则不改）：", widget.value[avatarKey]);
+            if (newAvatar) widget.value[avatarKey] = newAvatar;
+            saveWidget();
         };
+
+        const editSign = () => {
+            const newSign = prompt("请输入新的个性签名：", widget.value.signature);
+            if (newSign) widget.value.signature = newSign;
+            saveWidget();
+        };
+
+        const saveWidget = () => { localStorage.setItem('widget_data', JSON.stringify(widget.value)); };
         const save = () => { 
-            localStorage.setItem('ai_config_v3', JSON.stringify(config.value)); 
+            localStorage.setItem('ai_config_v4', JSON.stringify(config.value)); 
             document.getElementById('user-custom-css').innerHTML = config.value.beautyCss + config.value.presetCss;
             activeModal.value = null; 
         };
+
         const sendMsg = async () => {
-            if (!userInput.value || isTyping.value) return;
+            if (!userInput.value) return;
             messages.value.push({ role: 'user', content: userInput.value });
-            userInput.value = ''; isTyping.value = true;
-            setTimeout(() => { const b = document.getElementById('msg-box'); b.scrollTop = b.scrollHeight; }, 50);
+            const currentInput = userInput.value; userInput.value = '';
             try {
-                const sys = `你是我的真人好友。当前${config.value.city}${config.value.weather},时间${currentTime.value}。要求：1.回复极简(20字内)；2.禁止承认是AI；3.多条回复用[SEP]隔开。`;
                 const res = await fetch(`${config.value.baseUrl}/chat/completions`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${config.value.apiKey}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ model: config.value.model, messages: [{role:'system', content:sys}, ...messages.value.slice(-5)] })
+                    body: JSON.stringify({ model: config.value.model, messages: [{role:'system', content:'极简回复'}, ...messages.value.slice(-5)] })
                 });
                 const data = await res.json();
-                const reply = data.choices[0].message.content;
-                for (let p of reply.split('[SEP]')) {
-                    if (p.trim()) {
-                        await new Promise(r => setTimeout(r, 700));
-                        messages.value.push({ role: 'assistant', content: p.trim() });
-                        setTimeout(() => { const b = document.getElementById('msg-box'); b.scrollTop = b.scrollHeight; }, 50);
-                    }
-                }
-            } catch (e) { messages.value.push({ role: 'assistant', content: '连接好像出了点小问题...' }); }
-            finally { isTyping.value = false; }
+                messages.value.push({ role: 'assistant', content: data.choices[0].message.content });
+            } catch (e) { messages.value.push({ role: 'assistant', content: '检查下API设置哦~' }); }
         };
+
         onMounted(() => {
-            const s = localStorage.getItem('ai_config_v3'); if (s) config.value = JSON.parse(s);
-            tick(); setInterval(tick, 1000); save();
+            const s = localStorage.getItem('ai_config_v4'); if (s) config.value = JSON.parse(s);
+            const w = localStorage.getItem('widget_data'); if (w) widget.value = JSON.parse(w);
+            save();
         });
-        return { config, currentTime, currentDate, chatVisible, activeModal, modalTitle, userInput, messages, isTyping, save, sendMsg };
+
+        return { config, widget, chatVisible, activeModal, userInput, messages, editField, editSign, save, sendMsg };
     }
 }).mount('#app');
 </script>
-
-<style>
-@keyframes modal-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
-.animate-modal-up { animation: modal-up 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-@keyframes fade-in { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-.animate-fade-in { animation: fade-in 0.8s ease-out; }
-</style>
 </body>
 </html>
