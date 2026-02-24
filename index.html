@@ -45,11 +45,10 @@
         .cell-item { background: white; padding: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 0.5px solid #f0f0f0; }
         .cell-item:active { background: #f5f5f5; }
 
-        /* 长按菜单样式 */
-        .context-menu { position: fixed; background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 300; overflow: hidden; min-width: 120px; }
-        .menu-btn { padding: 12px 20px; font-size: 14px; width: 100%; text-align: left; border-bottom: 0.5px solid #eee; }
-        .menu-btn:active { background: #f2f2f2; }
-        .menu-btn.danger { color: #ff3b30; }
+        /* 长按菜单 */
+        .context-menu { position: fixed; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-radius: 12px; width: 120px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 300; overflow: hidden; }
+        .menu-item { padding: 12px; text-align: center; border-bottom: 0.5px solid #eee; font-size: 14px; }
+        .menu-item:last-child { border-bottom: none; color: #ff3b30; }
     </style>
 </head>
 <body>
@@ -87,7 +86,7 @@
         <div @click="activeModal = 'preset'" class="flex flex-col items-center"><span class="text-2xl">✍️</span><span class="text-[9px] mt-1 font-extrabold text-gray-800">预设</span></div>
     </div>
 
-    <div v-if="chatVisible" class="wechat-app">
+    <div v-if="chatVisible" class="wechat-app" @contextmenu.prevent>
         <div class="wechat-header">
             <div class="w-8 flex">
                 <button v-if="activeTab === 'contacts' && !currentChatPartner" @click="chatVisible = false" class="text-[#1a1a1a] pb-1">
@@ -98,22 +97,24 @@
                 </button>
             </div>
             <span class="font-bold text-[17px] pb-1">{{ currentChatPartner ? currentChatPartner.name : navTitle }}</span>
-            <div class="w-8 flex"></div>
+            <div class="w-8 flex justify-end pb-1"></div>
         </div>
 
         <div class="wechat-content">
-            <div v-if="activeTab === 'contacts'" class="h-full">
+            <div v-if="activeTab === 'contacts'" class="h-full relative">
                 <div v-if="!currentChatPartner" class="bg-white h-full">
-                    <div v-for="friend in sortedFriends" :key="friend.id" 
-                         @click="enterChat(friend.id)" 
-                         @touchstart="onLongPressStart($event, friend)"
-                         @touchend="onLongPressEnd"
-                         :class="['p-4 border-b flex items-center gap-3 active:bg-gray-50', friend.pinned ? 'bg-gray-50' : '']">
-                        <img :src="friend.avatar" class="w-10 h-10 rounded">
-                        <div class="flex-1 flex items-center justify-between">
-                            <span class="font-medium">{{ friend.name }}</span>
-                            <span v-if="friend.pinned" class="text-[10px] text-gray-400">📌</span>
+                    <div v-for="f in filteredFriends" :key="f.id" 
+                         @click="enterChat(f.id)"
+                         @touchstart="handleTouchStart($event, f)"
+                         @touchend="handleTouchEnd"
+                         @mousedown="handleMouseDown($event, f)"
+                         @mouseup="handleMouseUp"
+                         class="p-4 border-b flex items-center justify-between active:bg-gray-50 bg-white">
+                        <div class="flex items-center gap-3">
+                            <img :src="f.avatar" class="w-10 h-10 rounded">
+                            <span class="font-medium">{{ f.name }}</span>
                         </div>
+                        <span v-if="f.isTop" class="text-[10px] bg-gray-100 text-gray-400 px-1 rounded">置顶</span>
                     </div>
                 </div>
 
@@ -161,11 +162,11 @@
             <div class="nav-item" :class="{active: activeTab==='discover'}" @click="activeTab='discover'">朋友圈</div>
             <div class="nav-item" :class="{active: activeTab==='me'}" @click="activeTab='me'">我</div>
         </div>
-    </div>
 
-    <div v-if="menu.visible" class="context-menu" :style="{ top: menu.y + 'px', left: menu.x + 'px' }">
-        <div class="menu-btn" @click.stop="togglePin">{{ menu.target.pinned ? '取消置顶' : '置顶聊天' }}</div>
-        <div class="menu-btn danger" @click.stop="deleteFriend">删除联系人</div>
+        <div v-if="showMenu" class="context-menu" :style="{top: menuPos.y+'px', left: menuPos.x+'px'}">
+            <div class="menu-item" @click.stop="toggleTop">置顶/取消</div>
+            <div class="menu-item" @click.stop="deleteFriend">彻底删除</div>
+        </div>
     </div>
 
     <div v-if="activeModal" class="fixed inset-0 bg-black/40 z-[200] flex items-end" @click.self="activeModal = null">
@@ -202,10 +203,10 @@ createApp({
         const userInput = ref('');
         const currentEditSide = ref('');
 
-        // 好友列表数据
-        const friends = ref([
-            { id: 'left', name: '雨雨雨～', avatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png', pinned: false },
-            { id: 'ai', name: '哈吉米宝宝', avatar: 'https://test.fukit.cn/autoupload/fr/PUOzIkT_hEAqz4elPzgm9kg93R44cerOKVobYyu6bmqyl5f0KlZfm6UsKj-HyTuv/20260224/IR8x/1206X1168/IMG_2714.jpeg', pinned: false }
+        // 好友数据
+        const friendsList = ref([
+            { id: 'left', name: '雨雨雨～', avatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png', isTop: false },
+            { id: 'ai', name: '哈吉米宝宝', avatar: 'https://test.fukit.cn/autoupload/fr/PUOzIkT_hEAqz4elPzgm9kg93R44cerOKVobYyu6bmqyl5f0KlZfm6UsKj-HyTuv/20260224/IR8x/1206X1168/IMG_2714.jpeg', isTop: false }
         ]);
 
         const chatHistory = ref({
@@ -214,11 +215,13 @@ createApp({
         });
 
         const currentChatPartner = ref(null);
-        const menu = ref({ visible: false, x: 0, y: 0, target: null });
-        let pressTimer = null;
+        const showMenu = ref(false);
+        const menuPos = ref({ x: 0, y: 0 });
+        const selectedFriend = ref(null);
+        let longPressTimer = null;
 
-        const sortedFriends = computed(() => {
-            return [...friends.value].sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+        const filteredFriends = computed(() => {
+            return [...friendsList.value].sort((a, b) => (b.isTop - a.isTop));
         });
 
         const currentMessages = computed(() => {
@@ -231,45 +234,51 @@ createApp({
         const openWechat = () => { chatVisible.value = true; activeTab.value = 'contacts'; currentChatPartner.value = null; };
         
         const enterChat = (id) => {
-            if (menu.value.visible) return;
-            const f = friends.value.find(item => item.id === id);
-            if(f) currentChatPartner.value = { id: f.id, name: f.name };
-            nextTick(() => {
-                const box = document.getElementById('msg-box');
-                if(box) box.scrollTop = box.scrollHeight;
-            });
+            if (showMenu.value) return;
+            const f = friendsList.value.find(item => item.id === id);
+            currentChatPartner.value = { id, name: f.name };
+            nextTick(() => { const box = document.getElementById('msg-box'); if(box) box.scrollTop = box.scrollHeight; });
         };
 
         // 长按逻辑
-        const onLongPressStart = (e, friend) => {
-            pressTimer = setTimeout(() => {
-                const touch = e.touches[0];
-                menu.value = { visible: true, x: touch.clientX - 60, y: touch.clientY - 20, target: friend };
+        const handleTouchStart = (e, f) => {
+            longPressTimer = setTimeout(() => {
+                selectedFriend.value = f;
+                menuPos.value = { x: e.touches[0].clientX - 60, y: e.touches[0].clientY };
+                showMenu.value = true;
             }, 600);
         };
-        const onLongPressEnd = () => clearTimeout(pressTimer);
-        const closeMenu = () => menu.value.visible = false;
+        const handleTouchEnd = () => clearTimeout(longPressTimer);
+        const handleMouseDown = (e, f) => {
+            longPressTimer = setTimeout(() => {
+                selectedFriend.value = f;
+                menuPos.value = { x: e.clientX - 60, y: e.clientY };
+                showMenu.value = true;
+            }, 600);
+        };
+        const handleMouseUp = () => clearTimeout(longPressTimer);
+        const closeMenu = () => showMenu.value = false;
 
-        const togglePin = () => {
-            menu.value.target.pinned = !menu.value.target.pinned;
-            closeMenu();
+        const toggleTop = () => {
+            selectedFriend.value.isTop = !selectedFriend.value.isTop;
+            showMenu.value = false;
         };
 
         const deleteFriend = () => {
-            if (confirm(`确定要删除 ${menu.value.target.name} 吗？`)) {
-                friends.value = friends.value.filter(f => f.id !== menu.value.target.id);
+            if(confirm(`确定删除 ${selectedFriend.value.name}？`)) {
+                friendsList.value = friendsList.value.filter(f => f.id !== selectedFriend.value.id);
             }
-            closeMenu();
+            showMenu.value = false;
         };
 
         const editName = (side) => {
             const newName = prompt("编辑名字：", widget.value[side + 'Name']);
-            if (newName) { 
-                widget.value[side + 'Name'] = newName; 
-                const f = friends.value.find(item => item.id === (side === 'left' ? 'left' : ''));
-                if(f) f.name = newName;
-                saveWidget(); 
-            }
+            if (newName) { widget.value[side + 'Name'] = newName; saveWidget(); }
+        };
+
+        const editWxId = () => {
+            const newId = prompt("编辑微信号：", widget.value.wxId);
+            if (newId) { widget.value.wxId = newId; saveWidget(); }
         };
 
         const handleAvatarClick = (side) => {
@@ -283,17 +292,22 @@ createApp({
             const reader = new FileReader();
             reader.onload = (event) => {
                 widget.value[currentEditSide.value + 'Avatar'] = event.target.result;
-                const f = friends.value.find(item => item.id === (currentEditSide.value === 'left' ? 'left' : ''));
-                if(f) f.avatar = event.target.result;
                 saveWidget();
             };
             reader.readAsDataURL(file);
         };
 
-        const saveWidget = () => localStorage.setItem('widget_v5', JSON.stringify(widget.value));
+        const editSign = () => {
+            const s = prompt("编辑个人签名：", widget.value.signature);
+            if (s) { widget.value.signature = s; saveWidget(); }
+        };
+
+        const saveWidget = () => { localStorage.setItem('widget_v5', JSON.stringify(widget.value)); };
+        
         const save = () => { 
             localStorage.setItem('ai_config_v4', JSON.stringify(config.value)); 
-            document.getElementById('user-custom-css').innerHTML = config.value.beautyCss + config.value.presetCss;
+            const styleEl = document.getElementById('user-custom-css');
+            styleEl.innerHTML = config.value.beautyCss + config.value.presetCss;
             activeModal.value = null; 
         };
 
@@ -313,7 +327,7 @@ createApp({
                     headers: { 'Authorization': `Bearer ${config.value.apiKey}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         model: config.value.model, 
-                        messages: [{role:'system', content:`你现在是${currentChatPartner.value.name}，语气亲切。`}, ...chatHistory.value[partnerId].slice(-5)] 
+                        messages: [{role:'system', content:`你现在是${currentChatPartner.value.name}，对方叫雨。`}, ...chatHistory.value[partnerId].slice(-5)] 
                     })
                 });
                 const data = await res.json();
@@ -329,13 +343,19 @@ createApp({
             const s = localStorage.getItem('ai_config_v4'); if (s) config.value = JSON.parse(s);
             const w = localStorage.getItem('widget_v5'); if (w) widget.value = JSON.parse(w);
             save();
+            // 同步左侧好友名字
+            friendsList.value[0].name = widget.value.leftName;
+            friendsList.value[0].avatar = widget.value.leftAvatar;
         });
 
         return { 
-            config, widget, chatVisible, activeTab, activeModal, friends, sortedFriends,
-            userInput, currentChatPartner, currentMessages, navTitle, modalTitle, menu,
-            editName, handleAvatarClick, onPhotoSelected, editSign, 
-            save, sendMsg, openWechat, enterChat, onLongPressStart, onLongPressEnd, closeMenu, togglePin, deleteFriend
+            config, widget, chatVisible, activeTab, activeModal, 
+            userInput, currentChatPartner, currentMessages, navTitle, modalTitle,
+            filteredFriends, showMenu, menuPos,
+            editName, editWxId, handleAvatarClick, onPhotoSelected, editSign, 
+            save, sendMsg, openWechat, enterChat,
+            handleTouchStart, handleTouchEnd, handleMouseDown, handleMouseUp, closeMenu,
+            toggleTop, deleteFriend
         };
     }
 }).mount('#app');
