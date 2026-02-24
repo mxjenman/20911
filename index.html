@@ -10,141 +10,143 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 强制全屏基础样式 */
-        html, body, #app { margin: 0; padding: 0; width: 100%; height: 100vh; height: 100svh; overflow: hidden; background: #000; }
+        /* 1. 基础全屏修复 */
+        * { -webkit-tap-highlight-color: transparent; }
+        html, body, #app { margin: 0; padding: 0; width: 100%; height: 100vh; overflow: hidden; background: #000; }
         
-        /* 桌面主页面 */
-        .desktop-screen { 
+        /* 桌面背景 */
+        .desktop { 
             width: 100%; height: 100%; 
-            background: var(--bg-url, url('https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2070')) no-repeat center center; 
-            background-size: cover; 
-            position: absolute; inset: 0;
-            display: flex; flex-direction: column; 
-            transition: all 0.4s ease;
-            padding-top: env(safe-area-inset-top);
+            background: var(--bg-url, linear-gradient(to bottom, #ff9a9e, #fad0c4)) no-repeat center center; 
+            background-size: cover; position: relative; z-index: 10;
+            display: flex; flex-direction: column; padding-top: env(safe-area-inset-top);
         }
 
-        /* 顶部组件逻辑 */
-        .widget-box { 
+        /* 2. 小组件适配修复 */
+        .widget-card { 
             margin: 29px 20px 0; padding: 22px; border-radius: 32px;
             backdrop-filter: blur(25px); border: 1.5px solid rgba(255,255,255,0.3);
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1); transition: all 0.3s ease;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1); transition: 0.3s;
         }
         /* 日间：白底黑字 */
-        .day-mode .widget-box { background: rgba(255, 255, 255, 0.85); color: #000; }
+        .day-mode .widget-card { background: rgba(255, 255, 255, 0.85); color: #000; }
         /* 夜间：深灰底白字 */
-        .dark-mode .widget-box { background: rgba(30, 30, 32, 0.8); color: #fff; border-color: rgba(255,255,255,0.1); }
+        .dark-mode .widget-card { background: rgba(30, 30, 32, 0.85); color: #fff; border-color: rgba(255,255,255,0.1); }
 
-        .name-label { padding: 3px 14px; border-radius: 12px; font-weight: 800; font-size: 13px; margin-bottom: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .day-mode .name-label { background: #fff; color: #000; }
-        .dark-mode .name-label { background: #444; color: #fff; }
+        .name-tag { padding: 3px 14px; border-radius: 12px; font-weight: 800; font-size: 13px; margin-bottom: 8px; cursor: pointer; }
+        .day-mode .name-tag { background: #fff; color: #000; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .dark-mode .name-tag { background: #444; color: #fff; }
 
-        .avatar { width: 64px; height: 64px; border-radius: 50%; border: 3px solid #fff; object-fit: cover; }
+        .avatar-img { width: 64px; height: 64px; border-radius: 50%; border: 3px solid #fff; object-fit: cover; cursor: pointer; }
 
-        /* 全屏子页面共用样式 */
-        .sub-page {
-            position: fixed; inset: 0; z-index: 1000;
+        /* 3. 全屏子页面修复（解决透明和层级问题） */
+        .full-page {
+            position: fixed; inset: 0; z-index: 2000;
             transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            display: flex; flex-direction: column; padding-bottom: env(safe-area-inset-bottom);
+            display: flex; flex-direction: column;
         }
-        .sub-page.active { transform: translateY(0); }
+        .full-page.active { transform: translateY(0); }
         
-        .day-mode .sub-page { background: #f2f2f7; color: #000; }
-        .dark-mode .sub-page { background: #000; color: #fff; }
+        /* 强制设置不透明背景 */
+        .day-mode .full-page { background: #f2f2f7; color: #000; }
+        .dark-mode .full-page { background: #000000; color: #ffffff; }
 
-        /* 设置列表项 */
-        .item { 
+        /* 4. 点击项 */
+        .list-item { 
             margin: 0 16px 1px; padding: 18px; display: flex; justify-content: space-between; align-items: center; 
-            background: rgba(255,255,255,0.9); transition: 0.2s;
+            background: white; cursor: pointer;
         }
-        .dark-mode .item { background: #1c1c1e; }
-        .item:first-child { border-radius: 15px 15px 0 0; }
-        .item:last-child { border-radius: 0 0 15px 15px; }
+        .dark-mode .list-item { background: #1c1c1e; }
+        .list-item:first-child { border-radius: 15px 15px 0 0; }
+        .list-item:last-child { border-radius: 0 0 15px 15px; }
 
-        .dock-bar { 
-            position: absolute; bottom: calc(15px + env(safe-area-inset-bottom)); 
+        /* 5. 底部 Dock */
+        .dock { 
+            position: absolute; bottom: calc(20px + env(safe-area-inset-bottom)); 
             left: 20px; right: 20px; height: 84px; 
             background: rgba(255, 255, 255, 0.35); backdrop-filter: blur(30px); 
             border-radius: 38px; display: flex; justify-content: space-around; align-items: center;
-            border: 1px solid rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.2); z-index: 50;
         }
     </style>
 </head>
 <body>
 <div id="app" :class="isDark ? 'dark-mode' : 'day-mode'">
-    <div class="desktop-screen" :style="{'--bg-url': customBg ? `url(${customBg})` : ''}">
-        <div class="widget-box">
-            <div class="flex gap-10 mb-5 px-2">
+    
+    <div class="desktop" :style="{'--bg-url': customBg ? `url(${customBg})` : ''}">
+        <div class="widget-card">
+            <div class="flex gap-10 mb-4 px-2">
                 <div class="flex flex-col items-center">
-                    <div class="name-label">{{ widget.leftName }}</div>
-                    <img :src="widget.leftAvatar" class="avatar">
+                    <div class="name-tag" @click="editName('left')">{{ widget.leftName }}</div>
+                    <img :src="widget.leftAvatar" class="avatar-img" @click="pickAvatar('left')">
                 </div>
                 <div class="flex flex-col items-center">
-                    <div class="name-label">{{ widget.rightName }}</div>
-                    <img :src="widget.rightAvatar" class="avatar">
+                    <div class="name-tag" @click="editName('right')">{{ widget.rightName }}</div>
+                    <img :src="widget.rightAvatar" class="avatar-img" @click="pickAvatar('right')">
                 </div>
             </div>
-            <div class="w-full text-right pr-2">
-                <p class="text-[12px] font-black italic opacity-70 tracking-tight">{{ widget.signature }}</p>
+            <div class="w-full text-right" @click="editSign">
+                <p class="text-[12px] font-black italic opacity-60">{{ widget.signature }}</p>
             </div>
         </div>
 
-        <div class="px-10 py-10 flex gap-10">
-            <div @click="currentPage = 'chat'" class="flex flex-col items-center active:scale-90 transition-all">
-                <div class="w-16 h-16 bg-[#07c160] rounded-2xl flex items-center justify-center shadow-2xl text-3xl">💬</div>
-                <span class="text-white text-xs mt-2 font-bold shadow-sm">私聊</span>
+        <div class="px-10 py-10 flex gap-8">
+            <div @click="activePage = 'chat'" class="flex flex-col items-center active:scale-90 transition-all">
+                <div class="w-16 h-16 bg-[#07c160] rounded-2xl flex items-center justify-center shadow-xl text-3xl">💬</div>
+                <span class="text-white text-xs mt-2 font-bold">私聊</span>
             </div>
-            <div @click="currentPage = 'appearance'" class="flex flex-col items-center active:scale-90 transition-all">
-                <div class="w-16 h-16 bg-gradient-to-br from-pink-400 to-rose-500 rounded-2xl flex items-center justify-center shadow-2xl text-3xl">🎨</div>
-                <span class="text-white text-xs mt-2 font-bold shadow-sm">外观设置</span>
+            <div @click="activePage = 'appearance'" class="flex flex-col items-center active:scale-90 transition-all">
+                <div class="w-16 h-16 bg-gradient-to-br from-pink-400 to-orange-400 rounded-2xl flex items-center justify-center shadow-xl text-3xl">🎨</div>
+                <span class="text-white text-xs mt-2 font-bold">外观设置</span>
             </div>
         </div>
 
-        <div class="dock-bar">
-            <div @click="currentPage = 'config'" class="text-3xl active:scale-75 transition-transform">⚙️</div>
-            <div @click="currentPage = 'beauty'" class="text-3xl active:scale-75 transition-transform">✨</div>
-            <div @click="currentPage = 'preset'" class="text-3xl active:scale-75 transition-transform">✍️</div>
+        <div class="dock">
+            <div @click="activePage = 'config'" class="text-3xl">⚙️</div>
+            <div @click="activePage = 'beauty'" class="text-3xl">✨</div>
+            <div @click="activePage = 'preset'" class="text-3xl">✍️</div>
         </div>
     </div>
 
-    <div class="sub-page" :class="{'active': currentPage === 'appearance'}">
-        <div class="px-6 py-12 flex justify-between items-center">
+    <div class="full-page" :class="{'active': activePage === 'appearance'}">
+        <div class="px-6 pt-16 pb-6 flex justify-between items-center">
             <h2 class="text-3xl font-extrabold">外观设置</h2>
-            <button @click="currentPage = null" class="text-blue-500 text-lg font-bold">完成</button>
+            <button @click="activePage = null" class="text-blue-500 font-bold text-lg">完成</button>
         </div>
-        
         <div class="mt-4">
-            <div class="item" @click="toggleDark">
-                <span class="text-lg font-bold">夜间模式</span>
+            <div class="list-item" @click="toggleDark">
+                <span class="font-bold text-lg">夜间模式</span>
                 <div :class="isDark ? 'bg-green-500' : 'bg-gray-300'" class="w-14 h-7 rounded-full relative transition-all">
                     <div :class="isDark ? 'translate-x-7' : 'translate-x-1'" class="absolute top-1 w-5 h-5 bg-white rounded-full transition-all"></div>
                 </div>
             </div>
-            <div class="item" @click="pickBg">
-                <span class="text-lg font-bold">更换桌面壁纸</span>
+            <div class="list-item" @click="pickBg">
+                <span class="font-bold text-lg">更换桌面壁纸</span>
                 <span class="text-gray-400">去相册 〉</span>
             </div>
         </div>
-        <p class="p-6 opacity-50 text-sm font-medium">提示：开启夜间模式后，桌面小组件将自动切换为深灰色背景。</p>
     </div>
 
-    <div class="sub-page" :class="{'active': currentPage === 'chat'}">
-        <div class="h-20 flex items-end justify-between px-6 pb-4 border-b border-gray-200">
-            <button @click="currentPage = null" class="text-blue-500 font-bold">返回桌面</button>
-            <span class="font-bold">哈吉米宝宝</span>
-            <div class="w-12"></div>
+    <div v-for="p in ['chat','config','beauty','preset']" :key="p" class="full-page" :class="{'active': activePage === p}">
+        <div class="px-6 pt-16 pb-6 flex justify-between items-center border-b border-gray-100 dark:border-zinc-800">
+            <h2 class="text-2xl font-bold">{{ {chat:'私聊',config:'参数设置',beauty:'界面美化',preset:'人格预设'}[p] }}</h2>
+            <button @click="activePage = null" class="text-blue-500 font-bold">关闭</button>
         </div>
-        <div class="flex-1 flex items-center justify-center opacity-30 font-bold">暂无新消息</div>
+        <div class="flex-1 p-6 overflow-y-auto">
+            <p v-if="p==='chat'" class="text-center mt-20 opacity-30">功能开发中...</p>
+            <textarea v-else placeholder="输入内容..." class="w-full h-64 p-4 bg-gray-100 dark:bg-zinc-900 rounded-2xl border-none outline-none font-mono text-sm"></textarea>
+        </div>
     </div>
 
-    <input type="file" id="bgFile" accept="image/*" style="display: none" @change="saveBg">
+    <input type="file" id="bgInput" accept="image/*" style="display:none" @change="onFileChange($event, 'bg')">
+    <input type="file" id="avatarInput" accept="image/*" style="display:none" @change="onFileChange($event, 'avatar')">
 </div>
 
 <script>
 const { createApp, ref, onMounted } = Vue;
 createApp({
     setup() {
-        const currentPage = ref(null);
+        const activePage = ref(null);
         const isDark = ref(false);
         const customBg = ref('');
         const widget = ref({
@@ -152,29 +154,39 @@ createApp({
             rightName: '萌', rightAvatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png',
             signature: '卖萌偶尔失手 嘴甜从未出错 =￣ω￣='
         });
+        let currentSide = 'left';
 
-        const toggleDark = () => {
-            isDark.value = !isDark.value;
-            localStorage.setItem('dark_mode', isDark.value);
-        };
-
-        const pickBg = () => document.getElementById('bgFile').click();
-        const saveBg = (e) => {
+        // 逻辑函数
+        const editName = (side) => { const n = prompt("名字:", widget.value[side+'Name']); if(n) widget.value[side+'Name']=n; saveW(); };
+        const editSign = () => { const s = prompt("签名:", widget.value.signature); if(s) widget.value.signature=s; saveW(); };
+        const pickAvatar = (side) => { currentSide = side; document.getElementById('avatarInput').click(); };
+        const pickBg = () => { document.getElementById('bgInput').click(); };
+        
+        const onFileChange = (e, type) => {
+            const file = e.target.files[0];
+            if(!file) return;
             const reader = new FileReader();
             reader.onload = (ev) => {
-                customBg.value = ev.target.result;
-                localStorage.setItem('wall_paper', customBg.value);
+                if(type === 'avatar') widget.value[currentSide+'Avatar'] = ev.target.result;
+                else customBg.value = ev.target.result;
+                saveW();
             };
-            reader.readAsDataURL(e.target.files[0]);
+            reader.readAsDataURL(file);
+        };
+
+        const toggleDark = () => { isDark.value = !isDark.value; localStorage.setItem('is_dark', isDark.value); };
+        const saveW = () => { 
+            localStorage.setItem('widget_v6', JSON.stringify(widget.value)); 
+            localStorage.setItem('custom_bg', customBg.value);
         };
 
         onMounted(() => {
-            const d = localStorage.getItem('dark_mode'); if(d) isDark.value = d === 'true';
-            const b = localStorage.getItem('wall_paper'); if(b) customBg.value = b;
-            const w = localStorage.getItem('widget_v5'); if(w) widget.value = JSON.parse(w);
+            const d = localStorage.getItem('is_dark'); if(d) isDark.value = d === 'true';
+            const b = localStorage.getItem('custom_bg'); if(b) customBg.value = b;
+            const w = localStorage.getItem('widget_v6'); if(w) widget.value = JSON.parse(w);
         });
 
-        return { currentPage, isDark, customBg, widget, toggleDark, pickBg, saveBg };
+        return { activePage, isDark, customBg, widget, editName, editSign, pickAvatar, pickBg, onFileChange, toggleDark };
     }
 }).mount('#app');
 </script>
