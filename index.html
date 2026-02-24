@@ -51,7 +51,7 @@
         .wallet-nav-bar { height: 88px; display: flex; align-items: flex-end; justify-content: space-between; padding: 0 16px 12px; color: white; position: relative; z-index: 10; }
         .wallet-main-card { background: white; border-radius: 12px; margin: 0 16px; padding: 20px; position: relative; z-index: 10; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .wallet-btn-group { display: flex; gap: 12px; margin-top: 40px; }
-        .wallet-btn { flex: 1; height: 54px; border-radius: 27px; display: flex; justify-content: center; align-items: center; font-size: 17px; font-weight: 500; }
+        .wallet-btn { flex: 1; height: 54px; border-radius: 27px; display: flex; justify-content: center; align-items: center; font-size: 17px; font-weight: 500; cursor: pointer; }
         .wallet-btn-outline { border: 1px solid #e0e0e0; color: #333; }
         .wallet-btn-primary { background: var(--theme-color); color: white; position: relative; }
         .badge-bubble { position: absolute; top: -12px; right: 0; background: #e8e8e8; color: var(--theme-color); font-size: 10px; padding: 2px 8px; border-radius: 10px; border: 1px solid #ddd; }
@@ -99,21 +99,21 @@
         <div v-if="meSubPage === '钱包'" class="wallet-page">
             <div class="wallet-header-bg"></div>
             <div class="wallet-nav-bar">
-                <div @click="meSubPage = null" class="flex items-center"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg><span class="ml-1 text-lg font-medium">余额</span></div>
+                <div @click="meSubPage = null" class="flex items-center"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg><span class="ml-1 text-lg font-medium"></span></div>
                 <div class="text-2xl">···</div>
             </div>
             
             <div class="wallet-main-card">
                 <div class="flex items-center justify-center gap-1 text-[var(--theme-color)] text-xs font-medium bg-blue-50/50 py-2 rounded-t-lg -mx-5 -mt-5 mb-6">
-                    <span class="scale-90">🛡️</span> 资金安全有保障 〉
+                    资金安全有保障 〉
                 </div>
                 <div class="flex flex-col items-center mt-4">
-                    <div class="text-gray-600 text-[13px] flex items-center gap-1">可用余额(元) <span class="text-lg opacity-60">👁️</span></div>
+                    <div class="text-gray-600 text-[13px] flex items-center gap-1">可用余额(元) <img src="https://test.fukit.cn/autoupload/fr/qakEfOhNRG6o06DQb0_mtuPxZ2O0bsQcfNmgZJT0wpmyl5f0KlZfm6UsKj-HyTuv/20260225/ACrj/1000X1000/IMG_2974.png" class="w-4 h-4 object-contain"></div>
                     <div class="text-[44px] font-medium mt-3 leading-none">19.77</div>
                 </div>
                 <div class="wallet-btn-group">
-                    <div class="wallet-btn wallet-btn-outline">提现</div>
-                    <div class="wallet-btn wallet-btn-primary">
+                    <div @click="alert('正在开发中')" class="wallet-btn wallet-btn-outline">提现</div>
+                    <div @click="alert('正在开发中')" class="wallet-btn wallet-btn-primary">
                         充值
                         <span class="badge-bubble">找人充</span>
                     </div>
