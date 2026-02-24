@@ -7,7 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 基础样式 */
+        /* 基础 */
         html, body, #app { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
         
         .desktop { 
@@ -17,16 +17,6 @@
             display: flex; flex-direction: column;
             padding-top: env(safe-area-inset-top);
         }
-
-        /* 小组件 - 锁定位置 */
-        .widget-card { 
-            margin: 15px 20px 0; padding: 22px; border-radius: 28px;
-            backdrop-filter: blur(20px); border: 1.5px solid rgba(255,255,255,0.3);
-        }
-        .day-mode .widget-card { background: rgba(255, 255, 255, 0.85); color: #000; }
-        .dark-mode .widget-card { background: rgba(30, 30, 32, 0.9); color: #fff; }
-
-        .avatar-img { width: 64px; height: 64px; border-radius: 50%; border: 3px solid #fff; object-fit: cover; background: #eee; }
 
         /* 底部 Dock - 锁定位置 */
         .dock { 
@@ -39,28 +29,44 @@
             border: 1px solid rgba(255,255,255,0.25); z-index: 100;
         }
 
-        /* 【彻底修复】100% 不透明实色页面 */
+        /* 小组件 - 锁定位置 */
+        .widget-card { margin: 15px 20px 0; padding: 22px; border-radius: 28px; backdrop-filter: blur(20px); border: 1.5px solid rgba(255,255,255,0.3); }
+        .day-mode .widget-card { background: rgba(255, 255, 255, 0.85); color: #000; }
+        .dark-mode .widget-card { background: rgba(30, 30, 32, 0.9); color: #fff; }
+        .avatar-img { width: 64px; height: 64px; border-radius: 50%; border: 3px solid #fff; object-fit: cover; background: #eee; }
+
+        /* 【核心修复】强制实心背景，完全遮盖桌面 */
         .full-page {
             position: fixed; inset: 0; z-index: 2000;
-            transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            transform: translateY(100%); transition: transform 0.35s ease-out;
             display: flex; flex-direction: column;
+            /* 移除所有的透明属性和模糊属性 */
+            backdrop-filter: none !important; 
         }
         .full-page.active { transform: translateY(0); }
 
-        /* 纯色背景控制 - 拒绝任何透明度 */
-        .day-mode .full-page { background: #FFFFFF !important; color: #000; }
-        .dark-mode .full-page { background: #000000 !important; color: #FFF; }
-
-        /* 列表项适配不透明背景 */
-        .list-item { 
-            background: #f2f2f7; padding: 20px; margin: 0 16px 1px; 
-            display: flex; justify-content: space-between; align-items: center; 
+        /* 日间模式：强制整体纯白，不带任何透明 */
+        .day-mode .full-page { 
+            background-color: #f2f2f7 !important; /* 系统级纯白底色 */
+            color: #000; 
         }
-        .dark-mode .list-item { background: #1c1c1e; }
-        .list-item:first-child { border-radius: 16px 16px 0 0; }
-        .list-item:last-child { border-radius: 0 0 16px 16px; }
+        
+        /* 夜间模式：强制整体纯黑，不带任何透明 */
+        .dark-mode .full-page { 
+            background-color: #000000 !important; 
+            color: #fff; 
+        }
 
-        .nav-header { padding: calc(40px + env(safe-area-inset-top)) 24px 20px; display: flex; justify-content: space-between; align-items: center; }
+        /* 列表项也做实化处理 */
+        .list-group { margin: 0 16px; border-radius: 12px; overflow: hidden; }
+        .list-item { 
+            padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; 
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .day-mode .list-item { background: #FFFFFF; }
+        .dark-mode .list-item { background: #1c1c1e; border-bottom-color: rgba(255,255,255,0.05); }
+
+        .nav-header { padding: calc(45px + env(safe-area-inset-top)) 24px 20px; display: flex; justify-content: space-between; align-items: center; }
     </style>
 </head>
 <body>
@@ -70,11 +76,11 @@
         <div class="widget-card">
             <div class="flex gap-10 mb-4 px-2">
                 <div class="flex flex-col items-center">
-                    <div class="text-[13px] font-black mb-2 px-3 py-1 bg-white/60 rounded-lg shadow-sm" @click="editName('left')">{{ widget.leftName }}</div>
+                    <div class="text-[13px] font-black mb-2 px-3 py-1 bg-white/60 rounded-lg" @click="editName('left')">{{ widget.leftName }}</div>
                     <img :src="widget.leftAvatar" class="avatar-img" @click="pickAvatar('left')">
                 </div>
                 <div class="flex flex-col items-center">
-                    <div class="text-[13px] font-black mb-2 px-3 py-1 bg-white/60 rounded-lg shadow-sm" @click="editName('right')">{{ widget.rightName }}</div>
+                    <div class="text-[13px] font-black mb-2 px-3 py-1 bg-white/60 rounded-lg" @click="editName('right')">{{ widget.rightName }}</div>
                     <img :src="widget.rightAvatar" class="avatar-img" @click="pickAvatar('right')">
                 </div>
             </div>
@@ -82,44 +88,41 @@
         </div>
 
         <div class="px-10 py-10 flex gap-10">
-            <div @click="activePage = 'chat'" class="flex flex-col items-center">
-                <div class="w-16 h-16 bg-[#07c160] rounded-2xl flex items-center justify-center text-3xl shadow-xl">💬</div>
-                <span class="text-white text-xs mt-2 font-bold drop-shadow-md">私聊</span>
-            </div>
-            <div @click="activePage = 'appearance'" class="flex flex-col items-center">
-                <div class="w-16 h-16 bg-gradient-to-br from-pink-400 to-orange-400 rounded-2xl flex items-center justify-center text-3xl shadow-xl">🎨</div>
-                <span class="text-white text-xs mt-2 font-bold drop-shadow-md">外观设置</span>
-            </div>
+            <div @click="activePage = 'chat'" class="flex flex-col items-center"><div class="w-16 h-16 bg-[#07c160] rounded-2xl flex items-center justify-center text-3xl shadow-xl">💬</div><span class="text-white text-xs mt-2 font-bold">私聊</span></div>
+            <div @click="activePage = 'appearance'" class="flex flex-col items-center"><div class="w-16 h-16 bg-gradient-to-br from-pink-400 to-orange-400 rounded-2xl flex items-center justify-center text-3xl shadow-xl">🎨</div><span class="text-white text-xs mt-2 font-bold">外观</span></div>
         </div>
 
         <div class="dock">
-            <div @click="activePage = 'config'" class="flex flex-col items-center"><span class="text-2xl">⚙️</span><span class="text-[10px] mt-1 font-black opacity-60">设置</span></div>
-            <div @click="activePage = 'beauty'" class="flex flex-col items-center"><span class="text-2xl">✨</span><span class="text-[10px] mt-1 font-black opacity-60">美化</span></div>
-            <div @click="activePage = 'preset'" class="flex flex-col items-center"><span class="text-2xl">✍️</span><span class="text-[10px] mt-1 font-black opacity-60">预设</span></div>
+            <div @click="activePage = 'config'" class="flex flex-col items-center"><span class="text-2xl">⚙️</span><span class="text-[10px] font-black mt-1">设置</span></div>
+            <div @click="activePage = 'beauty'" class="flex flex-col items-center"><span class="text-2xl">✨</span><span class="text-[10px] font-black mt-1">美化</span></div>
+            <div @click="activePage = 'preset'" class="flex flex-col items-center"><span class="text-2xl">✍️</span><span class="text-[10px] font-black mt-1">预设</span></div>
         </div>
     </div>
 
     <div v-for="p in ['appearance', 'chat', 'config', 'beauty', 'preset']" :key="p" class="full-page" :class="{'active': activePage === p}">
         <div class="nav-header">
-            <h2 class="text-3xl font-black">{{ {appearance:'外观设置',chat:'私聊',config:'设置中心',beauty:'界面美化',preset:'人格预设'}[p] }}</h2>
-            <button @click="activePage = null" class="bg-blue-500 text-white px-5 py-2 rounded-full font-bold text-sm">完成</button>
+            <h2 class="text-2xl font-black">{{ {appearance:'外观设置',chat:'私聊',config:'设置中心',beauty:'界面美化',preset:'人格预设'}[p] }}</h2>
+            <button @click="activePage = null" class="bg-blue-500 text-white px-4 py-1.5 rounded-full font-bold text-sm">关闭</button>
         </div>
         
-        <div class="flex-1 overflow-y-auto pt-4">
-            <template v-if="p === 'appearance'">
-                <div class="list-item" @click="toggleDark">
-                    <span class="font-bold">夜间模式</span>
-                    <div :class="isDark ? 'bg-green-500' : 'bg-gray-300'" class="w-12 h-6 rounded-full relative transition-all">
-                        <div :class="isDark ? 'translate-x-6' : 'translate-x-1'" class="absolute top-1 w-4 h-4 bg-white rounded-full transition-all"></div>
+        <div class="flex-1 overflow-y-auto">
+            <div class="list-group">
+                <template v-if="p === 'appearance'">
+                    <div class="list-item" @click="toggleDark">
+                        <span class="font-bold">开启夜间模式</span>
+                        <div :class="isDark ? 'bg-green-500' : 'bg-gray-300'" class="w-10 h-5 rounded-full relative">
+                            <div :class="isDark ? 'translate-x-5' : 'translate-x-1'" class="absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all"></div>
+                        </div>
                     </div>
+                    <div class="list-item" @click="pickBg">
+                        <span class="font-bold">自定义壁纸</span>
+                        <span class="text-gray-400 font-bold">〉</span>
+                    </div>
+                </template>
+                <div v-else class="p-10 text-center font-bold opacity-30 mt-20">
+                    <p>100% 纯色背景已启用</p>
+                    <p>内容加载中...</p>
                 </div>
-                <div class="list-item" @click="pickBg">
-                    <span class="font-bold">更换桌面壁纸</span>
-                    <span class="text-gray-400">〉</span>
-                </div>
-            </template>
-            <div v-else class="p-10 text-center opacity-30 text-xl font-bold">
-                内容加载中...
             </div>
         </div>
     </div>
@@ -138,11 +141,11 @@ createApp({
         const widget = ref({
             leftName: '雅', leftAvatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png',
             rightName: '萌', rightAvatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png',
-            signature: '卖萌偶尔失手 嘴甜从未出错 =￣ω￣='
+            signature: '签名加载中...'
         });
         let curSide = 'left';
 
-        const toggleDark = () => { isDark.value = !isDark.value; localStorage.setItem('dark_v14', isDark.value); };
+        const toggleDark = () => { isDark.value = !isDark.value; localStorage.setItem('dark_final', isDark.value); };
         const pickBg = () => document.getElementById('bgInput').click();
         const pickAvatar = (s) => { curSide = s; document.getElementById('avatarInput').click(); };
         const editName = (s) => { const n = prompt("名字", widget.value[s+'Name']); if(n) widget.value[s+'Name']=n; save(); };
@@ -161,14 +164,14 @@ createApp({
         };
 
         const save = () => {
-            localStorage.setItem('bg_v14', customBg.value);
-            localStorage.setItem('widget_v14', JSON.stringify(widget.value));
+            localStorage.setItem('bg_f', customBg.value);
+            localStorage.setItem('widget_f', JSON.stringify(widget.value));
         };
 
         onMounted(() => {
-            isDark.value = localStorage.getItem('dark_v14') === 'true';
-            customBg.value = localStorage.getItem('bg_v14') || '';
-            const w = localStorage.getItem('widget_v14');
+            isDark.value = localStorage.getItem('dark_final') === 'true';
+            customBg.value = localStorage.getItem('bg_f') || '';
+            const w = localStorage.getItem('widget_f');
             if(w) widget.value = JSON.parse(w);
         });
 
