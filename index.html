@@ -14,7 +14,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style id="user-custom-css">/* 用户美化注入 */</style>
     <style>
-        :root { --bg-image: url('https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2070'); }
+        :root { --bg-image: url('https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2070'); --theme-color: #424243; }
         body { margin: 0; font-family: -apple-system, sans-serif; height: 100svh; overflow: hidden; background: #000; }
         .phone-screen { width: 100%; height: 100%; background: var(--bg-image) no-repeat center center; background-size: cover; position: relative; display: flex; flex-direction: column; padding-bottom: env(safe-area-inset-bottom); }
 
@@ -45,16 +45,18 @@
         .cell-item { background: white; padding: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 0.5px solid #f0f0f0; }
         .cell-item:active { background: #f5f5f5; }
 
-        .sub-page { position: absolute; inset: 0; background: #f4f6f8; z-index: 150; display: flex; flex-direction: column; }
+        /* 钱包界面专用样式 */
+        .wallet-page { background: #f6f6f6; position: absolute; inset: 0; z-index: 200; display: flex; flex-direction: column; }
+        .wallet-header-bg { background: linear-gradient(to bottom, var(--theme-color), #f6f6f6); height: 260px; position: absolute; top: 0; left: 0; right: 0; z-index: 0; }
+        .wallet-nav-bar { height: 88px; display: flex; align-items: flex-end; justify-content: space-between; padding: 0 16px 12px; color: white; position: relative; z-index: 10; }
+        .wallet-main-card { background: white; border-radius: 12px; margin: 0 16px; padding: 20px; position: relative; z-index: 10; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .wallet-btn-group { display: flex; gap: 12px; margin-top: 40px; }
+        .wallet-btn { flex: 1; height: 54px; border-radius: 27px; display: flex; justify-content: center; align-items: center; font-size: 17px; font-weight: 500; }
+        .wallet-btn-outline { border: 1px solid #e0e0e0; color: #333; }
+        .wallet-btn-primary { background: var(--theme-color); color: white; position: relative; }
+        .badge-bubble { position: absolute; top: -12px; right: 0; background: #e8e8e8; color: var(--theme-color); font-size: 10px; padding: 2px 8px; border-radius: 10px; border: 1px solid #ddd; }
         
-        /* 钱包专属样式 */
-        .wallet-bg { background: linear-gradient(180deg, #3482ff 0%, #f4f6f8 100%); }
-        .wallet-header { height: 88px; display: flex; align-items: flex-end; justify-content: space-between; padding: 0 16px 12px; color: white; }
-        .wallet-card-main { background: white; border-radius: 16px; margin: 12px 16px; position: relative; overflow: hidden; }
-        .wallet-safety { background: #e8f2ff; color: #3482ff; font-size: 11px; padding: 6px; text-align: center; display: flex; justify-content: center; align-items: center; gap: 4px; }
-        .wallet-btn-withdraw { border: 1px solid #ddd; border-radius: 50px; height: 50px; flex: 1; display: flex; align-items: center; justify-content: center; font-weight: 500; font-size: 16px; }
-        .wallet-btn-charge { background: #1a7bff; border-radius: 50px; height: 50px; flex: 1; display: flex; align-items: center; justify-content: center; color: white; font-weight: 500; font-size: 16px; position: relative; }
-        .bubble-tip { position: absolute; top: -12px; right: 10px; background: #e0edff; color: #1a7bff; font-size: 10px; padding: 2px 6px; border-radius: 8px 8px 8px 0; border: 1px solid #fff; }
+        .sub-page { position: absolute; inset: 0; background: #ededed; z-index: 150; display: flex; flex-direction: column; }
     </style>
 </head>
 <body>
@@ -86,51 +88,50 @@
         </div>
     </div>
 
+    <div class="dock">
+        <div @click="activeModal = 'config'" class="flex flex-col items-center"><span class="text-2xl">⚙️</span><span class="text-[9px] mt-1 font-extrabold text-gray-800">设置</span></div>
+        <div @click="activeModal = 'beauty'" class="flex flex-col items-center"><span class="text-2xl">✨</span><span class="text-[9px] mt-1 font-extrabold text-gray-800">美化</span></div>
+        <div @click="activeModal = 'preset'" class="flex flex-col items-center"><span class="text-2xl">✍️</span><span class="text-[9px] mt-1 font-extrabold text-gray-800">预设</span></div>
+    </div>
+
     <div v-if="chatVisible" class="wechat-app" @contextmenu.prevent>
         
-        <div v-if="meSubPage === '钱包'" class="sub-page wallet-bg">
-            <div class="wallet-header">
-                <div @click="meSubPage = null" class="w-8 cursor-pointer">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
-                </div>
-                <span class="font-bold text-[18px]">余额</span>
-                <div class="w-8 text-right text-xl">···</div>
+        <div v-if="meSubPage === '钱包'" class="wallet-page">
+            <div class="wallet-header-bg"></div>
+            <div class="wallet-nav-bar">
+                <div @click="meSubPage = null" class="flex items-center"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg><span class="ml-1 text-lg font-medium">余额</span></div>
+                <div class="text-2xl">···</div>
             </div>
             
-            <div class="wechat-content">
-                <div class="wallet-card-main shadow-sm">
-                    <div class="wallet-safety">
-                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 00-1 1v1a1 1 0 002 0V3a1 1 0 00-1-1zM4 4h3a3 3 0 006 0h3a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
-                        资金安全有保障 >
-                    </div>
-                    <div class="p-8 text-center">
-                        <div class="text-gray-600 text-[13px] mb-4 flex justify-center items-center gap-1">
-                            可用余额(元) <span class="text-xs">👁️</span>
-                        </div>
-                        <div class="text-[42px] font-bold text-gray-800 tracking-tight">{{ walletBalance }}</div>
-                    </div>
-                    <div class="px-5 pb-8 flex gap-4 mt-4">
-                        <div class="wallet-btn-withdraw active:bg-gray-100">提现</div>
-                        <div class="wallet-btn-charge active:opacity-90">
-                            充值
-                            <div class="bubble-tip">找人充</div>
-                        </div>
+            <div class="wallet-main-card">
+                <div class="flex items-center justify-center gap-1 text-[var(--theme-color)] text-xs font-medium bg-blue-50/50 py-2 rounded-t-lg -mx-5 -mt-5 mb-6">
+                    <span class="scale-90">🛡️</span> 资金安全有保障 〉
+                </div>
+                <div class="flex flex-col items-center mt-4">
+                    <div class="text-gray-600 text-[13px] flex items-center gap-1">可用余额(元) <span class="text-lg opacity-60">👁️</span></div>
+                    <div class="text-[44px] font-medium mt-3 leading-none">19.77</div>
+                </div>
+                <div class="wallet-btn-group">
+                    <div class="wallet-btn wallet-btn-outline">提现</div>
+                    <div class="wallet-btn wallet-btn-primary">
+                        充值
+                        <span class="badge-bubble">找人充</span>
                     </div>
                 </div>
+            </div>
 
-                <div class="bg-white rounded-xl mx-4 p-4 flex justify-between items-center active:bg-gray-50 shadow-sm mt-2">
-                    <div class="w-8"></div>
-                    <div class="text-gray-400 text-sm flex items-center gap-1">
-                        全部 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                    </div>
-                </div>
+            <div class="bg-white rounded-lg mt-3 mx-4 p-4 flex justify-between items-center text-sm text-gray-400">
+                <span></span>
+                <span class="flex items-center">全部 〉</span>
             </div>
         </div>
 
         <div v-if="meSubPage && meSubPage !== '钱包'" class="sub-page">
             <div class="wechat-header">
-                <div @click="meSubPage = null" class="w-8 cursor-pointer">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                <div class="w-8 flex">
+                    <button @click="meSubPage = null" class="text-[#1a1a1a] pb-1">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                    </button>
                 </div>
                 <span class="font-bold text-[17px] pb-1">{{ meSubPage }}</span>
                 <div class="w-8"></div>
@@ -157,7 +158,13 @@
         <div class="wechat-content">
             <div v-if="activeTab === 'contacts'" class="h-full relative">
                 <div v-if="!currentChatPartner" class="bg-white h-full">
-                    <div v-for="f in filteredFriends" :key="f.id" @click="enterChat(f.id)" class="p-4 border-b flex items-center justify-between active:bg-gray-50 bg-white">
+                    <div v-for="f in filteredFriends" :key="f.id" 
+                         @click="enterChat(f.id)"
+                         @touchstart="handleTouchStart($event, f)"
+                         @touchend="handleTouchEnd"
+                         @mousedown="handleMouseDown($event, f)"
+                         @mouseup="handleMouseUp"
+                         class="p-4 border-b flex items-center justify-between active:bg-gray-50 bg-white">
                         <div class="flex items-center gap-3">
                             <img :src="f.avatar" class="w-10 h-10 rounded">
                             <span class="font-medium">{{ f.name }}</span>
@@ -176,12 +183,22 @@
                 </div>
             </div>
 
+            <div v-if="activeTab === 'discover'" class="bg-[#ededed] h-full">
+                <div class="h-48 bg-gray-300 relative">
+                    <div class="absolute -bottom-4 right-4 flex items-center gap-3">
+                        <span class="text-white font-bold shadow-sm">{{ widget.rightName }}</span>
+                        <img :src="widget.rightAvatar" class="w-16 h-16 rounded-lg border-2 border-white">
+                    </div>
+                </div>
+                <div class="mt-10 p-4 text-center text-gray-400 text-sm">暂无新动态</div>
+            </div>
+
             <div v-if="activeTab === 'me'" class="bg-[#ededed] h-full">
                 <div class="bg-white p-8 pt-12 flex items-center gap-4">
-                    <img :src="widget.rightAvatar" class="w-16 h-16 rounded-lg object-cover bg-gray-100 border cursor-pointer">
+                    <img :src="widget.rightAvatar" @click="handleAvatarClick('right')" class="w-16 h-16 rounded-lg object-cover bg-gray-100 border cursor-pointer">
                     <div class="flex-1">
-                        <div class="text-xl font-bold">{{ widget.rightName }}</div>
-                        <div class="text-gray-500 text-sm mt-1">微信号：{{ widget.wxId }}</div>
+                        <div @click="editName('right')" class="text-xl font-bold flex items-center gap-1">{{ widget.rightName }}</div>
+                        <div @click="editWxId" class="text-gray-500 text-sm mt-1">微信号：{{ widget.wxId || 'AI_Habibi' }}</div>
                     </div>
                 </div>
                 <div class="mt-3">
@@ -199,6 +216,11 @@
             <div class="nav-item" :class="{active: activeTab==='discover'}" @click="activeTab='discover'">朋友圈</div>
             <div class="nav-item" :class="{active: activeTab==='me'}" @click="activeTab='me'">我</div>
         </div>
+
+        <div v-if="showMenu" class="context-menu" :style="{top: menuPos.y+'px', left: menuPos.x+'px'}">
+            <div class="menu-item" @click.stop="toggleTop">置顶/取消</div>
+            <div class="menu-item" @click.stop="deleteFriend">彻底删除</div>
+        </div>
     </div>
 
     <div v-if="activeModal" class="fixed inset-0 bg-black/40 z-[200] flex items-end" @click.self="activeModal = null">
@@ -208,7 +230,11 @@
                 <input v-model="config.baseUrl" placeholder="API 地址" class="w-full p-4 bg-gray-50 rounded-2xl border-none text-sm">
                 <input v-model="config.apiKey" type="password" placeholder="API Key" class="w-full p-4 bg-gray-50 rounded-2xl border-none text-sm">
                 <input v-model="config.model" placeholder="模型名称" class="w-full p-4 bg-gray-50 rounded-2xl border-none text-sm">
-                <button @click="save" class="w-full bg-black text-white py-4 rounded-2xl mt-6 font-bold shadow-lg">保存</button>
+                <button @click="save" class="w-full bg-black text-white py-4 rounded-2xl mt-6 font-bold shadow-lg">保存并应用</button>
+            </div>
+            <div v-else-if="activeModal==='beauty' || activeModal==='preset'" class="space-y-3">
+                <textarea v-model="activeModal==='beauty'?config.beautyCss:config.presetCss" rows="6" class="w-full p-4 bg-gray-50 rounded-2xl border-none font-mono text-xs"></textarea>
+                <button @click="save" class="w-full bg-black text-white py-4 rounded-2xl mt-6 font-bold shadow-lg">保存并应用</button>
             </div>
             <div v-else-if="activeModal==='addFriend'" class="min-h-[200px]"></div>
         </div>
@@ -220,49 +246,161 @@ const { createApp, ref, onMounted, computed, nextTick } = Vue;
 createApp({
     setup() {
         const config = ref({ baseUrl: '', apiKey: '', model: 'gpt-4o', beautyCss: '', presetCss: '' });
-        const widget = ref({ leftName: '雨雨雨～', leftAvatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png', rightName: '雨', rightAvatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png', signature: '我不想隔着屏幕和你说话', wxId: 'AI_Habibi' });
+        const widget = ref({
+            leftName: '雨雨雨～', leftAvatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png',
+            rightName: '雨', rightAvatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png',
+            signature: '我不想隔着屏幕和你说话',
+            wxId: 'AI_Habibi'
+        });
         
         const chatVisible = ref(false);
         const activeTab = ref('contacts');
         const activeModal = ref(null);
-        const meSubPage = ref(null);
-        const walletBalance = ref('19.77'); // 图片中的余额
+        const meSubPage = ref(null); 
         const userInput = ref('');
+        const currentEditSide = ref('');
 
         const friendsList = ref([
             { id: 'left', name: '雨雨雨～', avatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png', isTop: false },
             { id: 'ai', name: '哈吉米宝宝', avatar: 'https://test.fukit.cn/autoupload/fr/PUOzIkT_hEAqz4elPzgm9kg93R44cerOKVobYyu6bmqyl5f0KlZfm6UsKj-HyTuv/20260224/IR8x/1206X1168/IMG_2714.jpeg', isTop: false }
         ]);
 
-        const chatHistory = ref({ left: [{ role: 'assistant', content: '雨雨雨～准备好聊天啦！' }], ai: [{ role: 'assistant', content: '我是哈吉米宝宝，你好呀！' }] });
-        const currentChatPartner = ref(null);
+        const chatHistory = ref({
+            left: [{ role: 'assistant', content: '雨雨雨～准备好聊天啦！' }],
+            ai: [{ role: 'assistant', content: '我是哈吉米宝宝，你好呀！' }]
+        });
 
-        const filteredFriends = computed(() => [...friendsList.value].sort((a, b) => (b.isTop - a.isTop)));
-        const currentMessages = computed(() => currentChatPartner.value ? chatHistory.value[currentChatPartner.value.id] : []);
+        const currentChatPartner = ref(null);
+        const showMenu = ref(false);
+        const menuPos = ref({ x: 0, y: 0 });
+        const selectedFriend = ref(null);
+        let longPressTimer = null;
+
+        const filteredFriends = computed(() => {
+            return [...friendsList.value].sort((a, b) => (b.isTop - a.isTop));
+        });
+
+        const currentMessages = computed(() => {
+            return currentChatPartner.value ? chatHistory.value[currentChatPartner.value.id] : [];
+        });
+
         const navTitle = computed(() => ({ contacts: '好友', discover: '朋友圈', me: '我' }[activeTab.value]));
-        const modalTitle = computed(() => ({ config: '参数配置', addFriend: '添加新角色' }[activeModal.value]));
+        const modalTitle = computed(() => ({ 
+            config: '参数配置', 
+            beauty: '界面美化', 
+            preset: '人格预设',
+            addFriend: '添加新角色' 
+        }[activeModal.value]));
 
         const openWechat = () => { chatVisible.value = true; activeTab.value = 'contacts'; currentChatPartner.value = null; meSubPage.value = null; };
+        
         const enterChat = (id) => {
+            if (showMenu.value) return;
             const f = friendsList.value.find(item => item.id === id);
             currentChatPartner.value = { id, name: f.name };
             nextTick(() => { const box = document.getElementById('msg-box'); if(box) box.scrollTop = box.scrollHeight; });
         };
 
-        const save = () => { localStorage.setItem('ai_config_v4', JSON.stringify(config.value)); activeModal.value = null; };
-        const sendMsg = async () => { /* ...逻辑保持不变... */ };
+        const handleTouchStart = (e, f) => {
+            longPressTimer = setTimeout(() => {
+                selectedFriend.value = f;
+                menuPos.value = { x: (e.touches ? e.touches[0].clientX : e.clientX) - 60, y: (e.touches ? e.touches[0].clientY : e.clientY) };
+                showMenu.value = true;
+            }, 600);
+        };
+        const handleTouchEnd = () => clearTimeout(longPressTimer);
+        const handleMouseDown = (e, f) => {
+            longPressTimer = setTimeout(() => {
+                selectedFriend.value = f;
+                menuPos.value = { x: e.clientX - 60, y: e.clientY };
+                showMenu.value = true;
+            }, 600);
+        };
+        const handleMouseUp = () => clearTimeout(longPressTimer);
+        const closeMenu = () => showMenu.value = false;
+
+        const toggleTop = () => { selectedFriend.value.isTop = !selectedFriend.value.isTop; showMenu.value = false; };
+        const deleteFriend = () => {
+            if(confirm(`确定删除 ${selectedFriend.value.name}？`)) {
+                friendsList.value = friendsList.value.filter(f => f.id !== selectedFriend.value.id);
+            }
+            showMenu.value = false;
+        };
+
+        const editName = (side) => {
+            const newName = prompt("编辑名字：", widget.value[side + 'Name']);
+            if (newName) { widget.value[side + 'Name'] = newName; saveWidget(); }
+        };
+        const editWxId = () => {
+            const newId = prompt("编辑微信号：", widget.value.wxId);
+            if (newId) { widget.value.wxId = newId; saveWidget(); }
+        };
+        const handleAvatarClick = (side) => {
+            currentEditSide.value = side;
+            document.getElementById('avatarPicker').click();
+        };
+        const onPhotoSelected = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                widget.value[currentEditSide.value + 'Avatar'] = event.target.result;
+                saveWidget();
+            };
+            reader.readAsDataURL(file);
+        };
+        const editSign = () => {
+            const s = prompt("编辑个人签名：", widget.value.signature);
+            if (s) { widget.value.signature = s; saveWidget(); }
+        };
+        const saveWidget = () => { localStorage.setItem('widget_v5', JSON.stringify(widget.value)); };
+        const save = () => { 
+            localStorage.setItem('ai_config_v4', JSON.stringify(config.value)); 
+            const styleEl = document.getElementById('user-custom-css');
+            styleEl.innerHTML = config.value.beautyCss + config.value.presetCss;
+            activeModal.value = null; 
+        };
+
+        const sendMsg = async () => {
+            if (!userInput.value || !currentChatPartner.value) return;
+            const partnerId = currentChatPartner.value.id;
+            chatHistory.value[partnerId].push({ role: 'user', content: userInput.value });
+            userInput.value = '';
+            await nextTick();
+            const box = document.getElementById('msg-box');
+            if(box) box.scrollTop = box.scrollHeight;
+            try {
+                const res = await fetch(`${config.value.baseUrl}/chat/completions`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${config.value.apiKey}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        model: config.value.model, 
+                        messages: [{role:'system', content:`你现在是${currentChatPartner.value.name}，对方叫雨。`}, ...chatHistory.value[partnerId].slice(-5)] 
+                    })
+                });
+                const data = await res.json();
+                chatHistory.value[partnerId].push({ role: 'assistant', content: data.choices[0].message.content });
+                await nextTick();
+                if(box) box.scrollTop = box.scrollHeight;
+            } catch (e) { chatHistory.value[partnerId].push({ role: 'assistant', content: '发送失败。' }); }
+        };
 
         onMounted(() => {
             const s = localStorage.getItem('ai_config_v4'); if (s) config.value = JSON.parse(s);
             const w = localStorage.getItem('widget_v5'); if (w) widget.value = JSON.parse(w);
+            save();
             friendsList.value[0].name = widget.value.leftName;
             friendsList.value[0].avatar = widget.value.leftAvatar;
         });
 
         return { 
-            config, widget, chatVisible, activeTab, activeModal, meSubPage, walletBalance,
+            config, widget, chatVisible, activeTab, activeModal, meSubPage,
             userInput, currentChatPartner, currentMessages, navTitle, modalTitle,
-            filteredFriends, openWechat, enterChat, save, sendMsg
+            filteredFriends, showMenu, menuPos,
+            editName, editWxId, handleAvatarClick, onPhotoSelected, editSign, 
+            save, sendMsg, openWechat, enterChat,
+            handleTouchStart, handleTouchEnd, handleMouseDown, handleMouseUp, closeMenu,
+            toggleTop, deleteFriend
         };
     }
 }).mount('#app');
