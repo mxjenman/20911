@@ -100,11 +100,14 @@
             font-weight: 500;
         }
         .inv-btn:active { background: #ececec; }
+        .chat-img { max-width: 100%; border-radius: 8px; margin: 4px 0; }
     </style>
 </head>
 <body>
 <div id="app" class="phone-screen" @click="closeMenu">
     <input type="file" id="avatarPicker" accept="image/*" style="display: none" @change="onPhotoSelected">
+    <input type="file" id="albumPicker" accept="image/*" style="display: none" @change="onAlbumPhotoSelected">
+    <input type="file" id="cameraPicker" accept="image/*" capture="camera" style="display: none" @change="onCameraPhotoSelected">
 
     <div class="widget-card">
         <div class="flex gap-6 mb-3 px-2">
@@ -230,14 +233,19 @@
                 </div>
                 <div v-else class="flex flex-col h-full bg-[#ededed]">
                     <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-2" id="msg-box" @click="inventoryOpen = false">
-                        <div v-for="m in currentMessages" :class="['msg-bubble', m.role==='user'?'msg-user':'msg-ai']">{{m.content}}</div>
+                        <div v-for="m in currentMessages" :class="['msg-bubble', m.role==='user'?'msg-user':'msg-ai']">
+                            <template v-if="m.type === 'image'">
+                                <img :src="m.content" class="chat-img">
+                            </template>
+                            <template v-else>{{m.content}}</template>
+                        </div>
                     </div>
                     
                     <div v-if="inventoryOpen" class="inventory-panel">
                         <div class="grid grid-cols-2 gap-3">
-                            <div class="inv-btn" @click="developingTip">相册</div>
-                            <div class="inv-btn" @click="developingTip">相机</div>
-                            <div class="inv-btn" @click="developingTip">描述照片</div>
+                            <div class="inv-btn" @click="triggerAlbum">相册</div>
+                            <div class="inv-btn" @click="triggerCamera">相机</div>
+                            <div class="inv-btn" @click="handleDescriptionPhoto">描述照片</div>
                             <div class="inv-btn" @click="developingTip">语音</div>
                             <div class="inv-btn" @click="developingTip">转账</div>
                             <div class="inv-btn" @click="developingTip">重回</div>
@@ -250,8 +258,8 @@
                              class="w-7 h-7 inventory-icon cursor-pointer"
                              :class="{'inventory-rotate': isRotating}">
                         
-                        <input v-model="userInput" @keyup.enter="sendMsg" placeholder="输入内容..." class="flex-1 bg-white p-2.5 rounded-md text-sm border-none outline-none">
-                        <button @click="sendMsg" class="bg-[#07c160] text-white px-4 py-2 rounded-md text-sm font-bold">发送</button>
+                        <input v-model="userInput" @keyup.enter="sendMsg()" placeholder="输入内容..." class="flex-1 bg-white p-2.5 rounded-md text-sm border-none outline-none">
+                        <button @click="sendMsg()" class="bg-[#07c160] text-white px-4 py-2 rounded-md text-sm font-bold">发送</button>
                     </div>
                 </div>
             </div>
@@ -442,11 +450,35 @@ createApp({
             if (b !== null) { widget.value.balance = b; saveWidget(); }
         };
 
-        // 物品栏切换与旋转动画
+        // 物品栏相关功能
         const toggleInventory = () => {
             isRotating.value = true;
             inventoryOpen.value = !inventoryOpen.value;
             setTimeout(() => { isRotating.value = false; }, 600);
+        };
+        const triggerAlbum = () => document.getElementById('albumPicker').click();
+        const triggerCamera = () => document.getElementById('cameraPicker').click();
+        
+        const onAlbumPhotoSelected = (e) => handleImageUpload(e.target.files[0]);
+        const onCameraPhotoSelected = (e) => handleImageUpload(e.target.files[0]);
+
+        const handleImageUpload = (file) => {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                sendMsg(event.target.result, 'image');
+                inventoryOpen.value = false;
+            };
+            reader.readAsDataURL(file);
+        };
+
+        const handleDescriptionPhoto = () => {
+            const desc = prompt("请输入你想要描述的照片内容：");
+            if (desc) {
+                // 以描述图形式发送，AI将接收到你的描述
+                sendMsg(desc, 'desc_image');
+                inventoryOpen.value = false;
+            }
         };
 
         const saveWidget = () => { 
@@ -460,45 +492,72 @@ createApp({
             activeModal.value = null; 
         };
 
-        const sendMsg = async () => {
-            if (!userInput.value || !currentChatPartner.value) return;
-            const partnerId = currentChatPartner.value.id;
-            const msgContent = userInput.value;
-            
-            // 账单捕捉逻辑：如果输入包含数字和转账关键字
-            const amountMatch = msgContent.match(/(\d+(\.\d+)?)/);
-            if (amountMatch && (msgContent.includes('转账') || msgContent.includes('红包'))) {
-                const amount = parseFloat(amountMatch[0]);
-                billRecords.value.unshift({
-                    name: currentChatPartner.value.name,
-                    avatar: friendsList.value.find(f => f.id === partnerId)?.avatar,
-                    amount: -amount,
-                    time: new Date().toLocaleString()
-                });
-                widget.value.balance = (parseFloat(widget.value.balance) - amount).toFixed(2);
-                saveWidget();
+        const sendMsg = async (content = null, type = 'text') => {
+            const partnerId = currentChatPartner.value?.id;
+            if (!partnerId) return;
+
+            let msgContent = content || userInput.value;
+            if (!msgContent && type === 'text') return;
+
+            // 构造消息对象
+            let userMsgObj = { role: 'user', type: 'text', content: msgContent };
+
+            if (type === 'image') {
+                userMsgObj.type = 'image';
+                userMsgObj.content = msgContent; // Base64
+            } else if (type === 'desc_image') {
+                userMsgObj.type = 'image';
+                userMsgObj.content = 'https://test.fukit.cn/autoupload/fr/qakEfOhNRG6o06DQb0_mtuPxZ2O0bsQcfNmgZJT0wpmyl5f0KlZfm6UsKj-HyTuv/20260225/n2hK/1000X1000/IMG_2987.png';
+                userMsgObj.rawDesc = msgContent; // 存一份原描述用于发给AI
             }
 
-            chatHistory.value[partnerId].push({ role: 'user', content: msgContent });
-            userInput.value = '';
+            // 账单记录 (仅针对文本)
+            if (type === 'text') {
+                const amountMatch = msgContent.match(/(\d+(\.\d+)?)/);
+                if (amountMatch && (msgContent.includes('转账') || msgContent.includes('红包'))) {
+                    const amount = parseFloat(amountMatch[0]);
+                    billRecords.value.unshift({
+                        name: currentChatPartner.value.name,
+                        avatar: friendsList.value.find(f => f.id === partnerId)?.avatar,
+                        amount: -amount,
+                        time: new Date().toLocaleString()
+                    });
+                    widget.value.balance = (parseFloat(widget.value.balance) - amount).toFixed(2);
+                    saveWidget();
+                }
+            }
+
+            chatHistory.value[partnerId].push(userMsgObj);
+            if (type === 'text') userInput.value = '';
+
             await nextTick();
             const box = document.getElementById('msg-box');
             if(box) box.scrollTop = box.scrollHeight;
 
+            // 调用接口
             try {
+                // 准备发给AI的内容：如果是描述照片，发描述文字；如果是真照片，告知发了照片
+                let aiInput = userMsgObj.type === 'image' ? (userMsgObj.rawDesc || "[用户发送了一张照片]") : userMsgObj.content;
+
                 const res = await fetch(`${config.value.baseUrl}/chat/completions`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${config.value.apiKey}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         model: config.value.model, 
-                        messages: [{role:'system', content:`你现在是${currentChatPartner.value.name}，对方叫雨。`}, ...chatHistory.value[partnerId].slice(-5)] 
+                        messages: [
+                            {role:'system', content:`你现在是${currentChatPartner.value.name}，对方叫雨。如果你收到的内容看起来像对照片的描述，请当做你正看着这张真实的照片进行回复。`}, 
+                            ...chatHistory.value[partnerId].map(m => ({
+                                role: m.role,
+                                content: m.rawDesc || (m.type === 'image' ? '[照片]' : m.content)
+                            })).slice(-6)
+                        ] 
                     })
                 });
                 const data = await res.json();
                 const aiMsg = data.choices[0].message.content;
-                chatHistory.value[partnerId].push({ role: 'assistant', content: aiMsg });
+                chatHistory.value[partnerId].push({ role: 'assistant', type: 'text', content: aiMsg });
 
-                // AI 转账捕捉逻辑
+                // AI 转账捕捉
                 const aiAmountMatch = aiMsg.match(/(\d+(\.\d+)?)/);
                 if (aiAmountMatch && (aiMsg.includes('转账') || aiMsg.includes('收下'))) {
                     const amount = parseFloat(aiAmountMatch[0]);
@@ -534,7 +593,8 @@ createApp({
             save, sendMsg, openWechat, enterChat,
             handleTouchStart, handleTouchEnd, handleMouseDown, handleMouseUp, closeMenu,
             toggleTop, deleteFriend, developingTip, editBalance,
-            inventoryOpen, isRotating, toggleInventory, billRecords
+            inventoryOpen, isRotating, toggleInventory, billRecords,
+            triggerAlbum, triggerCamera, onAlbumPhotoSelected, onCameraPhotoSelected, handleDescriptionPhoto
         };
     }
 }).mount('#app');
