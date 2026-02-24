@@ -36,12 +36,14 @@
         .nav-item { flex: 1; height: 100%; display: flex; justify-content: center; align-items: center; font-size: 16px; font-weight: 500; color: #1a1a1a; transition: all 0.2s; padding-top: 3px; }
         .nav-item.active { color: #07c160; font-weight: 800; }
 
-        .msg-bubble { max-width: 75%; padding: 10px 14px; border-radius: 6px; font-size: 16px; margin: 4px 0; position: relative; word-wrap: break-word; }
+        .msg-bubble { max-width: 75%; padding: 10px 14px; border-radius: 6px; font-size: 16px; margin: 4px 0; position: relative; transition: background 0.2s; }
         .msg-user { background: #95ec69; align-self: flex-end; margin-right: 12px; }
         .msg-user::after { content: ''; position: absolute; right: -5px; top: 12px; border-left: 6px solid #95ec69; border-top: 6px solid transparent; border-bottom: 6px solid transparent; }
         .msg-ai { background: #ffffff; align-self: flex-start; margin-left: 12px; }
         .msg-ai::before { content: ''; position: absolute; left: -5px; top: 12px; border-right: 6px solid #ffffff; border-top: 6px solid transparent; border-bottom: 6px solid transparent; }
         
+        .quote-box { background: rgba(0,0,0,0.05); border-left: 2px solid #ccc; padding: 2px 6px; font-size: 12px; color: #666; margin-bottom: 4px; border-radius: 2px; }
+
         .cell-item { background: white; padding: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 0.5px solid #f0f0f0; }
         .cell-item:active { background: #f5f5f5; }
 
@@ -59,10 +61,12 @@
         
         .sub-page { position: absolute; inset: 0; background: #ededed; z-index: 150; display: flex; flex-direction: column; }
 
+        /* 旋转动画样式 */
         .inventory-icon { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         .inventory-rotate { animation: twist 0.6s ease-in-out; }
         @keyframes twist { 0% { transform: rotate(0deg); } 33% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
 
+        /* 物品栏小窗口 */
         .inventory-panel { position: absolute; bottom: 70px; left: 12px; width: 180px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 16px; padding: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 50; border: 1px solid rgba(0,0,0,0.05); transform-origin: bottom left; animation: popIn 0.2s ease-out; }
         @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         
@@ -72,21 +76,20 @@
         .chat-img { max-width: 150px; border-radius: 8px; margin: 4px 0; display: block; }
 
         /* 消息长按菜单 */
-        .msg-context-menu { position: fixed; background: rgba(50, 50, 50, 0.9); backdrop-filter: blur(10px); border-radius: 12px; padding: 6px; z-index: 300; display: flex; flex-direction: row; gap: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-        .msg-menu-item { color: white; font-size: 13px; padding: 4px 8px; border-radius: 6px; }
-        .msg-menu-item:active { background: rgba(255,255,255,0.1); }
+        .msg-menu { position: fixed; background: #4c4c4c; border-radius: 8px; display: flex; padding: 4px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .msg-menu-item { color: white; padding: 8px 12px; font-size: 14px; border-right: 0.5px solid #666; white-space: nowrap; }
+        .msg-menu-item:last-child { border-right: none; }
+        .msg-menu::after { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid #4c4c4c; }
 
-        /* 引用样式 */
-        .quote-preview { background: #e0e0e0; border-left: 3px solid #ccc; padding: 4px 8px; border-radius: 4px; font-size: 12px; color: #666; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
-        .quote-input-bar { background: #eee; padding: 4px 12px; font-size: 12px; color: #888; display: flex; justify-content: space-between; border-top: 0.5px solid #ddd; }
-        
-        /* 多选样式 */
-        .multi-select-active { border: 2px solid #07c160 !important; opacity: 0.8; }
-        .multi-select-toolbar { position: absolute; bottom: 0; left: 0; right: 0; height: 60px; background: #f7f7f7; border-top: 0.5px solid #ddd; z-index: 60; display: flex; justify-content: space-around; align-items: center; }
+        .multi-select-bar { position: fixed; bottom: 0; left: 0; right: 0; height: 80px; background: #f7f7f7; display: flex; justify-content: space-around; align-items: center; border-top: 0.5px solid #ddd; z-index: 110; padding-bottom: env(safe-area-inset-bottom); }
+        .multi-select-btn { flex: 1; text-align: center; font-size: 16px; color: #1a1a1a; }
+        .multi-select-btn.danger { color: #fa5151; }
+
+        .quote-preview { background: #f0f0f0; padding: 8px 12px; border-top: 0.5px solid #ddd; display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: #666; }
     </style>
 </head>
 <body>
-<div id="app" class="phone-screen" @click="globalClick">
+<div id="app" class="phone-screen" @click="handleGlobalClick">
     <input type="file" id="avatarPicker" accept="image/*" style="display: none" @change="onPhotoSelected">
     <input type="file" id="albumPicker" accept="image/*" style="display: none" @change="onAlbumPhotoSelected">
     <input type="file" id="cameraPicker" accept="image/*" capture="camera" style="display: none" @change="onCameraPhotoSelected">
@@ -130,43 +133,67 @@
                 <div @click="meSubPage = null" class="flex items-center"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg><span class="ml-1 text-lg font-medium">余额</span></div>
                 <div class="text-2xl">···</div>
             </div>
+            
             <div class="wallet-main-card">
-                <div class="flex items-center justify-center gap-1 text-[var(--theme-color)] text-xs font-medium bg-blue-50/50 py-2 rounded-t-lg -mx-5 -mt-5 mb-6">资金安全有保障 〉</div>
+                <div class="flex items-center justify-center gap-1 text-[var(--theme-color)] text-xs font-medium bg-blue-50/50 py-2 rounded-t-lg -mx-5 -mt-5 mb-6">
+                    资金安全有保障 〉
+                </div>
                 <div class="flex flex-col items-center mt-4">
                     <div class="text-gray-600 text-[13px] flex items-center gap-1">可用余额(元) <img src="https://test.fukit.cn/autoupload/fr/qakEfOhNRG6o06DQb0_mtuPxZ2O0bsQcfNmgZJT0wpmyl5f0KlZfm6UsKj-HyTuv/20260225/ACrj/1000X1000/IMG_2974.png" class="w-4 h-4 object-contain"></div>
                     <div class="text-[44px] font-medium mt-3 leading-none cursor-pointer" @click="editBalance">{{ widget.balance || '19.77' }}</div>
                 </div>
                 <div class="wallet-btn-group">
                     <div class="wallet-btn wallet-btn-outline" @click="developingTip">提现</div>
-                    <div class="wallet-btn wallet-btn-primary" @click="developingTip">充值<span class="badge-bubble">找人充</span></div>
+                    <div class="wallet-btn wallet-btn-primary" @click="developingTip">
+                        充值
+                        <span class="badge-bubble">找人充</span>
+                    </div>
                 </div>
             </div>
+
             <div class="mt-4 flex-1 overflow-y-auto px-4">
-                <div class="bg-white rounded-lg p-4 flex justify-between items-center text-sm text-gray-400 mb-2"><span class="text-gray-800 font-bold">全部记录</span><span class="flex items-center">全部 〉</span></div>
+                <div class="bg-white rounded-lg p-4 flex justify-between items-center text-sm text-gray-400 mb-2">
+                    <span class="text-gray-800 font-bold">全部记录</span>
+                    <span class="flex items-center">全部 〉</span>
+                </div>
                 <div v-for="(record, idx) in billRecords" :key="idx" class="bg-white rounded-xl p-3 mb-2 flex items-center shadow-sm">
                     <img :src="record.avatar" class="w-10 h-10 rounded-lg mr-3">
                     <div class="flex-1">
                         <div class="font-bold text-gray-800">{{ record.name }}</div>
                         <div class="text-[10px] text-gray-400">{{ record.time }}</div>
                     </div>
-                    <div :class="['font-bold text-lg', record.amount > 0 ? 'text-[#07c160]' : 'text-black']">{{ record.amount > 0 ? '+' : '' }}{{ record.amount }}</div>
+                    <div :class="['font-bold text-lg', record.amount > 0 ? 'text-[#07c160]' : 'text-black']">
+                        {{ record.amount > 0 ? '+' : '' }}{{ record.amount }}
+                    </div>
                 </div>
+                <div v-if="billRecords.length === 0" class="text-center py-10 text-gray-300 text-sm">暂无转账记录</div>
             </div>
         </div>
 
         <div v-if="meSubPage && meSubPage !== '钱包'" class="sub-page">
             <div class="wechat-header">
-                <div class="w-8 flex"><button @click="meSubPage = null" class="text-[#1a1a1a] pb-1"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button></div>
-                <span class="font-bold text-[17px] pb-1">{{ meSubPage }}</span><div class="w-8"></div>
+                <div class="w-8 flex">
+                    <button @click="meSubPage = null" class="text-[#1a1a1a] pb-1">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                    </button>
+                </div>
+                <span class="font-bold text-[17px] pb-1">{{ meSubPage }}</span>
+                <div class="w-8"></div>
             </div>
+            <div class="wechat-content"></div>
         </div>
 
         <div class="wechat-header">
             <div class="w-8 flex">
-                <button v-if="activeTab === 'contacts' && !currentChatPartner" @click="chatVisible = false" class="text-[#1a1a1a] pb-1"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button>
-                <button v-if="currentChatPartner" @click="exitChat" class="text-[#1a1a1a] pb-1"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button>
+                <button v-if="activeTab === 'contacts' && !currentChatPartner" @click="chatVisible = false" class="text-[#1a1a1a] pb-1">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <button v-if="currentChatPartner" @click="isMultiSelect ? (isMultiSelect = false, selectedMsgs = []) : (currentChatPartner = null)" class="text-[#1a1a1a] pb-1">
+                    <svg v-if="!isMultiSelect" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                    <span v-else class="text-sm">取消</span>
+                </button>
             </div>
-            <span class="font-bold text-[17px] pb-1">{{ currentChatPartner ? currentChatPartner.name : navTitle }}</span>
+            <span class="font-bold text-[17px] pb-1">{{ currentChatPartner ? (isMultiSelect ? '已选择' : currentChatPartner.name) : navTitle }}</span>
             <div class="w-8 flex justify-end">
                 <button v-if="activeTab === 'contacts' && !currentChatPartner" @click="activeModal = 'addFriend'" class="text-[#1a1a1a] pb-1 text-2xl font-light">＋</button>
                 <div v-else class="w-6"></div>
@@ -176,36 +203,39 @@
         <div class="wechat-content">
             <div v-if="activeTab === 'contacts'" class="h-full relative">
                 <div v-if="!currentChatPartner" class="bg-white h-full">
-                    <div v-for="f in filteredFriends" :key="f.id" @click="enterChat(f.id)" @touchstart="handleFriendLongPress($event, f)" @mousedown="handleFriendLongPress($event, f)" class="p-4 border-b flex items-center justify-between active:bg-gray-50 bg-white">
-                        <div class="flex items-center gap-3"><img :src="f.avatar" class="w-10 h-10 rounded"><span class="font-medium">{{ f.name }}</span></div>
+                    <div v-for="f in filteredFriends" :key="f.id" 
+                         @click="enterChat(f.id)"
+                         @touchstart="handleTouchStart($event, f, 'friend')"
+                         @touchend="handleTouchEnd"
+                         @mousedown="handleMouseDown($event, f, 'friend')"
+                         @mouseup="handleMouseUp"
+                         class="p-4 border-b flex items-center justify-between active:bg-gray-50 bg-white">
+                        <div class="flex items-center gap-3">
+                            <img :src="f.avatar" class="w-10 h-10 rounded">
+                            <span class="font-medium">{{ f.name }}</span>
+                        </div>
                         <span v-if="f.isTop" class="text-[10px] bg-gray-100 text-gray-400 px-1 rounded">置顶</span>
                     </div>
                 </div>
-
                 <div v-else class="flex flex-col h-full bg-[#ededed]">
-                    <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-2" id="msg-box" @click="handleChatBodyClick">
+                    <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-2" id="msg-box" @click="inventoryOpen = false">
                         <div v-for="(m, idx) in currentMessages" :key="idx" 
-                             :class="['msg-bubble', m.role==='user'?'msg-user':'msg-ai', isMultiSelect(idx)?'multi-select-active':'']"
-                             @touchstart="handleMsgLongPress($event, idx)"
-                             @mousedown="handleMsgLongPress($event, idx)"
-                             @click="handleMsgClick(idx)">
-                            
-                            <div v-if="m.quote" class="quote-preview">
-                                {{ m.quote.role === 'user' ? '我' : currentChatPartner.name }}: {{ m.quote.content }}
+                             :class="['msg-bubble', m.role==='user'?'msg-user':'msg-ai', isMultiSelect ? 'flex items-center gap-3' : '']"
+                             @touchstart="handleTouchStart($event, m, 'msg', idx)"
+                             @touchend="handleTouchEnd"
+                             @mousedown="handleMouseDown($event, m, 'msg', idx)"
+                             @mouseup="handleMouseUp">
+                            <input v-if="isMultiSelect" type="checkbox" :value="idx" v-model="selectedMsgs" class="w-4 h-4">
+                            <div class="flex flex-col">
+                                <div v-if="m.quote" class="quote-box">「{{m.quote}}」</div>
+                                <template v-if="m.type === 'image'">
+                                    <img :src="m.content" class="chat-img">
+                                </template>
+                                <template v-else>{{m.content}}</template>
                             </div>
-
-                            <template v-if="m.type === 'image'"><img :src="m.content" class="chat-img"></template>
-                            <template v-else>{{m.content}}</template>
                         </div>
                     </div>
                     
-                    <div v-if="msgMenu.show" class="msg-context-menu" :style="{ top: msgMenu.y + 'px', left: msgMenu.x + 'px' }">
-                        <div class="msg-menu-item" @click="menuAction('delete')">删除</div>
-                        <div class="msg-menu-item" @click="menuAction('edit')">编辑</div>
-                        <div class="msg-menu-item" @click="menuAction('quote')">引用</div>
-                        <div class="msg-menu-item" @click="menuAction('multi')">多选</div>
-                    </div>
-
                     <div v-if="inventoryOpen" class="inventory-panel">
                         <div class="grid grid-cols-2 gap-3">
                             <div class="inv-btn" @click="triggerAlbum">相册</div>
@@ -217,19 +247,21 @@
                         </div>
                     </div>
 
-                    <div v-if="multiSelect.active" class="multi-select-toolbar">
-                        <button @click="multiSelect.active = false" class="text-gray-600">取消</button>
-                        <button @click="deleteSelected" class="text-red-500 font-bold">删除({{multiSelect.list.length}})</button>
+                    <div v-if="isMultiSelect" class="multi-select-bar">
+                        <div class="multi-select-btn danger" @click="batchDelete">删除({{selectedMsgs.length}})</div>
                     </div>
-
-                    <div v-if="!multiSelect.active" class="flex flex-col">
-                        <div v-if="quoteTarget" class="quote-input-bar">
-                            <span>引用: {{ quoteTarget.content }}</span>
-                            <span @click="quoteTarget = null">✕</span>
+                    
+                    <div v-else class="flex flex-col bg-[#f7f7f7]">
+                        <div v-if="quoteContent" class="quote-preview">
+                            <span class="truncate">引用：{{quoteContent}}</span>
+                            <span @click="quoteContent = null" class="px-2">✕</span>
                         </div>
-                        <div class="p-3 bg-[#f7f7f7] border-t flex gap-2 items-center relative">
+                        <div class="p-3 border-t flex gap-2 items-center relative">
                             <img src="https://test.fukit.cn/autoupload/fr/qakEfOhNRG6o06DQb0_mtuPxZ2O0bsQcfNmgZJT0wpmyl5f0KlZfm6UsKj-HyTuv/20260225/PRR6/1000X1000/IMG_2985.png" 
-                                 @click="toggleInventory" class="w-7 h-7 inventory-icon cursor-pointer" :class="{'inventory-rotate': isRotating}">
+                                 @click="toggleInventory"
+                                 class="w-7 h-7 inventory-icon cursor-pointer"
+                                 :class="{'inventory-rotate': isRotating}">
+                            
                             <input v-model="userInput" @keyup.enter="sendMsg()" placeholder="输入内容..." class="flex-1 bg-white p-2.5 rounded-md text-sm border-none outline-none">
                             <button @click="sendMsg()" class="bg-[#07c160] text-white px-4 py-2 rounded-md text-sm font-bold">发送</button>
                         </div>
@@ -271,9 +303,17 @@
             <div class="nav-item" :class="{active: activeTab==='me'}" @click="activeTab='me'">我</div>
         </div>
 
-        <div v-if="showMenu" class="msg-context-menu" :style="{top: menuPos.y+'px', left: menuPos.x+'px'}">
-            <div class="msg-menu-item" @click.stop="toggleTop">置顶/取消</div>
-            <div class="msg-menu-item" @click.stop="deleteFriend">彻底删除</div>
+        <div v-if="showMenu" class="msg-menu" :style="{top: (menuPos.y - 50)+'px', left: menuPos.x+'px'}">
+            <template v-if="menuType === 'friend'">
+                <div class="msg-menu-item" @click.stop="toggleTop">置顶</div>
+                <div class="msg-menu-item" @click.stop="deleteFriend">删除</div>
+            </template>
+            <template v-if="menuType === 'msg'">
+                <div class="msg-menu-item" @click.stop="deleteSingleMsg">删除</div>
+                <div class="msg-menu-item" @click.stop="editSingleMsg">编辑</div>
+                <div class="msg-menu-item" @click.stop="quoteMsg">引用</div>
+                <div class="msg-menu-item" @click.stop="startMultiSelect">多选</div>
+            </template>
         </div>
     </div>
 
@@ -315,9 +355,19 @@ createApp({
         const userInput = ref('');
         const currentEditSide = ref('');
 
+        // 物品栏相关
         const inventoryOpen = ref(false);
         const isRotating = ref(false);
+
+        // 账单记录
         const billRecords = ref([]);
+
+        // 消息增强功能
+        const menuType = ref('friend'); // 'friend' | 'msg'
+        const selectedMsgIndex = ref(null);
+        const isMultiSelect = ref(false);
+        const selectedMsgs = ref([]);
+        const quoteContent = ref(null);
 
         const friendsList = ref([
             { id: 'left', name: '雨雨雨～', avatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png', isTop: false },
@@ -325,8 +375,8 @@ createApp({
         ]);
 
         const chatHistory = ref({
-            left: [{ role: 'assistant', content: '雨雨雨～准备好聊天啦！', type: 'text' }],
-            ai: [{ role: 'assistant', content: '我是哈吉米宝宝，你好呀！', type: 'text' }]
+            left: [{ role: 'assistant', type: 'text', content: '雨雨雨～准备好聊天啦！' }],
+            ai: [{ role: 'assistant', type: 'text', content: '我是哈吉米宝宝，你好呀！' }]
         });
 
         const currentChatPartner = ref(null);
@@ -334,11 +384,6 @@ createApp({
         const menuPos = ref({ x: 0, y: 0 });
         const selectedFriend = ref(null);
         let longPressTimer = null;
-
-        // --- 消息管理核心状态 ---
-        const msgMenu = ref({ show: false, x: 0, y: 0, index: -1 });
-        const multiSelect = ref({ active: false, list: [] });
-        const quoteTarget = ref(null);
 
         const filteredFriends = computed(() => {
             return [...friendsList.value].sort((a, b) => (b.isTop - a.isTop));
@@ -349,26 +394,12 @@ createApp({
         });
 
         const navTitle = computed(() => ({ contacts: '好友', discover: '朋友圈', me: '我' }[activeTab.value]));
-        const modalTitle = computed(() => ({ config: '参数配置', beauty: '界面美化', preset: '人格预设', addFriend: '添加新角色' }[activeModal.value]));
-
-        // --- 交互逻辑 ---
-        const globalClick = () => {
-            showMenu.value = false;
-            msgMenu.value.show = false;
-        };
-
-        const handleChatBodyClick = () => {
-            inventoryOpen.value = false;
-        };
-
-        const exitChat = () => {
-            currentChatPartner.value = null;
-            multiSelect.value.active = false;
-            multiSelect.value.list = [];
-            quoteTarget.value = null;
-        };
+        const modalTitle = computed(() => ({ 
+            config: '参数配置', beauty: '界面美化', preset: '人格预设', addFriend: '添加新角色' 
+        }[activeModal.value]));
 
         const openWechat = () => { chatVisible.value = true; activeTab.value = 'contacts'; currentChatPartner.value = null; meSubPage.value = null; };
+        
         const enterChat = (id) => {
             if (showMenu.value) return;
             const f = friendsList.value.find(item => item.id === id);
@@ -376,80 +407,88 @@ createApp({
             nextTick(() => { const box = document.getElementById('msg-box'); if(box) box.scrollTop = box.scrollHeight; });
         };
 
-        // 好友长按
-        const handleFriendLongPress = (e, f) => {
+        const handleTouchStart = (e, target, type, index = null) => {
+            if (isMultiSelect.value) return;
             longPressTimer = setTimeout(() => {
-                selectedFriend.value = f;
-                menuPos.value = { x: (e.touches ? e.touches[0].clientX : e.clientX), y: (e.touches ? e.touches[0].clientY : e.clientY) };
+                if(type === 'friend') {
+                    selectedFriend.value = target;
+                    menuType.value = 'friend';
+                } else {
+                    selectedMsgIndex.value = index;
+                    menuType.value = 'msg';
+                }
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                menuPos.value = { x: Math.max(10, clientX - 60), y: clientY };
                 showMenu.value = true;
             }, 600);
         };
-
-        // --- 消息长按菜单逻辑 ---
-        const handleMsgLongPress = (e, idx) => {
-            if (multiSelect.value.active) return;
+        const handleTouchEnd = () => clearTimeout(longPressTimer);
+        const handleMouseDown = (e, target, type, index = null) => {
+            if (isMultiSelect.value) return;
             longPressTimer = setTimeout(() => {
-                msgMenu.value = {
-                    show: true,
-                    x: (e.touches ? e.touches[0].clientX : e.clientX) - 50,
-                    y: (e.touches ? e.touches[0].clientY : e.clientY) - 40,
-                    index: idx
-                };
+                if(type === 'friend') {
+                    selectedFriend.value = target;
+                    menuType.value = 'friend';
+                } else {
+                    selectedMsgIndex.value = index;
+                    menuType.value = 'msg';
+                }
+                menuPos.value = { x: Math.max(10, e.clientX - 60), y: e.clientY };
+                showMenu.value = true;
             }, 600);
         };
+        const handleMouseUp = () => clearTimeout(longPressTimer);
+        const handleGlobalClick = () => { showMenu.value = false; };
 
-        const handleMsgClick = (idx) => {
-            if (multiSelect.value.active) {
-                const pos = multiSelect.value.list.indexOf(idx);
-                if (pos > -1) multiSelect.value.list.splice(pos, 1);
-                else multiSelect.value.list.push(idx);
-            }
-        };
-
-        const isMultiSelect = (idx) => multiSelect.value.active && multiSelect.value.list.includes(idx);
-
-        const menuAction = (type) => {
-            const partnerId = currentChatPartner.value.id;
-            const idx = msgMenu.value.index;
-            const msg = chatHistory.value[partnerId][idx];
-
-            if (type === 'delete') {
-                chatHistory.value[partnerId].splice(idx, 1);
-                saveChat();
-            } else if (type === 'edit') {
-                const newContent = prompt("编辑消息内容：", msg.content);
-                if (newContent !== null) {
-                    msg.content = newContent;
-                    saveChat();
-                }
-            } else if (type === 'quote') {
-                quoteTarget.value = { ...msg };
-            } else if (type === 'multi') {
-                multiSelect.value.active = true;
-                multiSelect.value.list = [idx];
-            }
-            msgMenu.value.show = false;
-        };
-
-        const deleteSelected = () => {
-            if (!confirm(`确定删除选中的 ${multiSelect.value.list.length} 条消息吗？`)) return;
-            const partnerId = currentChatPartner.value.id;
-            // 从大到小删除
-            multiSelect.value.list.sort((a,b) => b - a).forEach(idx => {
-                chatHistory.value[partnerId].splice(idx, 1);
-            });
-            multiSelect.value.active = false;
-            multiSelect.value.list = [];
-            saveChat();
-        };
-
-        // --- 基础功能 ---
+        // 好友菜单操作
         const toggleTop = () => { selectedFriend.value.isTop = !selectedFriend.value.isTop; showMenu.value = false; };
         const deleteFriend = () => {
             if(confirm(`确定删除 ${selectedFriend.value.name}？`)) {
                 friendsList.value = friendsList.value.filter(f => f.id !== selectedFriend.value.id);
             }
             showMenu.value = false;
+        };
+
+        // 消息菜单操作
+        const deleteSingleMsg = () => {
+            const pid = currentChatPartner.value.id;
+            chatHistory.value[pid].splice(selectedMsgIndex.value, 1);
+            saveHistory();
+            showMenu.value = false;
+        };
+        const editSingleMsg = () => {
+            const pid = currentChatPartner.value.id;
+            const msg = chatHistory.value[pid][selectedMsgIndex.value];
+            if(msg.type === 'image') return alert("图片暂不支持编辑内容");
+            const newContent = prompt("编辑消息内容：", msg.content);
+            if (newContent !== null) {
+                msg.content = newContent;
+                saveHistory();
+            }
+            showMenu.value = false;
+        };
+        const quoteMsg = () => {
+            const pid = currentChatPartner.value.id;
+            const msg = chatHistory.value[pid][selectedMsgIndex.value];
+            quoteContent.value = msg.type === 'image' ? '[图片]' : msg.content;
+            showMenu.value = false;
+        };
+        const startMultiSelect = () => {
+            isMultiSelect.value = true;
+            selectedMsgs.value = [selectedMsgIndex.value];
+            showMenu.value = false;
+        };
+        const batchDelete = () => {
+            const pid = currentChatPartner.value.id;
+            // 从大到小删除索引以免错位
+            const sortedIndexes = [...selectedMsgs.value].sort((a,b) => b-a);
+            sortedIndexes.forEach(idx => {
+                chatHistory.value[pid].splice(idx, 1);
+            });
+            isMultiSelect.value = false;
+            selectedMsgs.value = [];
+            saveHistory();
         };
 
         const editName = (side) => {
@@ -478,6 +517,7 @@ createApp({
             const s = prompt("编辑个人签名：", widget.value.signature);
             if (s) { widget.value.signature = s; saveWidget(); }
         };
+
         const developingTip = () => { alert("正在开发中"); };
         const editBalance = () => {
             const b = prompt("设置余额：", widget.value.balance);
@@ -517,7 +557,7 @@ createApp({
             localStorage.setItem('widget_v5', JSON.stringify(widget.value)); 
             localStorage.setItem('bill_records', JSON.stringify(billRecords.value));
         };
-        const saveChat = () => {
+        const saveHistory = () => {
             localStorage.setItem('chat_history_v5', JSON.stringify(chatHistory.value));
         };
         const save = () => { 
@@ -538,7 +578,7 @@ createApp({
                 role: 'user', 
                 type: 'text', 
                 content: msgContent,
-                quote: quoteTarget.value ? { role: quoteTarget.value.role, content: quoteTarget.value.content } : null
+                quote: quoteContent.value 
             };
 
             if (type === 'image') {
@@ -550,7 +590,6 @@ createApp({
                 userMsgObj.rawDesc = msgContent;
             }
 
-            // 账单记录
             if (type === 'text') {
                 const amountMatch = msgContent.match(/(\d+(\.\d+)?)/);
                 if (amountMatch && (msgContent.includes('转账') || msgContent.includes('红包'))) {
@@ -567,16 +606,16 @@ createApp({
             }
 
             chatHistory.value[partnerId].push(userMsgObj);
-            userInput.value = '';
-            quoteTarget.value = null;
+            if (type === 'text') userInput.value = '';
+            quoteContent.value = null; // 发送后清除引用
 
             await nextTick();
             const box = document.getElementById('msg-box');
             if(box) box.scrollTop = box.scrollHeight;
 
             try {
-                let aiInput = userMsgObj.type === 'image' ? (userMsgObj.rawDesc || "[照片]") : userMsgObj.content;
-                if (userMsgObj.quote) aiInput = `(引用了${userMsgObj.quote.role==='user'?'我':'你'}的消息："${userMsgObj.quote.content}") ` + aiInput;
+                let aiInput = userMsgObj.type === 'image' ? (userMsgObj.rawDesc || "[用户发送了一张照片]") : userMsgObj.content;
+                if(userMsgObj.quote) aiInput = `(引用了之前的话: "${userMsgObj.quote}") ` + aiInput;
 
                 const res = await fetch(`${config.value.baseUrl}/chat/completions`, {
                     method: 'POST',
@@ -584,11 +623,11 @@ createApp({
                     body: JSON.stringify({ 
                         model: config.value.model, 
                         messages: [
-                            {role:'system', content:`你现在是${currentChatPartner.value.name}，对方叫雨。`}, 
+                            {role:'system', content:`你现在是${currentChatPartner.value.name}，对方叫雨。请以亲密自然的语气回复，不要像机器人。如果你收到内容带有引用，请结合引用语境回复。`}, 
                             ...chatHistory.value[partnerId].map(m => ({
                                 role: m.role,
                                 content: m.rawDesc || (m.type === 'image' ? '[照片]' : m.content)
-                            })).slice(-15) // 加大上下文记忆
+                            })).slice(-10) // 增加记忆长度
                         ] 
                     })
                 });
@@ -608,11 +647,10 @@ createApp({
                     widget.value.balance = (parseFloat(widget.value.balance) + amount).toFixed(2);
                     saveWidget();
                 }
-
-                saveChat();
+                saveHistory();
                 await nextTick();
                 if(box) box.scrollTop = box.scrollHeight;
-            } catch (e) { chatHistory.value[partnerId].push({ role: 'assistant', type: 'text', content: '连接超时。' }); }
+            } catch (e) { chatHistory.value[partnerId].push({ role: 'assistant', type: 'text', content: '连接超时，请检查配置。' }); }
         };
 
         onMounted(() => {
@@ -628,14 +666,15 @@ createApp({
         return { 
             config, widget, chatVisible, activeTab, activeModal, meSubPage,
             userInput, currentChatPartner, currentMessages, navTitle, modalTitle,
-            filteredFriends, showMenu, menuPos, msgMenu, multiSelect, quoteTarget,
+            filteredFriends, showMenu, menuPos, menuType,
+            isMultiSelect, selectedMsgs, quoteContent,
             editName, editWxId, handleAvatarClick, onPhotoSelected, editSign, 
-            save, sendMsg, openWechat, enterChat, exitChat,
+            save, sendMsg, openWechat, enterChat,
+            handleTouchStart, handleTouchEnd, handleMouseDown, handleMouseUp, handleGlobalClick,
             toggleTop, deleteFriend, developingTip, editBalance,
             inventoryOpen, isRotating, toggleInventory, billRecords,
             triggerAlbum, triggerCamera, onAlbumPhotoSelected, onCameraPhotoSelected, handleDescriptionPhoto,
-            handleFriendLongPress, handleMsgLongPress, handleMsgClick, isMultiSelect, menuAction, deleteSelected,
-            globalClick, handleChatBodyClick
+            deleteSingleMsg, editSingleMsg, quoteMsg, startMultiSelect, batchDelete
         };
     }
 }).mount('#app');
