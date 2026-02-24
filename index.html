@@ -100,7 +100,9 @@
             font-weight: 500;
         }
         .inv-btn:active { background: #ececec; }
-        .chat-img { max-width: 100%; border-radius: 8px; margin: 4px 0; }
+
+        /* 修改：将最大宽度设置为 150px 缩小占比 */
+        .chat-img { max-width: 150px; border-radius: 8px; margin: 4px 0; display: block; }
     </style>
 </head>
 <body>
@@ -475,7 +477,7 @@ createApp({
         const handleDescriptionPhoto = () => {
             const desc = prompt("请输入你想要描述的照片内容：");
             if (desc) {
-                // 以描述图形式发送，AI将接收到你的描述
+                // 以描述图形式发送
                 sendMsg(desc, 'desc_image');
                 inventoryOpen.value = false;
             }
@@ -536,7 +538,7 @@ createApp({
 
             // 调用接口
             try {
-                // 准备发给AI的内容：如果是描述照片，发描述文字；如果是真照片，告知发了照片
+                // 准备发给AI的内容
                 let aiInput = userMsgObj.type === 'image' ? (userMsgObj.rawDesc || "[用户发送了一张照片]") : userMsgObj.content;
 
                 const res = await fetch(`${config.value.baseUrl}/chat/completions`, {
