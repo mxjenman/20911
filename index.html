@@ -44,11 +44,16 @@
         
         .cell-item { background: white; padding: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 0.5px solid #f0f0f0; }
         .cell-item:active { background: #f5f5f5; }
-        .cell-item:last-child { border-bottom: none; }
+
+        /* 长按菜单样式 */
+        .context-menu { position: fixed; background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 300; overflow: hidden; min-width: 120px; }
+        .menu-btn { padding: 12px 20px; font-size: 14px; width: 100%; text-align: left; border-bottom: 0.5px solid #eee; }
+        .menu-btn:active { background: #f2f2f2; }
+        .menu-btn.danger { color: #ff3b30; }
     </style>
 </head>
 <body>
-<div id="app" class="phone-screen">
+<div id="app" class="phone-screen" @click="closeMenu">
     <input type="file" id="avatarPicker" accept="image/*" style="display: none" @change="onPhotoSelected">
 
     <div class="widget-card">
@@ -93,22 +98,22 @@
                 </button>
             </div>
             <span class="font-bold text-[17px] pb-1">{{ currentChatPartner ? currentChatPartner.name : navTitle }}</span>
-            <div class="w-8 flex justify-end pb-1">
-                <span v-if="activeTab === 'contacts' && !currentChatPartner" @click="addFriend" class="text-2xl leading-none">+</span>
-            </div>
+            <div class="w-8 flex"></div>
         </div>
 
         <div class="wechat-content">
             <div v-if="activeTab === 'contacts'" class="h-full">
                 <div v-if="!currentChatPartner" class="bg-white h-full">
-                    <div class="p-3 bg-gray-100 text-xs text-gray-500">我的联系人</div>
-                    <div @click="enterChat('left')" class="p-4 border-b flex items-center gap-3 active:bg-gray-50">
-                        <img :src="widget.leftAvatar" class="w-10 h-10 rounded">
-                        <span class="font-medium">{{ widget.leftName }}</span>
-                    </div>
-                    <div @click="enterChat('ai')" class="p-4 border-b flex items-center gap-3 active:bg-gray-50">
-                        <img src="https://test.fukit.cn/autoupload/fr/PUOzIkT_hEAqz4elPzgm9kg93R44cerOKVobYyu6bmqyl5f0KlZfm6UsKj-HyTuv/20260224/IR8x/1206X1168/IMG_2714.jpeg" class="w-10 h-10 rounded">
-                        <span class="font-medium">哈吉米宝宝</span>
+                    <div v-for="friend in sortedFriends" :key="friend.id" 
+                         @click="enterChat(friend.id)" 
+                         @touchstart="onLongPressStart($event, friend)"
+                         @touchend="onLongPressEnd"
+                         :class="['p-4 border-b flex items-center gap-3 active:bg-gray-50', friend.pinned ? 'bg-gray-50' : '']">
+                        <img :src="friend.avatar" class="w-10 h-10 rounded">
+                        <div class="flex-1 flex items-center justify-between">
+                            <span class="font-medium">{{ friend.name }}</span>
+                            <span v-if="friend.pinned" class="text-[10px] text-gray-400">📌</span>
+                        </div>
                     </div>
                 </div>
 
@@ -158,6 +163,11 @@
         </div>
     </div>
 
+    <div v-if="menu.visible" class="context-menu" :style="{ top: menu.y + 'px', left: menu.x + 'px' }">
+        <div class="menu-btn" @click.stop="togglePin">{{ menu.target.pinned ? '取消置顶' : '置顶聊天' }}</div>
+        <div class="menu-btn danger" @click.stop="deleteFriend">删除联系人</div>
+    </div>
+
     <div v-if="activeModal" class="fixed inset-0 bg-black/40 z-[200] flex items-end" @click.self="activeModal = null">
         <div class="bg-white w-full rounded-t-[30px] p-6 pb-12">
             <div class="flex justify-between items-center mb-6"><h3 class="font-extrabold">{{modalTitle}}</h3><button @click="activeModal = null">✕</button></div>
@@ -192,42 +202,74 @@ createApp({
         const userInput = ref('');
         const currentEditSide = ref('');
 
-        // 聊天数据管理
-        const currentChatPartner = ref(null);
+        // 好友列表数据
+        const friends = ref([
+            { id: 'left', name: '雨雨雨～', avatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png', pinned: false },
+            { id: 'ai', name: '哈吉米宝宝', avatar: 'https://test.fukit.cn/autoupload/fr/PUOzIkT_hEAqz4elPzgm9kg93R44cerOKVobYyu6bmqyl5f0KlZfm6UsKj-HyTuv/20260224/IR8x/1206X1168/IMG_2714.jpeg', pinned: false }
+        ]);
+
         const chatHistory = ref({
             left: [{ role: 'assistant', content: '雨雨雨～准备好聊天啦！' }],
             ai: [{ role: 'assistant', content: '我是哈吉米宝宝，你好呀！' }]
+        });
+
+        const currentChatPartner = ref(null);
+        const menu = ref({ visible: false, x: 0, y: 0, target: null });
+        let pressTimer = null;
+
+        const sortedFriends = computed(() => {
+            return [...friends.value].sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
         });
 
         const currentMessages = computed(() => {
             return currentChatPartner.value ? chatHistory.value[currentChatPartner.value.id] : [];
         });
 
-        const navTitle = computed(() => {
-            return { contacts: '好友', discover: '朋友圈', me: '我' }[activeTab.value];
-        });
-
+        const navTitle = computed(() => ({ contacts: '好友', discover: '朋友圈', me: '我' }[activeTab.value]));
         const modalTitle = computed(() => ({ config: '参数配置', beauty: '界面美化', preset: '人格预设' }[activeModal.value]));
 
         const openWechat = () => { chatVisible.value = true; activeTab.value = 'contacts'; currentChatPartner.value = null; };
         
         const enterChat = (id) => {
-            const name = id === 'left' ? widget.value.leftName : '哈吉米宝宝';
-            currentChatPartner.value = { id, name };
+            if (menu.value.visible) return;
+            const f = friends.value.find(item => item.id === id);
+            if(f) currentChatPartner.value = { id: f.id, name: f.name };
             nextTick(() => {
                 const box = document.getElementById('msg-box');
                 if(box) box.scrollTop = box.scrollHeight;
             });
         };
 
-        const editName = (side) => {
-            const newName = prompt("编辑名字：", widget.value[side + 'Name']);
-            if (newName) { widget.value[side + 'Name'] = newName; saveWidget(); }
+        // 长按逻辑
+        const onLongPressStart = (e, friend) => {
+            pressTimer = setTimeout(() => {
+                const touch = e.touches[0];
+                menu.value = { visible: true, x: touch.clientX - 60, y: touch.clientY - 20, target: friend };
+            }, 600);
+        };
+        const onLongPressEnd = () => clearTimeout(pressTimer);
+        const closeMenu = () => menu.value.visible = false;
+
+        const togglePin = () => {
+            menu.value.target.pinned = !menu.value.target.pinned;
+            closeMenu();
         };
 
-        const editWxId = () => {
-            const newId = prompt("编辑微信号：", widget.value.wxId);
-            if (newId) { widget.value.wxId = newId; saveWidget(); }
+        const deleteFriend = () => {
+            if (confirm(`确定要删除 ${menu.value.target.name} 吗？`)) {
+                friends.value = friends.value.filter(f => f.id !== menu.value.target.id);
+            }
+            closeMenu();
+        };
+
+        const editName = (side) => {
+            const newName = prompt("编辑名字：", widget.value[side + 'Name']);
+            if (newName) { 
+                widget.value[side + 'Name'] = newName; 
+                const f = friends.value.find(item => item.id === (side === 'left' ? 'left' : ''));
+                if(f) f.name = newName;
+                saveWidget(); 
+            }
         };
 
         const handleAvatarClick = (side) => {
@@ -241,22 +283,17 @@ createApp({
             const reader = new FileReader();
             reader.onload = (event) => {
                 widget.value[currentEditSide.value + 'Avatar'] = event.target.result;
+                const f = friends.value.find(item => item.id === (currentEditSide.value === 'left' ? 'left' : ''));
+                if(f) f.avatar = event.target.result;
                 saveWidget();
             };
             reader.readAsDataURL(file);
         };
 
-        const editSign = () => {
-            const s = prompt("编辑个人签名：", widget.value.signature);
-            if (s) { widget.value.signature = s; saveWidget(); }
-        };
-
-        const saveWidget = () => { localStorage.setItem('widget_v5', JSON.stringify(widget.value)); };
-        
+        const saveWidget = () => localStorage.setItem('widget_v5', JSON.stringify(widget.value));
         const save = () => { 
             localStorage.setItem('ai_config_v4', JSON.stringify(config.value)); 
-            const styleEl = document.getElementById('user-custom-css');
-            styleEl.innerHTML = config.value.beautyCss + config.value.presetCss;
+            document.getElementById('user-custom-css').innerHTML = config.value.beautyCss + config.value.presetCss;
             activeModal.value = null; 
         };
 
@@ -276,7 +313,7 @@ createApp({
                     headers: { 'Authorization': `Bearer ${config.value.apiKey}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         model: config.value.model, 
-                        messages: [{role:'system', content:`你现在是${currentChatPartner.value.name}，对方叫雨。`}, ...chatHistory.value[partnerId].slice(-5)] 
+                        messages: [{role:'system', content:`你现在是${currentChatPartner.value.name}，语气亲切。`}, ...chatHistory.value[partnerId].slice(-5)] 
                     })
                 });
                 const data = await res.json();
@@ -295,10 +332,10 @@ createApp({
         });
 
         return { 
-            config, widget, chatVisible, activeTab, activeModal, 
-            userInput, currentChatPartner, currentMessages, navTitle, modalTitle,
-            editName, editWxId, handleAvatarClick, onPhotoSelected, editSign, 
-            save, sendMsg, openWechat, enterChat
+            config, widget, chatVisible, activeTab, activeModal, friends, sortedFriends,
+            userInput, currentChatPartner, currentMessages, navTitle, modalTitle, menu,
+            editName, handleAvatarClick, onPhotoSelected, editSign, 
+            save, sendMsg, openWechat, enterChat, onLongPressStart, onLongPressEnd, closeMenu, togglePin, deleteFriend
         };
     }
 }).mount('#app');
