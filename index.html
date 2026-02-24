@@ -48,6 +48,10 @@
         .context-menu { position: fixed; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-radius: 12px; width: 120px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 300; overflow: hidden; }
         .menu-item { padding: 12px; text-align: center; border-bottom: 0.5px solid #eee; font-size: 14px; }
         .menu-item:last-child { border-bottom: none; color: #ff3b30; }
+
+        /* 旋转动画控制 */
+        .rotate-icon { display: inline-block; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .is-rotated { transform: rotate(180deg); }
     </style>
 </head>
 <body>
@@ -98,7 +102,7 @@
             <span class="font-bold text-[17px] pb-1">{{ currentChatPartner ? currentChatPartner.name : navTitle }}</span>
             <div class="w-8 flex justify-end">
                 <button v-if="activeTab === 'contacts' && !currentChatPartner" @click="activeModal = 'addFriend'" class="text-[#1a1a1a] pb-1 text-2xl font-light">
-                    ＋
+                    <span class="rotate-icon" :class="{'is-rotated': activeModal === 'addFriend'}">＋</span>
                 </button>
                 <div v-else class="w-6"></div>
             </div>
@@ -249,7 +253,6 @@ createApp({
         }[activeModal.value]));
 
         const openWechat = () => { chatVisible.value = true; activeTab.value = 'contacts'; currentChatPartner.value = null; };
-        
         const enterChat = (id) => {
             if (showMenu.value) return;
             const f = friendsList.value.find(item => item.id === id);
@@ -257,58 +260,25 @@ createApp({
             nextTick(() => { const box = document.getElementById('msg-box'); if(box) box.scrollTop = box.scrollHeight; });
         };
 
-        const handleTouchStart = (e, f) => {
-            longPressTimer = setTimeout(() => {
-                selectedFriend.value = f;
-                menuPos.value = { x: e.touches[0].clientX - 60, y: e.touches[0].clientY };
-                showMenu.value = true;
-            }, 600);
-        };
+        const handleTouchStart = (e, f) => { longPressTimer = setTimeout(() => { selectedFriend.value = f; menuPos.value = { x: e.touches[0].clientX - 60, y: e.touches[0].clientY }; showMenu.value = true; }, 600); };
         const handleTouchEnd = () => clearTimeout(longPressTimer);
-        const handleMouseDown = (e, f) => {
-            longPressTimer = setTimeout(() => {
-                selectedFriend.value = f;
-                menuPos.value = { x: e.clientX - 60, y: e.clientY };
-                showMenu.value = true;
-            }, 600);
-        };
+        const handleMouseDown = (e, f) => { longPressTimer = setTimeout(() => { selectedFriend.value = f; menuPos.value = { x: e.clientX - 60, y: e.clientY }; showMenu.value = true; }, 600); };
         const handleMouseUp = () => clearTimeout(longPressTimer);
         const closeMenu = () => showMenu.value = false;
 
         const toggleTop = () => { selectedFriend.value.isTop = !selectedFriend.value.isTop; showMenu.value = false; };
-        const deleteFriend = () => {
-            if(confirm(`确定删除 ${selectedFriend.value.name}？`)) {
-                friendsList.value = friendsList.value.filter(f => f.id !== selectedFriend.value.id);
-            }
-            showMenu.value = false;
-        };
+        const deleteFriend = () => { if(confirm(`确定删除 ${selectedFriend.value.name}？`)) { friendsList.value = friendsList.value.filter(f => f.id !== selectedFriend.value.id); } showMenu.value = false; };
 
-        const editName = (side) => {
-            const newName = prompt("编辑名字：", widget.value[side + 'Name']);
-            if (newName) { widget.value[side + 'Name'] = newName; saveWidget(); }
-        };
-        const editWxId = () => {
-            const newId = prompt("编辑微信号：", widget.value.wxId);
-            if (newId) { widget.value.wxId = newId; saveWidget(); }
-        };
-        const handleAvatarClick = (side) => {
-            currentEditSide.value = side;
-            document.getElementById('avatarPicker').click();
-        };
+        const editName = (side) => { const newName = prompt("编辑名字：", widget.value[side + 'Name']); if (newName) { widget.value[side + 'Name'] = newName; saveWidget(); } };
+        const editWxId = () => { const newId = prompt("编辑微信号：", widget.value.wxId); if (newId) { widget.value.wxId = newId; saveWidget(); } };
+        const handleAvatarClick = (side) => { currentEditSide.value = side; document.getElementById('avatarPicker').click(); };
         const onPhotoSelected = (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
+            const file = e.target.files[0]; if (!file) return;
             const reader = new FileReader();
-            reader.onload = (event) => {
-                widget.value[currentEditSide.value + 'Avatar'] = event.target.result;
-                saveWidget();
-            };
+            reader.onload = (event) => { widget.value[currentEditSide.value + 'Avatar'] = event.target.result; saveWidget(); };
             reader.readAsDataURL(file);
         };
-        const editSign = () => {
-            const s = prompt("编辑个人签名：", widget.value.signature);
-            if (s) { widget.value.signature = s; saveWidget(); }
-        };
+        const editSign = () => { const s = prompt("编辑个人签名：", widget.value.signature); if (s) { widget.value.signature = s; saveWidget(); } };
         const saveWidget = () => { localStorage.setItem('widget_v5', JSON.stringify(widget.value)); };
         const save = () => { 
             localStorage.setItem('ai_config_v4', JSON.stringify(config.value)); 
