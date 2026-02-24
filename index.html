@@ -12,12 +12,12 @@
         body { margin: 0; font-family: -apple-system, sans-serif; height: 100svh; overflow: hidden; background: #000; }
         .phone-screen { width: 100%; height: 100%; background: var(--bg-image) no-repeat center center; background-size: cover; position: relative; display: flex; flex-direction: column; padding-bottom: env(safe-area-inset-bottom); }
 
-        /* 组件位置上移，并增加精致感 */
+        /* 顶部组件：已精准上移 6px (从 55px 改为 49px) */
         .widget-card { 
             background: rgba(255, 255, 255, 0.85); 
             backdrop-filter: blur(15px); 
             border-radius: 30px; 
-            margin: 55px 20px 10px; /* 之前是70px，现在挪到了55px */
+            margin: 49px 20px 10px; 
             padding: 18px; 
             box-shadow: 0 10px 30px rgba(0,0,0,0.08);
             border: 1px solid rgba(255,255,255,0.3);
@@ -50,9 +50,7 @@
             </div>
         </div>
         <div class="w-full text-right pr-2" @click="editSign">
-            <p class="text-gray-500 text-[12px] font-bold tracking-tight italic">
-                {{ widget.signature }}
-            </p>
+            <p class="text-gray-500 text-[12px] font-bold tracking-tight italic">{{ widget.signature }}</p>
         </div>
     </div>
 
@@ -86,7 +84,7 @@
     </div>
 
     <div v-if="activeModal" class="fixed inset-0 bg-black/40 z-[200] flex items-end" @click.self="activeModal = null">
-        <div class="bg-white w-full rounded-t-[30px] p-6 pb-12 animate-slide-up">
+        <div class="bg-white w-full rounded-t-[30px] p-6 pb-12">
             <div class="flex justify-between items-center mb-6"><h3 class="font-extrabold">{{modalTitle}}</h3><button @click="activeModal = null">✕</button></div>
             <div v-if="activeModal==='config'" class="space-y-4">
                 <input v-model="config.baseUrl" placeholder="API 地址" class="w-full p-4 bg-gray-50 rounded-2xl border-none">
@@ -113,24 +111,18 @@ createApp({
         });
         const currentEditSide = ref('');
         const chatVisible = ref(false); const activeModal = ref(null);
-        const userInput = ref(''); const messages = ref([{ role: 'assistant', content: '点击名字可以改名，点击照片可以去相册选图哦～' }]);
+        const userInput = ref(''); const messages = ref([{ role: 'assistant', content: '位置已再次微调，看看舒服了吗？' }]);
 
         const modalTitle = computed(() => ({ config: '参数配置', beauty: '界面美化', preset: '人格预设' }[activeModal.value]));
-
-        // 改名字
         const editName = (side) => {
-            const newName = prompt("起个什么好听的名字呢？", widget.value[side + 'Name']);
+            const newName = prompt("名字改为什么呢？", widget.value[side + 'Name']);
             if (newName) widget.value[side + 'Name'] = newName;
             saveWidget();
         };
-
-        // 改头像（触发相册）
         const handleAvatarClick = (side) => {
             currentEditSide.value = side;
             document.getElementById('avatarPicker').click();
         };
-
-        // 处理相册选图
         const onPhotoSelected = (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -141,20 +133,17 @@ createApp({
             };
             reader.readAsDataURL(file);
         };
-
         const editSign = () => {
             const s = prompt("想换什么签名？", widget.value.signature);
             if (s) widget.value.signature = s;
             saveWidget();
         };
-
         const saveWidget = () => { localStorage.setItem('widget_v5', JSON.stringify(widget.value)); };
         const save = () => { 
             localStorage.setItem('ai_config_v4', JSON.stringify(config.value)); 
             document.getElementById('user-custom-css').innerHTML = config.value.beautyCss + config.value.presetCss;
             activeModal.value = null; 
         };
-
         const sendMsg = async () => {
             if (!userInput.value) return;
             messages.value.push({ role: 'user', content: userInput.value });
@@ -167,7 +156,7 @@ createApp({
                 });
                 const data = await res.json();
                 messages.value.push({ role: 'assistant', content: data.choices[0].message.content });
-            } catch (e) { messages.value.push({ role: 'assistant', content: '宝宝，API没设置好哦～' }); }
+            } catch (e) { messages.value.push({ role: 'assistant', content: 'API未就绪哦～' }); }
         };
 
         onMounted(() => {
