@@ -42,8 +42,8 @@
         .msg-ai { background: #ffffff; align-self: flex-start; margin-left: 12px; }
         .msg-ai::before { content: ''; position: absolute; left: -5px; top: 12px; border-right: 6px solid #ffffff; border-top: 6px solid transparent; border-bottom: 6px solid transparent; }
         
-        /* 通用列表样式 */
-        .cell-item { background: white; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 0.5px solid #f0f0f0; active: background: #f5f5f5; }
+        .cell-item { background: white; padding: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 0.5px solid #f0f0f0; }
+        .cell-item:active { background: #f5f5f5; }
         .cell-item:last-child { border-bottom: none; }
     </style>
 </head>
@@ -83,14 +83,15 @@
     </div>
 
     <div v-if="chatVisible" class="wechat-app">
-        <div class="wechat-header" v-if="activeTab !== 'me'">
-            <button @click="chatVisible = false" class="text-[#1a1a1a] pb-1">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-            </button>
+        <div class="wechat-header">
+            <div class="w-8 flex">
+                <button v-if="activeTab === 'contacts'" @click="chatVisible = false" class="text-[#1a1a1a] pb-1">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+            </div>
             <span class="font-bold text-[17px] pb-1">{{ navTitle }}</span>
             <div class="w-8 flex justify-end pb-1">
                 <span v-if="activeTab === 'contacts'" @click="addFriend" class="text-2xl leading-none">+</span>
-                <span v-else class="w-6"></span>
             </div>
         </div>
 
@@ -128,35 +129,28 @@
             </div>
 
             <div v-if="activeTab === 'me'" class="bg-[#ededed] h-full">
-                <button @click="chatVisible = false" class="absolute top-12 left-4 z-10 text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                </button>
-                
-                <div class="bg-white p-8 pt-16 flex items-center gap-4">
+                <div class="bg-white p-8 pt-12 flex items-center gap-4">
                     <img :src="widget.rightAvatar" @click="handleAvatarClick('right')" class="w-16 h-16 rounded-lg object-cover bg-gray-100 border cursor-pointer">
                     <div class="flex-1">
-                        <div @click="editName('right')" class="text-xl font-bold flex items-center gap-1">{{ widget.rightName }} <span class="text-xs font-normal text-gray-400">✎</span></div>
-                        <div @click="editWxId" class="text-gray-500 text-sm mt-1 flex items-center gap-1">微信号：{{ widget.wxId || 'AI_Habibi' }} <span class="text-xs text-gray-400">✎</span></div>
+                        <div @click="editName('right')" class="text-xl font-bold flex items-center gap-1">{{ widget.rightName }}</div>
+                        <div @click="editWxId" class="text-gray-500 text-sm mt-1">微信号：{{ widget.wxId || 'AI_Habibi' }}</div>
                     </div>
                 </div>
 
                 <div class="mt-3">
                     <div class="cell-item" @click="alert('开启钱包')">
-                        <div class="flex items-center gap-3">🧧 <span>钱包</span></div>
+                        <span>钱包</span>
                         <span class="text-gray-400">〉</span>
                     </div>
                 </div>
 
                 <div class="mt-3">
                     <div class="cell-item" @click="editSign">
-                        <div class="flex items-center gap-3">📋 <span>个人资料 (签名)</span></div>
+                        <span>个人资料</span>
                         <span class="text-gray-400">〉</span>
                     </div>
-                </div>
-
-                <div class="mt-3">
                     <div class="cell-item">
-                        <div class="flex items-center gap-3">⚙️ <span>设置</span></div>
+                        <span>设置</span>
                         <span class="text-gray-400">〉</span>
                     </div>
                 </div>
@@ -203,11 +197,11 @@ createApp({
         const activeTab = ref('chat');
         const activeModal = ref(null);
         const userInput = ref('');
-        const messages = ref([{ role: 'assistant', content: '收到短信请回复哦，雨～' }]);
+        const messages = ref([{ role: 'assistant', content: '收到短信请回复哦，雨。' }]);
         const currentEditSide = ref('');
 
         const navTitle = computed(() => {
-            return { chat: '短信', contacts: '好友', discover: '朋友圈', me: '个人中心' }[activeTab.value];
+            return { chat: '短信', contacts: '好友', discover: '朋友圈', me: '我' }[activeTab.value];
         });
 
         const modalTitle = computed(() => ({ config: '参数配置', beauty: '界面美化', preset: '人格预设' }[activeModal.value]));
@@ -278,7 +272,7 @@ createApp({
                     headers: { 'Authorization': `Bearer ${config.value.apiKey}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         model: config.value.model, 
-                        messages: [{role:'system', content:'你现在是一个短信助手，对方叫雨，回复要简练，语气亲切。'}, ...messages.value.slice(-5)] 
+                        messages: [{role:'system', content:'你现在是一个短信助手，对方叫雨，回复简练、语气正式。'}, ...messages.value.slice(-5)] 
                     })
                 });
                 const data = await res.json();
@@ -286,7 +280,7 @@ createApp({
                 await nextTick();
                 if(box) box.scrollTop = box.scrollHeight;
             } catch (e) { 
-                messages.value.push({ role: 'assistant', content: '短信发送失败，请检查设置。' }); 
+                messages.value.push({ role: 'assistant', content: '短信发送失败。' }); 
             }
         };
 
