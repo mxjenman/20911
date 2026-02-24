@@ -7,7 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 基础样式：桌面环境 */
+        /* 基础全屏设置 */
         html, body, #app { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
         
         .desktop { 
@@ -19,7 +19,7 @@
             z-index: 1;
         }
 
-        /* 小组件 - 保持你的黄金坐标 (上移至 15px) */
+        /* 小组件 - 保持黄金坐标 (15px) */
         .widget-card { 
             margin: 15px 20px 0; padding: 22px; border-radius: 28px;
             backdrop-filter: blur(20px); border: 1.5px solid rgba(255,255,255,0.3);
@@ -28,7 +28,7 @@
         .dark-mode .widget-card { background: rgba(30, 30, 32, 0.9); color: #fff; }
         .avatar-img { width: 64px; height: 64px; border-radius: 50%; border: 3px solid #fff; object-fit: cover; background: #eee; }
 
-        /* 底部 Dock - 保持你的黄金坐标 (下移至 -12px) */
+        /* 底部 Dock - 保持黄金坐标 (-12px) */
         .dock { 
             position: absolute; 
             bottom: calc(-12px + env(safe-area-inset-bottom)); 
@@ -38,39 +38,39 @@
             border: 1px solid rgba(255,255,255,0.25); z-index: 100;
         }
 
-        /* 【核心修复】模拟真手机 App：100% 遮盖，不透一丝缝隙 */
+        /* 【核心修复】全屏 App 容器 */
         .full-page {
-            position: fixed; 
-            top: 0; left: 0; 
-            width: 100vw; height: 100vh; /* 强制铺满全屏 */
-            z-index: 9999; /* 必须在最最最前面 */
-            transform: translateY(100%); 
-            transition: transform 0.35s ease-out;
-            display: flex; flex-direction: column;
-            visibility: hidden; /* 未激活时完全隐藏 */
+            position: fixed; inset: 0; width: 100vw; height: 100vh;
+            z-index: 9999; transform: translateY(100%); 
+            transition: transform 0.3s ease-out;
+            visibility: hidden;
         }
-        .full-page.active { 
-            transform: translateY(0); 
-            visibility: visible;
+        .full-page.active { transform: translateY(0); visibility: visible; }
+
+        /* 私聊 App 特殊处理：直接展示你的截图 */
+        .chat-page {
+            background: #ededed; /* 微信底色 */
+        }
+        .chat-screenshot {
+            width: 100%; height: 100%;
+            object-fit: cover; /* 保证图片铺满且不变形 */
         }
 
-        /* 纯色背景：日间模式点开就是纯白，夜间点开就是纯黑 */
-        .day-mode .full-page { background: #FFFFFF !important; color: #000; }
-        .dark-mode .full-page { background: #000000 !important; color: #FFF; }
-
-        /* 内部列表样式 */
-        .list-group { margin: 0 16px; border-radius: 16px; overflow: hidden; }
-        .list-item { 
-            padding: 20px; display: flex; justify-content: space-between; align-items: center; 
-            border-bottom: 1px solid rgba(0,0,0,0.05);
+        /* 退出按钮：在图片上浮动一个返回按钮，方便你退出来 */
+        .back-btn {
+            position: absolute; top: 60px; left: 20px;
+            background: rgba(0,0,0,0.2); color: white;
+            padding: 8px 16px; border-radius: 20px; font-weight: bold;
+            z-index: 10001;
         }
-        .day-mode .list-item { background: #f2f2f7; }
-        .dark-mode .list-item { background: #1c1c1e; border-color: rgba(255,255,255,0.05); }
 
-        .nav-header { 
-            padding: calc(50px + env(safe-area-inset-top)) 24px 25px; 
-            display: flex; justify-content: space-between; align-items: center; 
-        }
+        /* 外观设置页面：纯实色不透明 */
+        .setting-page { display: flex; flex-direction: column; }
+        .day-mode .setting-page { background: #FFFFFF !important; color: #000; }
+        .dark-mode .setting-page { background: #000000 !important; color: #FFF; }
+        .nav-header { padding: calc(50px + env(safe-area-inset-top)) 24px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .list-item { background: #f2f2f7; padding: 20px; margin: 0 16px 1px; display: flex; justify-content: space-between; align-items: center; border-radius: 12px; }
+        .dark-mode .list-item { background: #1c1c1e; }
     </style>
 </head>
 <body>
@@ -92,53 +92,41 @@
         </div>
 
         <div class="px-10 py-10 flex gap-10">
-            <div @click="activePage = 'chat'" class="flex flex-col items-center active:scale-90 transition-all">
+            <div @click="activePage = 'chat'" class="flex flex-col items-center">
                 <div class="w-16 h-16 bg-[#07c160] rounded-2xl flex items-center justify-center text-3xl shadow-xl">💬</div>
                 <span class="text-white text-xs mt-2 font-bold drop-shadow-md">私聊</span>
             </div>
-            <div @click="activePage = 'appearance'" class="flex flex-col items-center active:scale-90 transition-all">
+            <div @click="activePage = 'appearance'" class="flex flex-col items-center">
                 <div class="w-16 h-16 bg-gradient-to-br from-pink-400 to-orange-400 rounded-2xl flex items-center justify-center text-3xl shadow-xl">🎨</div>
                 <span class="text-white text-xs mt-2 font-bold drop-shadow-md">外观设置</span>
             </div>
         </div>
 
         <div class="dock">
-            <div @click="activePage = 'config'" class="flex flex-col items-center"><span class="text-2xl">⚙️</span><span class="text-[10px] mt-1 font-black opacity-60">设置</span></div>
-            <div @click="activePage = 'beauty'" class="flex flex-col items-center"><span class="text-2xl">✨</span><span class="text-[10px] mt-1 font-black opacity-60">美化</span></div>
-            <div @click="activePage = 'preset'" class="flex flex-col items-center"><span class="text-2xl">✍️</span><span class="text-[10px] mt-1 font-black opacity-60">预设</span></div>
+            <div @click="activePage = 'config'" class="flex flex-col items-center"><span class="text-2xl">⚙️</span><span class="text-[10px] mt-1 font-black">设置</span></div>
+            <div @click="activePage = 'beauty'" class="flex flex-col items-center"><span class="text-2xl">✨</span><span class="text-[10px] mt-1 font-black">美化</span></div>
+            <div @click="activePage = 'preset'" class="flex flex-col items-center"><span class="text-2xl">✍️</span><span class="text-[10px] mt-1 font-black">预设</span></div>
         </div>
     </div>
 
-    <div v-for="p in ['appearance', 'chat', 'config', 'beauty', 'preset']" :key="p" class="full-page" :class="{'active': activePage === p}">
+    <div class="full-page chat-page" :class="{'active': activePage === 'chat'}">
+        <div class="back-btn" @click="activePage = null">返回桌面</div>
+        <img src="https://test.fukit.cn/autoupload/fr/PUOzIkT_hEAqz4elPzgm9kg93R44cerOKVobYyu6bmqyl5f0KlZfm6UsKj-HyTuv/20260224/lNRu/1206X2622/IMG_2906.jpeg" class="chat-screenshot">
+    </div>
+
+    <div class="full-page setting-page" :class="{'active': activePage === 'appearance'}">
         <div class="nav-header">
-            <h2 class="text-3xl font-black">{{ {appearance:'外观设置',chat:'私聊',config:'设置中心',beauty:'界面美化',preset:'人格预设'}[p] }}</h2>
-            <button @click="activePage = null" class="bg-blue-500 text-white px-6 py-2 rounded-full font-bold shadow-md active:bg-blue-600">完成</button>
+            <h2 class="text-3xl font-black">外观设置</h2>
+            <button @click="activePage = null" class="bg-blue-500 text-white px-6 py-2 rounded-full font-bold">完成</button>
         </div>
-        
-        <div class="flex-1 overflow-y-auto pt-2">
-            <div class="list-group" v-if="p === 'appearance'">
-                <div class="list-item" @click="toggleDark">
-                    <span class="font-bold">夜间模式</span>
-                    <div :class="isDark ? 'bg-green-500' : 'bg-gray-300'" class="w-12 h-6 rounded-full relative transition-all">
-                        <div :class="isDark ? 'translate-x-6' : 'translate-x-1'" class="absolute top-1 w-4 h-4 bg-white rounded-full transition-all"></div>
-                    </div>
-                </div>
-                <div class="list-item" @click="pickBg">
-                    <span class="font-bold">更换桌面背景</span>
-                    <span class="text-blue-500 font-medium">相册 〉</span>
-                </div>
-            </div>
-            
-            <div v-else class="flex flex-col items-center justify-center mt-20 px-10">
-                <div class="w-24 h-24 bg-gray-100 dark:bg-zinc-900 rounded-full flex items-center justify-center text-5xl mb-6">⚙️</div>
-                <p class="font-bold text-lg opacity-40">此功能正在连接服务器...</p>
-                <p class="text-xs opacity-20 mt-2">v1.0.15 Stable Build</p>
+        <div class="list-item" @click="toggleDark">
+            <span class="font-bold">夜间模式</span>
+            <div :class="isDark ? 'bg-green-500' : 'bg-gray-300'" class="w-12 h-6 rounded-full relative transition-all">
+                <div :class="isDark ? 'translate-x-6' : 'translate-x-1'" class="absolute top-1 w-4 h-4 bg-white rounded-full"></div>
             </div>
         </div>
     </div>
 
-    <input type="file" id="bgInput" style="display:none" @change="onFileChange($event, 'bg')">
-    <input type="file" id="avatarInput" style="display:none" @change="onFileChange($event, 'avatar')">
 </div>
 
 <script>
@@ -153,39 +141,19 @@ createApp({
             rightName: '萌', rightAvatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png',
             signature: '卖萌偶尔失手 嘴甜从未出错 =￣ω￣='
         });
-        let curSide = 'left';
 
-        const toggleDark = () => { isDark.value = !isDark.value; localStorage.setItem('dark_v15', isDark.value); };
+        const toggleDark = () => { isDark.value = !isDark.value; localStorage.setItem('dark_v16', isDark.value); };
         const pickBg = () => document.getElementById('bgInput').click();
-        const pickAvatar = (s) => { curSide = s; document.getElementById('avatarInput').click(); };
-        const editName = (s) => { const n = prompt("名字", widget.value[s+'Name']); if(n) widget.value[s+'Name']=n; save(); };
-        const editSign = () => { const s = prompt("签名", widget.value.signature); if(s) widget.value.signature=s; save(); };
-
-        const onFileChange = (e, type) => {
-            const file = e.target.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                if(type === 'bg') customBg.value = ev.target.result;
-                else widget.value[curSide+'Avatar'] = ev.target.result;
-                save();
-            };
-            reader.readAsDataURL(file);
-        };
-
         const save = () => {
-            localStorage.setItem('bg_v15', customBg.value);
-            localStorage.setItem('widget_v15', JSON.stringify(widget.value));
+            localStorage.setItem('bg_v16', customBg.value);
+            localStorage.setItem('widget_v16', JSON.stringify(widget.value));
         };
-
         onMounted(() => {
-            isDark.value = localStorage.getItem('dark_v15') === 'true';
-            customBg.value = localStorage.getItem('bg_v15') || '';
-            const w = localStorage.getItem('widget_v15');
-            if(w) widget.value = JSON.parse(w);
+            isDark.value = localStorage.getItem('dark_v16') === 'true';
+            customBg.value = localStorage.getItem('bg_v16') || '';
+            const w = localStorage.getItem('widget_v16'); if(w) widget.value = JSON.parse(w);
         });
-
-        return { activePage, isDark, customBg, widget, toggleDark, pickBg, pickAvatar, onFileChange, editName, editSign };
+        return { activePage, isDark, customBg, widget, toggleDark };
     }
 }).mount('#app');
 </script>
