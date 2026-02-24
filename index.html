@@ -34,8 +34,7 @@
         
         /* 底部纯文字导航栏 */
         .wechat-nav { height: 60px; background: #f7f7f7; border-top: 0.5px solid #ddd; display: flex; justify-content: space-around; align-items: center; padding-bottom: env(safe-area-inset-bottom); }
-        
-        /* 只有字往下挪 3px */
+        /* 文字向下挪动 3px */
         .nav-item { flex: 1; height: 100%; display: flex; justify-content: center; align-items: center; font-size: 16px; font-weight: 500; color: #1a1a1a; transition: all 0.2s; padding-top: 3px; }
         .nav-item.active { color: #07c160; font-weight: 800; }
 
@@ -239,7 +238,7 @@ createApp({
                     headers: { 'Authorization': `Bearer ${config.value.apiKey}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         model: config.value.model, 
-                        messages: [{role:'system', content:'你现在是一个短信助手，回复要简练。'}, ...messages.value.slice(-5)] 
+                        messages: [{role:'system', content:'你现在是一个短信助手，回复要简练，语气稍微亲切一点。'}, ...messages.value.slice(-5)] 
                     })
                 });
                 const data = await res.json();
@@ -247,7 +246,7 @@ createApp({
                 await nextTick();
                 if(box) box.scrollTop = box.scrollHeight;
             } catch (e) { 
-                messages.value.push({ role: 'assistant', content: '短信发送失败。' }); 
+                messages.value.push({ role: 'assistant', content: '短信发送失败，请检查网络。' }); 
             }
         };
 
