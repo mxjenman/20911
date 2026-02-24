@@ -45,7 +45,6 @@
         .cell-item { background: white; padding: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 0.5px solid #f0f0f0; }
         .cell-item:active { background: #f5f5f5; }
 
-        /* 长按菜单 */
         .context-menu { position: fixed; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-radius: 12px; width: 120px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 300; overflow: hidden; }
         .menu-item { padding: 12px; text-align: center; border-bottom: 0.5px solid #eee; font-size: 14px; }
         .menu-item:last-child { border-bottom: none; color: #ff3b30; }
@@ -97,7 +96,12 @@
                 </button>
             </div>
             <span class="font-bold text-[17px] pb-1">{{ currentChatPartner ? currentChatPartner.name : navTitle }}</span>
-            <div class="w-8 flex justify-end pb-1"></div>
+            <div class="w-8 flex justify-end">
+                <button v-if="activeTab === 'contacts' && !currentChatPartner" @click="activeModal = 'addFriend'" class="text-[#1a1a1a] pb-1 text-2xl font-light">
+                    ＋
+                </button>
+                <div v-else class="w-6"></div>
+            </div>
         </div>
 
         <div class="wechat-content">
@@ -171,16 +175,25 @@
 
     <div v-if="activeModal" class="fixed inset-0 bg-black/40 z-[200] flex items-end" @click.self="activeModal = null">
         <div class="bg-white w-full rounded-t-[30px] p-6 pb-12">
-            <div class="flex justify-between items-center mb-6"><h3 class="font-extrabold">{{modalTitle}}</h3><button @click="activeModal = null">✕</button></div>
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-extrabold">{{modalTitle}}</h3>
+                <button @click="activeModal = null">✕</button>
+            </div>
+            
             <div v-if="activeModal==='config'" class="space-y-4">
                 <input v-model="config.baseUrl" placeholder="API 地址" class="w-full p-4 bg-gray-50 rounded-2xl border-none text-sm">
                 <input v-model="config.apiKey" type="password" placeholder="API Key" class="w-full p-4 bg-gray-50 rounded-2xl border-none text-sm">
                 <input v-model="config.model" placeholder="模型名称" class="w-full p-4 bg-gray-50 rounded-2xl border-none text-sm">
+                <button @click="save" class="w-full bg-black text-white py-4 rounded-2xl mt-6 font-bold shadow-lg">保存并应用</button>
             </div>
-            <div v-else class="space-y-3">
+            
+            <div v-else-if="activeModal==='beauty' || activeModal==='preset'" class="space-y-3">
                 <textarea v-model="activeModal==='beauty'?config.beautyCss:config.presetCss" rows="6" class="w-full p-4 bg-gray-50 rounded-2xl border-none font-mono text-xs"></textarea>
+                <button @click="save" class="w-full bg-black text-white py-4 rounded-2xl mt-6 font-bold shadow-lg">保存并应用</button>
             </div>
-            <button @click="save" class="w-full bg-black text-white py-4 rounded-2xl mt-6 font-bold shadow-lg">保存并应用</button>
+
+            <div v-else-if="activeModal==='addFriend'" class="min-h-[200px]">
+                </div>
         </div>
     </div>
 </div>
@@ -203,7 +216,6 @@ createApp({
         const userInput = ref('');
         const currentEditSide = ref('');
 
-        // 好友数据
         const friendsList = ref([
             { id: 'left', name: '雨雨雨～', avatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png', isTop: false },
             { id: 'ai', name: '哈吉米宝宝', avatar: 'https://test.fukit.cn/autoupload/fr/PUOzIkT_hEAqz4elPzgm9kg93R44cerOKVobYyu6bmqyl5f0KlZfm6UsKj-HyTuv/20260224/IR8x/1206X1168/IMG_2714.jpeg', isTop: false }
@@ -229,7 +241,12 @@ createApp({
         });
 
         const navTitle = computed(() => ({ contacts: '好友', discover: '朋友圈', me: '我' }[activeTab.value]));
-        const modalTitle = computed(() => ({ config: '参数配置', beauty: '界面美化', preset: '人格预设' }[activeModal.value]));
+        const modalTitle = computed(() => ({ 
+            config: '参数配置', 
+            beauty: '界面美化', 
+            preset: '人格预设',
+            addFriend: '添加新角色' 
+        }[activeModal.value]));
 
         const openWechat = () => { chatVisible.value = true; activeTab.value = 'contacts'; currentChatPartner.value = null; };
         
@@ -240,7 +257,6 @@ createApp({
             nextTick(() => { const box = document.getElementById('msg-box'); if(box) box.scrollTop = box.scrollHeight; });
         };
 
-        // 长按逻辑
         const handleTouchStart = (e, f) => {
             longPressTimer = setTimeout(() => {
                 selectedFriend.value = f;
@@ -259,11 +275,7 @@ createApp({
         const handleMouseUp = () => clearTimeout(longPressTimer);
         const closeMenu = () => showMenu.value = false;
 
-        const toggleTop = () => {
-            selectedFriend.value.isTop = !selectedFriend.value.isTop;
-            showMenu.value = false;
-        };
-
+        const toggleTop = () => { selectedFriend.value.isTop = !selectedFriend.value.isTop; showMenu.value = false; };
         const deleteFriend = () => {
             if(confirm(`确定删除 ${selectedFriend.value.name}？`)) {
                 friendsList.value = friendsList.value.filter(f => f.id !== selectedFriend.value.id);
@@ -275,17 +287,14 @@ createApp({
             const newName = prompt("编辑名字：", widget.value[side + 'Name']);
             if (newName) { widget.value[side + 'Name'] = newName; saveWidget(); }
         };
-
         const editWxId = () => {
             const newId = prompt("编辑微信号：", widget.value.wxId);
             if (newId) { widget.value.wxId = newId; saveWidget(); }
         };
-
         const handleAvatarClick = (side) => {
             currentEditSide.value = side;
             document.getElementById('avatarPicker').click();
         };
-
         const onPhotoSelected = (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -296,14 +305,11 @@ createApp({
             };
             reader.readAsDataURL(file);
         };
-
         const editSign = () => {
             const s = prompt("编辑个人签名：", widget.value.signature);
             if (s) { widget.value.signature = s; saveWidget(); }
         };
-
         const saveWidget = () => { localStorage.setItem('widget_v5', JSON.stringify(widget.value)); };
-        
         const save = () => { 
             localStorage.setItem('ai_config_v4', JSON.stringify(config.value)); 
             const styleEl = document.getElementById('user-custom-css');
@@ -316,11 +322,9 @@ createApp({
             const partnerId = currentChatPartner.value.id;
             chatHistory.value[partnerId].push({ role: 'user', content: userInput.value });
             const input = userInput.value; userInput.value = '';
-            
             await nextTick();
             const box = document.getElementById('msg-box');
             if(box) box.scrollTop = box.scrollHeight;
-
             try {
                 const res = await fetch(`${config.value.baseUrl}/chat/completions`, {
                     method: 'POST',
@@ -334,16 +338,13 @@ createApp({
                 chatHistory.value[partnerId].push({ role: 'assistant', content: data.choices[0].message.content });
                 await nextTick();
                 if(box) box.scrollTop = box.scrollHeight;
-            } catch (e) { 
-                chatHistory.value[partnerId].push({ role: 'assistant', content: '发送失败。' }); 
-            }
+            } catch (e) { chatHistory.value[partnerId].push({ role: 'assistant', content: '发送失败。' }); }
         };
 
         onMounted(() => {
             const s = localStorage.getItem('ai_config_v4'); if (s) config.value = JSON.parse(s);
             const w = localStorage.getItem('widget_v5'); if (w) widget.value = JSON.parse(w);
             save();
-            // 同步左侧好友名字
             friendsList.value[0].name = widget.value.leftName;
             friendsList.value[0].avatar = widget.value.leftAvatar;
         });
