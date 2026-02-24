@@ -3,177 +3,184 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AI 桌面</title>
+    <title>微信助手</title>
     
     <link rel="apple-touch-icon" href="https://test.fukit.cn/autoupload/fr/PUOzIkT_hEAqz4elPzgm9kg93R44cerOKVobYyu6bmqyl5f0KlZfm6UsKj-HyTuv/20260224/IR8x/1206X1168/IMG_2714.jpeg">
     <link rel="icon" type="image/jpeg" href="https://test.fukit.cn/autoupload/fr/PUOzIkT_hEAqz4elPzgm9kg93R44cerOKVobYyu6bmqyl5f0KlZfm6UsKj-HyTuv/20260224/IR8x/1206X1168/IMG_2714.jpeg">
-    <meta name="apple-mobile-web-app-title" content="我的桌面">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
     <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style id="user-custom-css">/* 用户美化注入 */</style>
     <style>
-        :root { --bg-image: url('https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2070'); }
-        body { margin: 0; font-family: -apple-system, sans-serif; height: 100svh; overflow: hidden; background: #000; }
-        .phone-screen { width: 100%; height: 100%; background: var(--bg-image) no-repeat center center; background-size: cover; position: relative; display: flex; flex-direction: column; padding-bottom: env(safe-area-inset-bottom); }
-
-        /* 组件位置：已往上挪 10px (29px -> 19px) */
-        .widget-card { 
-            background: rgba(255, 255, 255, 0.85); 
-            backdrop-filter: blur(15px); 
-            border-radius: 30px; 
-            margin: 19px 20px 10px; 
-            padding: 18px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            border: 1px solid rgba(255,255,255,0.3);
-        }
-        .avatar-wrap { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
-        .avatar-img { width: 62px; height: 62px; border-radius: 50%; border: 2.5px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); object-fit: cover; background: #eee; }
-        .name-tag { background: #fff; padding: 2px 14px; border-radius: 12px; font-size: 13px; font-weight: 800; margin-bottom: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); position: relative; color: #333; }
-        .name-tag::after { content: ''; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 5px solid #fff; }
-
-        /* Dock位置：已往下挪 20px (10px -> -10px) */
-        .dock { position: absolute; bottom: calc(-10px + env(safe-area-inset-bottom)); left: 20px; right: 20px; height: 75px; background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(30px); border-radius: 30px; display: flex; justify-content: space-around; align-items: center; border: 1px solid rgba(255,255,255,0.25); }
+        body { margin: 0; font-family: -apple-system, sans-serif; background: #ededed; height: 100vh; overflow: hidden; }
+        #app { height: 100%; display: flex; flex-direction: column; }
         
-        .chat-window { position: fixed; inset: 0; background: #ededed; z-index: 100; display: flex; flex-direction: column; padding-bottom: env(safe-area-inset-bottom); }
-        .msg-bubble { max-width: 75%; padding: 10px 14px; border-radius: 12px; font-size: 16px; margin: 4px 0; }
-        .msg-user { background: #95ec69; align-self: flex-end; margin-right: 10px; }
-        .msg-ai { background: #ffffff; align-self: flex-start; margin-left: 10px; }
+        /* 顶部标题栏 */
+        .nav-header { height: 44px; background: #ededed; display: flex; align-items: center; justify-content: center; font-weight: 600; border-bottom: 0.5px solid #ddd; flex-shrink: 0; }
+        
+        /* 内容区域 */
+        .main-content { flex: 1; overflow-y: auto; padding-bottom: 20px; }
+        
+        /* 底部导航栏 */
+        .tab-bar { 
+            height: 56px; background: #f7f7f7; border-top: 0.5px solid #ccc; 
+            display: flex; justify-content: space-around; align-items: center;
+            padding-bottom: env(safe-area-inset-bottom); flex-shrink: 0;
+        }
+        .tab-item { display: flex; flex-direction: column; align-items: center; color: #1a1a1a; font-size: 10px; }
+        .tab-item.active { color: #07c160; }
+        .tab-icon { width: 24px; height: 24px; margin-bottom: 2px; }
+
+        /* 微信列表样式 */
+        .cell { background: white; display: flex; align-items: center; padding: 12px 16px; border-bottom: 0.5px solid #eee; }
+        .cell:active { background: #f2f2f2; }
+        .cell-img { width: 48px; height: 48px; border-radius: 6px; margin-right: 12px; }
+        
+        /* 朋友圈封面 */
+        .moments-header { height: 300px; background: #333; position: relative; margin-bottom: 40px; }
+        .moments-bg { width: 100%; height: 100%; object-fit: cover; }
+        .moments-user { position: absolute; right: 12px; bottom: -20px; display: flex; align-items: center; color: white; }
+        .moments-avatar { width: 64px; height: 64px; border-radius: 8px; border: 2px solid white; margin-left: 12px; }
+
+        /* 聊天窗口全屏 */
+        .chat-view { position: fixed; inset: 0; background: #ededed; z-index: 100; display: flex; flex-direction: column; }
+        .msg-bubble { max-width: 70%; padding: 10px; border-radius: 6px; font-size: 15px; margin: 8px 12px; position: relative; }
+        .msg-user { background: #95ec69; align-self: flex-end; }
+        .msg-ai { background: #ffffff; align-self: flex-start; }
     </style>
 </head>
 <body>
-<div id="app" class="phone-screen">
-    <input type="file" id="avatarPicker" accept="image/*" style="display: none" @change="onPhotoSelected">
-
-    <div class="widget-card">
-        <div class="flex gap-6 mb-3 px-2">
-            <div class="avatar-wrap" @click="handleAvatarClick('left')">
-                <div class="name-tag" @click.stop="editName('left')">{{ widget.leftName }}</div>
-                <img :src="widget.leftAvatar" class="avatar-img">
+<div id="app">
+    <template v-if="!inChat">
+        <div class="nav-header">{{ titles[currentTab] }}</div>
+        
+        <div class="main-content">
+            <div v-if="currentTab === 'wechat'">
+                <div class="cell" @click="enterChat">
+                    <img :src="widget.leftAvatar" class="cell-img">
+                    <div class="flex-1">
+                        <div class="flex justify-between"><span class="font-medium text-lg">{{widget.leftName}}</span><span class="text-xs text-gray-400">10:05</span></div>
+                        <div class="text-sm text-gray-400 truncate w-64">{{messages[messages.length-1].content}}</div>
+                    </div>
+                </div>
             </div>
-            <div class="avatar-wrap" @click="handleAvatarClick('right')">
-                <div class="name-tag" @click.stop="editName('right')">{{ widget.rightName }}</div>
-                <img :src="widget.rightAvatar" class="avatar-img">
+
+            <div v-if="currentTab === 'contacts'">
+                <div class="text-[10px] px-4 py-1 text-gray-500">我的好友</div>
+                <div class="cell" v-for="i in 3">
+                    <img src="https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png" class="cell-img">
+                    <span>示例好友 {{i}}</span>
+                </div>
+            </div>
+
+            <div v-if="currentTab === 'discovery'">
+                <div class="moments-header">
+                    <img src="https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80" class="moments-bg">
+                    <div class="moments-user">
+                        <span class="font-bold text-shadow">我</span>
+                        <img :src="widget.rightAvatar" class="moments-avatar">
+                    </div>
+                </div>
+                <div class="bg-white p-4 mb-2">
+                    <div class="flex gap-3">
+                        <img :src="widget.leftAvatar" class="w-10 h-10 rounded">
+                        <div class="flex-1">
+                            <div class="text-blue-600 font-bold mb-1">{{widget.leftName}}</div>
+                            <div class="text-black mb-2">{{widget.signature}}</div>
+                            <div class="text-xs text-gray-400">1小时前</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="currentTab === 'me'">
+                <div class="bg-white p-6 flex items-center mb-2">
+                    <img :src="widget.rightAvatar" class="w-16 h-16 rounded-lg mr-4">
+                    <div>
+                        <div class="text-xl font-bold">{{widget.rightName}}</div>
+                        <div class="text-gray-400 text-sm">微信号：ai_user_888</div>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="cell bg-white mt-2"><span>支付</span></div>
+                    <div class="cell bg-white mt-2"><span>收藏</span></div>
+                    <div class="cell bg-white"><span>相册</span></div>
+                    <div class="cell bg-white mt-2" @click="showSettings"><span>设置</span></div>
+                </div>
             </div>
         </div>
-        <div class="w-full text-right pr-2" @click="editSign">
-            <p class="text-gray-500 text-[12px] font-bold tracking-tight italic">{{ widget.signature }}</p>
-        </div>
-    </div>
 
-    <div class="px-10 py-6">
-        <div @click="chatVisible = true" class="flex flex-col items-center w-14 active:scale-90 transition-all">
-            <div class="w-14 h-14 bg-gradient-to-br from-[#09d36a] to-[#07c160] rounded-2xl flex items-center justify-center shadow-lg">
-                <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+        <div class="tab-bar">
+            <div class="tab-item" :class="{active: currentTab==='wechat'}" @click="currentTab='wechat'">
+                <div class="text-2xl">💬</div><span>微信</span>
             </div>
-            <span class="text-white text-[10px] mt-2 font-bold shadow-sm">私聊</span>
+            <div class="tab-item" :class="{active: currentTab==='contacts'}" @click="currentTab='contacts'">
+                <div class="text-2xl">👥</div><span>通讯录</span>
+            </div>
+            <div class="tab-item" :class="{active: currentTab==='discovery'}" @click="currentTab='discovery'">
+                <div class="text-2xl">🧭</div><span>发现</span>
+            </div>
+            <div class="tab-item" :class="{active: currentTab==='me'}" @click="currentTab='me'">
+                <div class="text-2xl">👤</div><span>我</span>
+            </div>
         </div>
-    </div>
+    </template>
 
-    <div class="dock">
-        <div @click="activeModal = 'config'" class="flex flex-col items-center"><span class="text-2xl">⚙️</span><span class="text-[9px] mt-1 font-extrabold text-gray-800">设置</span></div>
-        <div @click="activeModal = 'beauty'" class="flex flex-col items-center"><span class="text-2xl">✨</span><span class="text-[9px] mt-1 font-extrabold text-gray-800">美化</span></div>
-        <div @click="activeModal = 'preset'" class="flex flex-col items-center"><span class="text-2xl">✍️</span><span class="text-[9px] mt-1 font-extrabold text-gray-800">预设</span></div>
-    </div>
-
-    <div v-if="chatVisible" class="chat-window">
-        <div class="h-16 bg-gray-100 flex items-end justify-between px-4 pb-3 border-b border-gray-200">
-            <button @click="chatVisible = false" class="text-blue-600 text-sm font-bold">返回</button>
-            <span class="font-bold">智友</span><div class="w-10"></div>
+    <div v-else class="chat-view">
+        <div class="nav-header border-b">
+            <button @click="inChat = false" class="absolute left-4 text-lg">〈</button>
+            <span>{{widget.leftName}}</span>
         </div>
-        <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-2" id="msg-box">
+        <div class="flex-1 overflow-y-auto p-2 flex flex-col" id="msg-box">
             <div v-for="m in messages" :class="['msg-bubble', m.role==='user'?'msg-user':'msg-ai']">{{m.content}}</div>
         </div>
-        <div class="p-3 bg-white border-t flex gap-2 pb-10">
-            <input v-model="userInput" @keyup.enter="sendMsg" placeholder="发消息..." class="flex-1 bg-gray-100 p-2.5 rounded-xl text-sm border-none outline-none">
-            <button @click="sendMsg" class="bg-[#07c160] text-white px-5 rounded-xl text-sm font-bold">发送</button>
-        </div>
-    </div>
-
-    <div v-if="activeModal" class="fixed inset-0 bg-black/40 z-[200] flex items-end" @click.self="activeModal = null">
-        <div class="bg-white w-full rounded-t-[30px] p-6 pb-12">
-            <div class="flex justify-between items-center mb-6"><h3 class="font-extrabold">{{modalTitle}}</h3><button @click="activeModal = null">✕</button></div>
-            <div v-if="activeModal==='config'" class="space-y-4">
-                <input v-model="config.baseUrl" placeholder="API 地址" class="w-full p-4 bg-gray-50 rounded-2xl border-none text-sm">
-                <input v-model="config.apiKey" type="password" placeholder="API Key" class="w-full p-4 bg-gray-50 rounded-2xl border-none text-sm">
-                <input v-model="config.model" placeholder="模型名称" class="w-full p-4 bg-gray-50 rounded-2xl border-none text-sm">
-            </div>
-            <div v-else class="space-y-3">
-                <textarea v-model="activeModal==='beauty'?config.beautyCss:config.presetCss" rows="6" class="w-full p-4 bg-gray-50 rounded-2xl border-none font-mono text-xs"></textarea>
-            </div>
-            <button @click="save" class="w-full bg-black text-white py-4 rounded-2xl mt-6 font-bold shadow-lg">保存并应用</button>
+        <div class="p-2 bg-[#f7f7f7] border-t flex gap-2 pb-8">
+            <input v-model="userInput" @keyup.enter="sendMsg" class="flex-1 bg-white p-2 rounded border-none outline-none">
+            <button @click="sendMsg" class="bg-[#07c160] text-white px-4 py-1 rounded font-medium">发送</button>
         </div>
     </div>
 </div>
 
 <script>
-const { createApp, ref, onMounted, computed } = Vue;
+const { createApp, ref, onMounted } = Vue;
 createApp({
     setup() {
-        const config = ref({ baseUrl: '', apiKey: '', model: 'gpt-4o', beautyCss: '', presetCss: '' });
+        const currentTab = ref('wechat');
+        const inChat = ref(false);
+        const titles = { wechat: '微信', contacts: '通讯录', discovery: '发现', me: '' };
+        
         const widget = ref({
             leftName: '雨雨雨～', leftAvatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png',
             rightName: '哦哦哦～', rightAvatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png',
             signature: '我不想隔着屏幕和你说话'
         });
-        const currentEditSide = ref('');
-        const chatVisible = ref(false); const activeModal = ref(null);
-        const userInput = ref(''); const messages = ref([{ role: 'assistant', content: '图标设置好啦！请删除旧的桌面快捷方式，重新“添加到主屏幕”试试。' }]);
 
-        const modalTitle = computed(() => ({ config: '参数配置', beauty: '界面美化', preset: '人格预设' }[activeModal.value]));
-        const editName = (side) => {
-            const newName = prompt("编辑名称：", widget.value[side + 'Name']);
-            if (newName) widget.value[side + 'Name'] = newName;
-            saveWidget();
-        };
-        const handleAvatarClick = (side) => {
-            currentEditSide.value = side;
-            document.getElementById('avatarPicker').click();
-        };
-        const onPhotoSelected = (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                widget.value[currentEditSide.value + 'Avatar'] = event.target.result;
-                saveWidget();
-            };
-            reader.readAsDataURL(file);
-        };
-        const editSign = () => {
-            const s = prompt("编辑签名：", widget.value.signature);
-            if (s) widget.value.signature = s;
-            saveWidget();
-        };
-        const saveWidget = () => { localStorage.setItem('widget_v5', JSON.stringify(widget.value)); };
-        const save = () => { 
-            localStorage.setItem('ai_config_v4', JSON.stringify(config.value)); 
-            document.getElementById('user-custom-css').innerHTML = config.value.beautyCss + config.value.presetCss;
-            activeModal.value = null; 
-        };
+        const messages = ref([{ role: 'assistant', content: '哈吉米！新界面已经准备好了，去“发现”看看朋友圈吧～' }]);
+        const userInput = ref('');
+
+        const enterChat = () => { inChat.value = true; };
+        
         const sendMsg = async () => {
             if (!userInput.value) return;
             messages.value.push({ role: 'user', content: userInput.value });
-            const input = userInput.value; userInput.value = '';
-            try {
-                const res = await fetch(`${config.value.baseUrl}/chat/completions`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${config.value.apiKey}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ model: config.value.model, messages: [{role:'system', content:'极简回复'}, ...messages.value.slice(-5)] })
-                });
-                const data = await res.json();
-                messages.value.push({ role: 'assistant', content: data.choices[0].message.content });
-            } catch (e) { messages.value.push({ role: 'assistant', content: '连接失败。' }); }
+            const msg = userInput.value;
+            userInput.value = '';
+            
+            // 模拟回复逻辑 (此处可接入您之前的API配置)
+            setTimeout(() => {
+                messages.value.push({ role: 'assistant', content: '收到啦！这是一个仿微信的功能演示。' });
+            }, 500);
         };
 
+        const showSettings = () => { alert('设置功能可以在原主屏点击⚙️进入'); };
+
         onMounted(() => {
-            const s = localStorage.getItem('ai_config_v4'); if (s) config.value = JSON.parse(s);
-            const w = localStorage.getItem('widget_v5'); if (w) widget.value = JSON.parse(w);
-            save();
+            const w = localStorage.getItem('widget_v5');
+            if (w) widget.value = JSON.parse(w);
         });
 
-        return { config, widget, chatVisible, activeModal, userInput, messages, editName, handleAvatarClick, onPhotoSelected, editSign, save, sendMsg };
+        return { currentTab, inChat, titles, widget, messages, userInput, enterChat, sendMsg, showSettings };
     }
 }).mount('#app');
 </script>
