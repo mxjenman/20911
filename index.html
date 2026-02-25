@@ -39,20 +39,21 @@
 
         .dock { position: absolute; bottom: calc(-10px + env(safe-area-inset-bottom)); left: 20px; right: 20px; height: 75px; background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(30px); border-radius: 30px; display: flex; justify-content: space-around; align-items: center; border: 1px solid rgba(255,255,255,0.25); }
         
-        .wechat-app { position: fixed; inset: 0; background: #ededed; z-index: 100; display: flex; flex-direction: column; animation: slideUp 0.3s ease-out; }
+        .wechat-app { position: fixed; inset: 0; background: #f2f2f2; z-index: 100; display: flex; flex-direction: column; animation: slideUp 0.3s ease-out; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         
         .wechat-header { 
             padding-top: calc(env(safe-area-inset-top) + 5px);
-            background: #ededed; 
+            background: #f2f2f2; 
             display: flex; 
             align-items: flex-end; 
             justify-content: space-between; 
             padding-left: 16px; 
             padding-right: 16px; 
             padding-bottom: 12px; 
-            border-bottom: 0.5px solid #ddd; 
+            border-bottom: 0.5px solid #e0e0e0; 
             flex-shrink: 0;
+            min-height: 44px;
         }
 
         .wechat-content { flex: 1; overflow-y: auto; }
@@ -69,8 +70,17 @@
         
         .quote-box { background: rgba(0,0,0,0.06); border-left: 2px solid #bbb; padding: 2px 8px; font-size: 12px; color: #777; margin-bottom: 4px; border-radius: 2px; line-height: 1.4; }
 
-        .cell-item { background: white; padding: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 0.5px solid #f0f0f0; }
-        .cell-item:active { background: #f5f5f5; }
+        /* 修改后的“我”界面样式 */
+        .me-profile-section { padding: 30px 24px; background: #f2f2f2; }
+        .me-avatar-circle { width: 100px; height: 100px; border-radius: 50%; border: 0.5px solid #ccc; object-fit: cover; background: #fff; margin-bottom: 20px; }
+        .me-info-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+        .me-id-label { font-size: 24px; font-weight: 500; color: #444; }
+        .me-status-tag { border: 0.5px solid #999; padding: 2px 8px; font-size: 14px; color: #444; }
+        .me-at-account { font-size: 22px; font-weight: 600; color: #555; margin-top: 4px; }
+
+        .me-menu-list { border-top: 0.5px solid #ddd; }
+        .me-menu-item { background: #f2f2f2; padding: 14px 20px; font-size: 20px; color: #333; border-bottom: 0.5px solid #ddd; display: flex; align-items: center; justify-content: flex-start; }
+        .me-menu-item:active { background: #e6e6e6; }
 
         .wallet-page { background: #f6f6f6; position: absolute; inset: 0; z-index: 200; display: flex; flex-direction: column; }
         .wallet-header-bg { background: linear-gradient(to bottom, var(--theme-color), #f6f6f6); height: 260px; position: absolute; top: 0; left: 0; right: 0; z-index: 0; }
@@ -96,7 +106,7 @@
         .wallet-btn-primary { background: var(--theme-color); color: white; position: relative; }
         .badge-bubble { position: absolute; top: -12px; right: 0; background: #e8e8e8; color: var(--theme-color); font-size: 10px; padding: 2px 8px; border-radius: 10px; border: 1px solid #ddd; }
         
-        .sub-page { position: absolute; inset: 0; background: #ededed; z-index: 150; display: flex; flex-direction: column; }
+        .sub-page { position: absolute; inset: 0; background: #f2f2f2; z-index: 150; display: flex; flex-direction: column; }
 
         .inventory-icon { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         .inventory-rotate { animation: twist 0.6s ease-in-out; }
@@ -341,20 +351,26 @@
                 <div class="mt-12 p-4 text-center text-gray-400 text-sm">暂无新动态</div>
             </div>
 
-            <div v-if="activeTab === 'me'" class="bg-[#ededed] h-full">
-                <div class="bg-white p-8 pt-12 flex items-center gap-4">
-                    <img :src="widget.meAvatar || widget.rightAvatar" @click="handleMeAvatarClick" class="w-16 h-16 rounded-lg object-cover bg-gray-100 border cursor-pointer">
-                    <div class="flex-1">
-                        <div @click="editMeName" class="text-xl font-bold flex items-center gap-1">{{ widget.meName }}</div>
-                        <div @click="editWxId" class="text-gray-500 text-sm mt-1">微信号：{{ widget.wxId || 'AI_Habibi' }}</div>
+            <div v-if="activeTab === 'me'" class="bg-[#f2f2f2] h-full">
+                <div class="me-profile-section">
+                    <img :src="widget.meAvatar || widget.rightAvatar" 
+                         @click="handleMeAvatarClick" 
+                         class="me-avatar-circle">
+                    
+                    <div class="me-info-row" @click="editMeName">
+                        <span class="me-id-label">ID</span>
+                        <div class="me-status-tag">状态栏</div>
+                    </div>
+                    
+                    <div @click="editWxId" class="me-at-account">
+                        @{{ widget.wxId || 'xxxx_xxxx' }}
                     </div>
                 </div>
-                <div class="mt-3">
-                    <div class="cell-item" @click="meSubPage = '钱包'"><span>钱包</span><span class="text-gray-400">〉</span></div>
-                </div>
-                <div class="mt-3">
-                    <div class="cell-item" @click="meSubPage = '个人资料'"><span>个人资料</span><span class="text-gray-400">〉</span></div>
-                    <div class="cell-item" @click="meSubPage = '设置'"><span>设置</span><span class="text-gray-400">〉</span></div>
+
+                <div class="me-menu-list">
+                    <div class="me-menu-item" @click="meSubPage = '钱包'">钱包</div>
+                    <div class="me-menu-item" @click="meSubPage = '个人资料'">个人资料</div>
+                    <div class="me-menu-item" @click="meSubPage = '设置'">设置</div>
                 </div>
             </div>
         </div>
@@ -468,7 +484,6 @@ createApp({
             return currentChatPartner.value ? chatHistory.value[currentChatPartner.value.id] : [];
         });
         
-        // 修改点：处于“me”标签时返回空字符串
         const navTitle = computed(() => ({ contacts: '好友', discover: '朋友圈', me: '' }[activeTab.value]));
         
         const modalTitle = computed(() => ({ 
