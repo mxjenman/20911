@@ -39,31 +39,10 @@
 
         .dock { position: absolute; bottom: calc(-10px + env(safe-area-inset-bottom)); left: 20px; right: 20px; height: 75px; background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(30px); border-radius: 30px; display: flex; justify-content: space-around; align-items: center; border: 1px solid rgba(255,255,255,0.25); }
         
-        /* 全屏应用基础样式 */
-        .fullscreen-app { position: fixed; inset: 0; background: #f2f2f2; z-index: 1000; display: flex; flex-direction: column; animation: appSlideUp 0.35s cubic-bezier(0.32, 0.72, 0, 1); }
-        @keyframes appSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        
-        .app-header { 
-            padding-top: calc(env(safe-area-inset-top) + 5px);
-            background: #f2f2f2; 
-            display: flex; 
-            align-items: flex-end; 
-            justify-content: space-between; 
-            padding-left: 16px; 
-            padding-right: 16px; 
-            padding-bottom: 12px; 
-            border-bottom: 0.5px solid #e0e0e0; 
-            flex-shrink: 0;
-            min-height: 44px;
-        }
-
-        .app-content { flex: 1; overflow-y: auto; background: #f2f2f2; padding-bottom: env(safe-area-inset-bottom); }
-
-        /* 针对微信内部逻辑的样式 */
-        .wechat-app { position: fixed; inset: 0; background: #ffffff; z-index: 100; display: flex; flex-direction: column; animation: slideUp 0.3s ease-out; }
+        .wechat-app, .settings-full-page { position: fixed; inset: 0; background: #f2f2f2; z-index: 100; display: flex; flex-direction: column; animation: slideUp 0.3s ease-out; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         
-        .wechat-header { 
+        .wechat-header, .settings-header { 
             padding-top: calc(env(safe-area-inset-top) + 5px);
             background: #f2f2f2; 
             display: flex; 
@@ -79,6 +58,22 @@
 
         .wechat-content { flex: 1; overflow-y: auto; background: #ffffff; }
         
+        /* 设置页面特有样式 */
+        .settings-content { flex: 1; overflow-y: auto; background: #f2f2f2; }
+        .settings-group { background: white; margin-top: 12px; border-top: 0.5px solid #eee; border-bottom: 0.5px solid #eee; }
+        .settings-item { display: flex; align-items: center; padding: 14px 16px; border-bottom: 0.5px solid #eee; position: relative; }
+        .settings-item:last-child { border-bottom: none; }
+        .settings-label { flex: 1; font-size: 16px; color: #000; }
+        .settings-value { font-size: 15px; color: #888; margin-right: 8px; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .settings-arrow { width: 8px; height: 13px; opacity: 0.3; }
+        .settings-title-big { font-size: 34px; font-weight: bold; padding: 10px 16px 5px; background: #f2f2f2; }
+        
+        /* 这里的 Switch 模仿 iOS 原生 */
+        .ios-switch { width: 51px; height: 31px; background: #e9e9ea; border-radius: 100px; position: relative; transition: 0.3s; }
+        .ios-switch.active { background: #34c759; }
+        .ios-switch::after { content: ''; position: absolute; left: 2px; top: 2px; width: 27px; height: 27px; background: white; border-radius: 50%; transition: 0.3s; box-shadow: 0 3px 8px rgba(0,0,0,0.15); }
+        .ios-switch.active::after { transform: translateX(20px); }
+
         .wechat-nav { height: 60px; background: #f2f2f2; border-top: 0.5px solid #ddd; display: flex; justify-content: space-around; align-items: center; padding-bottom: env(safe-area-inset-bottom); }
         .nav-item { flex: 1; height: 100%; display: flex; justify-content: center; align-items: center; font-size: 14px; font-weight: 500; color: #1a1a1a; transition: all 0.2s; padding-top: 3px; }
         .nav-item.active { color: #07c160; font-weight: 800; }
@@ -262,64 +257,99 @@
     </div>
 
     <div class="dock">
-        <div @click="activeModal = 'config'" class="flex flex-col items-center"><span class="text-2xl">⚙️</span><span class="text-[9px] mt-1 font-extrabold text-gray-800">设置</span></div>
+        <div @click="openFullSettings" class="flex flex-col items-center"><span class="text-2xl">⚙️</span><span class="text-[9px] mt-1 font-extrabold text-gray-800">设置</span></div>
         <div @click="activeModal = 'beauty'" class="flex flex-col items-center"><span class="text-2xl">✨</span><span class="text-[9px] mt-1 font-extrabold text-gray-800">美化</span></div>
         <div @click="activeModal = 'preset'" class="flex flex-col items-center"><span class="text-2xl">✍️</span><span class="text-[9px] mt-1 font-extrabold text-gray-800">预设</span></div>
     </div>
 
-    <div v-if="activeModal && activeModal !== 'addFriend'" class="fullscreen-app">
-        <div class="app-header">
-            <div class="w-12 flex">
-                <button @click="activeModal = null" class="text-[#1a1a1a] pb-1">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                </button>
+    <div v-if="settingsVisible" class="settings-full-page">
+        <div class="settings-header">
+            <div @click="settingsVisible = false" class="w-20 text-blue-500 text-[17px] flex items-center">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
             </div>
-            <span class="font-bold text-[17px] pb-1">{{ modalTitle }}</span>
-            <div class="w-12 flex justify-end">
-                <button @click="save" class="text-[#07c160] font-bold pb-1 text-[15px]">完成</button>
-            </div>
+            <div class="flex-1"></div>
+            <div class="w-20"></div>
         </div>
-        
-        <div class="app-content p-5">
-            <div v-if="activeModal==='config'" class="space-y-6">
-                <div class="bg-white rounded-2xl overflow-hidden shadow-sm">
-                    <div class="p-4 border-b text-[13px] text-gray-400 font-bold bg-gray-50/50">核心连接参数</div>
-                    <div class="px-4 py-2">
-                        <label class="text-[12px] text-gray-500 ml-1">API Base URL</label>
-                        <input v-model="config.baseUrl" placeholder="https://api.openai.com/v1" class="w-full py-3 bg-white border-b border-gray-100 outline-none text-[15px]">
+        <div class="settings-content">
+            <div class="settings-title-big">设置</div>
+            
+            <div class="settings-group">
+                <div class="settings-item" @click="editMeName">
+                    <img :src="widget.meAvatar || widget.rightAvatar" class="w-14 h-14 rounded-lg mr-4">
+                    <div class="flex-1">
+                        <div class="font-bold text-lg">{{ widget.meName }}</div>
+                        <div class="text-sm text-gray-500">Apple 账户、iCloud+ 等</div>
                     </div>
-                    <div class="px-4 py-2">
-                        <label class="text-[12px] text-gray-500 ml-1">API Key</label>
-                        <input v-model="config.apiKey" type="password" placeholder="sk-xxxx..." class="w-full py-3 bg-white border-b border-gray-100 outline-none text-[15px]">
-                    </div>
-                    <div class="px-4 py-2">
-                        <label class="text-[12px] text-gray-500 ml-1">AI Model Name</label>
-                        <input v-model="config.model" placeholder="gpt-4o" class="w-full py-3 bg-white outline-none text-[15px]">
-                    </div>
+                    <img src="https://test.fukit.cn/autoupload/fr/qakEfOhNRG6o06DQb0_mtuPxZ2O0bsQcfNmgZJT0wpmyl5f0KlZfm6UsKj-HyTuv/20260225/mF0M/1000X1000/IMG_2989.png" class="settings-arrow">
                 </div>
-                <p class="px-4 text-[12px] text-gray-400">请确保 API Key 拥有访问对应模型的权限，且网络环境畅通。</p>
+                <div class="settings-item" @click="developingTip">
+                    <div class="settings-label">Apple 账户建议</div>
+                    <img src="https://test.fukit.cn/autoupload/fr/qakEfOhNRG6o06DQb0_mtuPxZ2O0bsQcfNmgZJT0wpmyl5f0KlZfm6UsKj-HyTuv/20260225/mF0M/1000X1000/IMG_2989.png" class="settings-arrow">
+                </div>
             </div>
 
-            <div v-else-if="activeModal==='beauty'" class="h-full flex flex-col">
-                <div class="mb-3 px-2 flex justify-between items-center">
-                    <span class="text-[13px] text-gray-500 font-bold">自定义 CSS 注入</span>
-                    <span class="text-[11px] text-[#07c160]">实时生效</span>
+            <div class="settings-group">
+                <div class="settings-item" @click="developingTip">
+                    <div class="settings-label">有软件更新可用</div>
+                    <img src="https://test.fukit.cn/autoupload/fr/qakEfOhNRG6o06DQb0_mtuPxZ2O0bsQcfNmgZJT0wpmyl5f0KlZfm6UsKj-HyTuv/20260225/mF0M/1000X1000/IMG_2989.png" class="settings-arrow">
                 </div>
-                <textarea v-model="config.beautyCss" placeholder="/* 在这里输入 CSS 代码美化 UI */" class="flex-1 w-full p-4 bg-white rounded-2xl border-none font-mono text-sm shadow-sm resize-none outline-none focus:ring-1 ring-[#07c160]/20"></textarea>
             </div>
 
-            <div v-else-if="activeModal==='preset'" class="h-full flex flex-col">
-                <div class="mb-3 px-2 flex justify-between items-center">
-                    <span class="text-[13px] text-gray-500 font-bold">全局系统提示词 (Prompt)</span>
+            <div class="settings-group">
+                <div class="settings-item">
+                    <div class="settings-label">飞行模式</div>
+                    <div class="ios-switch"></div>
                 </div>
-                <textarea v-model="config.presetCss" placeholder="/* 这里的预设会应用到所有 AI 聊天对话中 */" class="flex-1 w-full p-4 bg-white rounded-2xl border-none font-mono text-sm shadow-sm resize-none outline-none focus:ring-1 ring-[#07c160]/20"></textarea>
-                <p class="mt-3 px-2 text-[11px] text-gray-400">注意：此预设权重极高，会与各联系人的独立人设合并。</p>
+                <div class="settings-item" @click="developingTip">
+                    <div class="settings-label">无线局域网</div>
+                    <div class="settings-value">TP-LINK_BBC4</div>
+                    <img src="https://test.fukit.cn/autoupload/fr/qakEfOhNRG6o06DQb0_mtuPxZ2O0bsQcfNmgZJT0wpmyl5f0KlZfm6UsKj-HyTuv/20260225/mF0M/1000X1000/IMG_2989.png" class="settings-arrow">
+                </div>
+                <div class="settings-item" @click="developingTip">
+                    <div class="settings-label">蓝牙</div>
+                    <div class="settings-value">打开</div>
+                    <img src="https://test.fukit.cn/autoupload/fr/qakEfOhNRG6o06DQb0_mtuPxZ2O0bsQcfNmgZJT0wpmyl5f0KlZfm6UsKj-HyTuv/20260225/mF0M/1000X1000/IMG_2989.png" class="settings-arrow">
+                </div>
+                <div class="settings-item" @click="developingTip">
+                    <div class="settings-label">蜂窝网络</div>
+                    <img src="https://test.fukit.cn/autoupload/fr/qakEfOhNRG6o06DQb0_mtuPxZ2O0bsQcfNmgZJT0wpmyl5f0KlZfm6UsKj-HyTuv/20260225/mF0M/1000X1000/IMG_2989.png" class="settings-arrow">
+                </div>
+                <div class="settings-item" @click="developingTip">
+                    <div class="settings-label">个人热点</div>
+                    <div class="settings-value">关闭</div>
+                    <img src="https://test.fukit.cn/autoupload/fr/qakEfOhNRG6o06DQb0_mtuPxZ2O0bsQcfNmgZJT0wpmyl5f0KlZfm6UsKj-HyTuv/20260225/mF0M/1000X1000/IMG_2989.png" class="settings-arrow">
+                </div>
+                <div class="settings-item" @click="editBalance">
+                    <div class="settings-label">电池</div>
+                    <div class="settings-value">余额: {{widget.balance}}</div>
+                    <img src="https://test.fukit.cn/autoupload/fr/qakEfOhNRG6o06DQb0_mtuPxZ2O0bsQcfNmgZJT0wpmyl5f0KlZfm6UsKj-HyTuv/20260225/mF0M/1000X1000/IMG_2989.png" class="settings-arrow">
+                </div>
+                <div class="settings-item">
+                    <div class="settings-label">VPN</div>
+                    <div class="ios-switch active"></div>
+                </div>
             </div>
+
+            <div class="settings-title-big !text-[14px] !text-gray-400 !mt-4">API 服务配置</div>
+            <div class="settings-group">
+                <div class="settings-item">
+                    <input v-model="config.baseUrl" placeholder="API 地址 (https://...)" class="flex-1 outline-none text-[15px]">
+                </div>
+                <div class="settings-item">
+                    <input v-model="config.apiKey" type="password" placeholder="API KEY" class="flex-1 outline-none text-[15px]">
+                </div>
+                <div class="settings-item">
+                    <input v-model="config.model" placeholder="模型名称 (gpt-4o...)" class="flex-1 outline-none text-[15px]">
+                </div>
+            </div>
+            <div class="p-6">
+                <button @click="save" class="w-full bg-[#007aff] text-white py-3 rounded-xl font-bold">同步配置到系统</button>
+            </div>
+            <div class="h-10"></div>
         </div>
     </div>
 
     <div v-if="chatVisible" class="wechat-app" @contextmenu.prevent>
-        
         <div v-if="meSubPage === '钱包'" class="wallet-page">
             <div class="wallet-header-bg"></div>
             <div class="wallet-nav-bar">
@@ -536,6 +566,16 @@
         </div>
     </div>
 
+    <div v-if="activeModal && activeModal !== 'addFriend'" class="fixed inset-0 bg-black/40 z-[200] flex items-end" @click.self="activeModal = null">
+        <div class="bg-white w-full rounded-t-[30px] p-6 pb-12">
+            <div class="flex justify-between items-center mb-6"><h3 class="font-extrabold">{{modalTitle}}</h3><button @click="activeModal = null">✕</button></div>
+            <div v-if="activeModal==='beauty' || activeModal==='preset'" class="space-y-3">
+                <textarea v-model="activeModal==='beauty'?config.beautyCss:config.presetCss" rows="6" class="w-full p-4 bg-gray-50 rounded-2xl border-none font-mono text-xs"></textarea>
+                <button @click="save" class="w-full bg-black text-white py-4 rounded-2xl mt-6 font-bold shadow-lg">保存并应用</button>
+            </div>
+        </div>
+    </div>
+
     <div v-if="activeModal === 'addFriend'" class="fixed inset-0 bg-black/40 z-[2000] flex items-center justify-center" @click.self="activeModal = null">
         <div class="add-ai-modal">
             <div>
@@ -583,6 +623,7 @@ createApp({
         const friendsList = ref([...DEFAULT_FRIENDS]);
         const chatHistory = ref({ ...DEFAULT_HISTORY });
         const billRecords = ref([]);
+        const settingsVisible = ref(false); // 控制全屏设置
 
         const newAI = ref({ remark: '', realName: '', persona: '' });
 
@@ -627,8 +668,11 @@ createApp({
         const navTitle = computed(() => ({ contacts: '好友', discover: '朋友圈', me: '' }[activeTab.value]));
         
         const modalTitle = computed(() => ({ 
-            config: '参数设置', beauty: '界面美化', preset: '人格预设'
+            beauty: '界面美化', preset: '人格预设'
         }[activeModal.value]));
+
+        // 方法重写
+        const openFullSettings = () => { settingsVisible.value = true; };
 
         const openWechat = () => { chatVisible.value = true; activeTab.value = 'contacts'; currentChatPartner.value = null; meSubPage.value = null; };
         const enterChat = (id) => {
@@ -817,16 +861,16 @@ createApp({
             styleEl.innerHTML = (config.value.beautyCss || '') + (config.value.presetCss || '');
             saveAllData();
             activeModal.value = null; 
+            settingsVisible.value = false; // 保存后关闭全屏设置
+            alert("配置已同步");
         };
 
         const sendMsg = async (content = null, type = 'text') => {
             const partnerId = currentChatPartner.value?.id;
             if (!partnerId) return;
             const targetFriend = friendsList.value.find(f => f.id === partnerId);
-            
             let msgContent = content || userInput.value;
             if (!msgContent && type === 'text') return;
-
             let userMsgObj = { role: 'user', type: 'text', content: msgContent, quote: quoteContent.value };
             if (type === 'image') { userMsgObj.type = 'image'; userMsgObj.content = msgContent; }
             else if (type === 'desc_image') {
@@ -834,21 +878,18 @@ createApp({
                 userMsgObj.content = 'https://test.fukit.cn/autoupload/fr/qakEfOhNRG6o06DQb0_mtuPxZ2O0bsQcfNmgZJT0wpmyl5f0KlZfm6UsKj-HyTuv/20260225/n2hK/1000X1000/IMG_2987.png';
                 userMsgObj.rawDesc = msgContent;
             }
-
             chatHistory.value[partnerId].push(userMsgObj);
             if (type === 'text') userInput.value = '';
             quoteContent.value = null;
-
             await nextTick();
             const box = document.getElementById('msg-box');
             if(box) box.scrollTop = box.scrollHeight;
-
             try {
                 let aiSystemPrompt = `你现在是 ${targetFriend.realName}。
-你的备注名（对方看到的）是 ${targetFriend.name}，但你只知道你叫 ${targetFriend.realName}。
-对方叫 ${widget.value.meName}。对方目前的微信状态是“${widget.value.userStatus}”。
-你的核心设定（必须严格遵守）：${targetFriend.persona}
-额外预设：${config.value.presetCss}`;
+你的备注名是 ${targetFriend.name}。
+对方叫 ${widget.value.meName}。状态是“${widget.value.userStatus}”。
+设定：${targetFriend.persona}
+额外：${config.value.presetCss}`;
 
                 const res = await fetch(`${config.value.baseUrl}/chat/completions`, {
                     method: 'POST',
@@ -867,7 +908,6 @@ createApp({
                 const data = await res.json();
                 const aiMsg = data.choices[0].message.content;
                 chatHistory.value[partnerId].push({ role: 'assistant', type: 'text', content: aiMsg });
-
                 await nextTick();
                 if(box) box.scrollTop = box.scrollHeight;
             } catch (e) { chatHistory.value[partnerId].push({ role: 'assistant', type: 'text', content: '连接失败，请检查配置。' }); }
@@ -883,7 +923,6 @@ createApp({
             friendsList.value = getLocal('friends_list_v5', friendsList.value);
             chatHistory.value = getLocal('chat_history_v5', chatHistory.value);
             billRecords.value = getLocal('bill_records', billRecords.value);
-
             const styleEl = document.getElementById('user-custom-css');
             styleEl.innerHTML = (config.value.beautyCss || '') + (config.value.presetCss || '');
         });
@@ -905,7 +944,7 @@ createApp({
             selectedFriend, changeMomentCover, onMomentCoverSelected,
             changeMomentAvatar, onMomentAvatarSelected,
             handleMeAvatarClick, onMeAvatarSelected, editUserStatus,
-            newAI, addNewFriend
+            newAI, addNewFriend, settingsVisible, openFullSettings
         };
     }
 }).mount('#app');
