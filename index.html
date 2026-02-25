@@ -18,16 +18,15 @@
         
         /* 核心防选区代码 */
         * {
-            -webkit-tap-highlight-color: transparent; /* 禁用点击高亮 */
-            -webkit-touch-callout: none;              /* 禁用 iOS 系统长按菜单 */
-            -webkit-user-select: none;                /* 禁用选区 */
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
             -khtml-user-select: none;
             -moz-user-select: none;
             -ms-user-select: none;
             user-select: none;
         }
 
-        /* 允许输入框可以选中文本，否则无法打字 */
         input, textarea {
             -webkit-user-select: text !important;
             user-select: text !important;
@@ -114,6 +113,7 @@
     <input type="file" id="albumPicker" accept="image/*" style="display: none" @change="onAlbumPhotoSelected">
     <input type="file" id="cameraPicker" accept="image/*" capture="camera" style="display: none" @change="onCameraPhotoSelected">
     <input type="file" id="momentCoverPicker" accept="image/*" style="display: none" @change="onMomentCoverSelected">
+    <input type="file" id="momentAvatarPicker" accept="image/*" style="display: none" @change="onMomentAvatarSelected">
 
     <div class="widget-card">
         <div class="flex gap-6 mb-3 px-2">
@@ -293,14 +293,16 @@
             </div>
 
             <div v-if="activeTab === 'discover'" class="bg-[#ededed] h-full">
-                <div class="h-64 bg-gray-300 relative overflow-hidden" @click="changeMomentCover">
+                <div class="h-64 bg-gray-300 relative overflow-visible" @click="changeMomentCover">
                     <img :src="widget.momentCover || 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=1000'" class="w-full h-full object-cover">
-                    <div class="absolute -bottom-4 right-4 flex items-center gap-3">
+                    <div class="absolute -bottom-6 right-4 flex items-center gap-3 z-50">
                         <span class="text-white font-bold shadow-sm mb-4">{{ widget.rightName }}</span>
-                        <img :src="widget.rightAvatar" class="w-16 h-16 rounded-lg border-2 border-white object-cover bg-white">
+                        <img :src="widget.momentAvatar || widget.rightAvatar" 
+                             @click.stop="changeMomentAvatar"
+                             class="w-16 h-16 rounded-lg border-2 border-white object-cover bg-white shadow-md">
                     </div>
                 </div>
-                <div class="mt-10 p-4 text-center text-gray-400 text-sm">暂无新动态</div>
+                <div class="mt-12 p-4 text-center text-gray-400 text-sm">暂无新动态</div>
             </div>
 
             <div v-if="activeTab === 'me'" class="bg-[#ededed] h-full">
@@ -375,7 +377,8 @@ createApp({
             signature: '我不想隔着屏幕和你说话',
             wxId: 'AI_Habibi',
             balance: '19.77',
-            momentCover: '' // 新增朋友圈封面字段
+            momentCover: '',
+            momentAvatar: '' // 朋友圈独立头像
         });
         
         const chatVisible = ref(false);
@@ -559,7 +562,7 @@ createApp({
             };
             reader.readAsDataURL(file);
         };
-        // 新增：更换朋友圈封面逻辑
+        // 朋友圈封面更换
         const changeMomentCover = () => {
             document.getElementById('momentCoverPicker').click();
         };
@@ -569,6 +572,20 @@ createApp({
             const reader = new FileReader();
             reader.onload = (event) => {
                 widget.value.momentCover = event.target.result;
+                saveWidget();
+            };
+            reader.readAsDataURL(file);
+        };
+        // 朋友圈独立头像更换
+        const changeMomentAvatar = () => {
+            document.getElementById('momentAvatarPicker').click();
+        };
+        const onMomentAvatarSelected = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                widget.value.momentAvatar = event.target.result;
                 saveWidget();
             };
             reader.readAsDataURL(file);
@@ -736,7 +753,8 @@ createApp({
             developingTip, editBalance,
             inventoryOpen, isRotating, toggleInventory, billRecords,
             triggerAlbum, triggerCamera, onAlbumPhotoSelected, onCameraPhotoSelected, handleDescriptionPhoto,
-            selectedFriend, changeMomentCover, onMomentCoverSelected
+            selectedFriend, changeMomentCover, onMomentCoverSelected,
+            changeMomentAvatar, onMomentAvatarSelected
         };
     }
 }).mount('#app');
