@@ -112,7 +112,6 @@
         .inventory-rotate { animation: twist 0.6s ease-in-out; }
         @keyframes twist { 0% { transform: rotate(0deg); } 33% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
 
-        /* 好友加号按钮点击旋转动画 */
         .plus-icon-container { transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: inline-block; }
         .plus-rotate-active { animation: plus-rotate 0.5s forwards ease-in-out; }
         @keyframes plus-rotate {
@@ -150,81 +149,18 @@
             background: #ededed; 
             height: 100%; 
             overflow-y: auto; 
+            position: relative;
         }
         .moment-cover-wrap {
             height: 300px;
             position: relative;
+            background: #333;
         }
 
-        /* 朋友圈头部相机图标动画 */
-        .moment-camera-icon {
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .moment-camera-icon:active {
-            transform: scale(0.85);
-        }
-
-        /* 朋友圈发布弹窗 */
-        .publish-modal {
-            position: fixed;
-            inset: 0;
-            background: #ffffff;
-            z-index: 500;
-            display: flex;
-            flex-direction: column;
-            animation: slideUp 0.3s ease-out;
-        }
-        .publish-header {
-            padding-top: calc(env(safe-area-inset-top) + 5px);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-left: 16px;
-            padding-right: 16px;
-            padding-bottom: 12px;
-            border-bottom: 0.5px solid #eee;
-        }
-        .publish-content {
-            flex: 1;
-            padding: 16px;
-        }
-        .publish-textarea {
-            width: 100%;
-            height: 150px;
-            border: none;
-            outline: none;
-            font-size: 17px;
-            resize: none;
-            color: #111;
-        }
-        .publish-img-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            margin-top: 20px;
-        }
-        .publish-img-item {
-            aspect-ratio: 1/1;
-            background: #f7f7f7;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            position: relative;
-        }
-        .publish-img-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        /* 强制白色背景覆盖层 */
         .white-fill-layer {
             background-color: #ffffff !important;
         }
 
-        /* --- 新增：添加角色弹窗样式 --- */
         .add-ai-modal {
             background: #fff;
             width: 90%;
@@ -269,20 +205,98 @@
         }
         .save-ai-btn:active { opacity: 0.8; }
 
-        /* 朋友圈列表项样式 */
-        .moment-item {
-            padding: 15px;
-            border-bottom: 0.5px solid #eee;
+        /* --- 新增：发布动态弹窗相关样式 --- */
+        .post-modal {
+            position: fixed;
+            inset: 0;
             background: #fff;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            animation: slideUp 0.3s ease-out;
+        }
+        .post-header {
+            padding-top: calc(env(safe-area-inset-top) + 10px);
+            padding-bottom: 12px;
+            padding-left: 16px;
+            padding-right: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 0.5px solid #eee;
+        }
+        .post-content-area {
+            flex: 1;
+            padding: 16px;
+        }
+        .post-textarea {
+            width: 100%;
+            height: 150px;
+            font-size: 17px;
+            border: none;
+            outline: none;
+            resize: none;
+        }
+        .post-image-grid {
+            display: grid;
+            grid-template-cols: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 20px;
+        }
+        .post-img-box {
+            aspect-ratio: 1;
+            background: #f7f7f7;
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .post-img-item {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .post-add-btn {
+            font-size: 40px;
+            color: #ccc;
+            font-weight: 200;
+        }
+        .post-submit-btn {
+            background: #07c160;
+            color: white;
+            padding: 6px 16px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 15px;
+        }
+        .post-submit-btn.disabled {
+            background: #e1e1e1;
+            color: #b1b1b1;
+        }
+
+        /* 动态列表样式 */
+        .moment-item {
+            padding: 16px;
+            background: #fff;
+            border-bottom: 0.5px solid #f0f0f0;
             display: flex;
             gap: 12px;
         }
-        .moment-avatar { width: 42px; height: 42px; border-radius: 4px; object-fit: cover; }
-        .moment-body { flex: 1; }
-        .moment-nick { color: #576b95; font-weight: 600; font-size: 15px; margin-bottom: 4px; }
-        .moment-text { font-size: 15px; color: #111; line-height: 1.4; margin-bottom: 8px; }
-        .moment-imgs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; max-width: 250px; }
-        .moment-img { aspect-ratio: 1/1; width: 100%; object-fit: cover; border-radius: 2px; }
+        .moment-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 4px;
+            object-fit: cover;
+        }
+        .moment-main { flex: 1; }
+        .moment-nickname { color: #576b95; font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+        .moment-text { font-size: 15px; color: #111; line-height: 1.5; margin-bottom: 8px; }
+        .moment-img-list { display: grid; grid-template-cols: repeat(3, 1fr); gap: 4px; max-width: 260px; }
+        .moment-img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 2px; }
+        .moment-time { font-size: 12px; color: #b1b1b1; margin-top: 10px; }
+
     </style>
 </head>
 <body oncontextmenu="return false;"> 
@@ -293,7 +307,7 @@
     <input type="file" id="momentCoverPicker" accept="image/*" style="display: none" @change="onMomentCoverSelected">
     <input type="file" id="momentAvatarPicker" accept="image/*" style="display: none" @change="onMomentAvatarSelected">
     <input type="file" id="meAvatarPicker" accept="image/*" style="display: none" @change="onMeAvatarSelected">
-    <input type="file" id="publishImgPicker" accept="image/*" style="display: none" multiple @change="onPublishImgsSelected">
+    <input type="file" id="postImagePicker" accept="image/*" multiple style="display: none" @change="onPostImagesSelected">
 
     <div class="widget-card">
         <div class="flex gap-6 mb-3 px-2">
@@ -383,20 +397,6 @@
             <div class="wechat-content"></div>
         </div>
 
-        <div v-if="activeTab === 'discover' && !currentChatPartner" class="wechat-header !bg-transparent !border-none absolute top-0 left-0 right-0 z-[60] text-white">
-            <div class="w-8 flex">
-                <button @click="activeTab = 'contacts'" class="pb-1">
-                    <svg class="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                </button>
-            </div>
-            <span class="font-bold text-[17px] pb-1">朋友圈</span>
-            <div class="w-8 flex justify-end">
-                <img src="https://test.fukit.cn/autoupload/fr/qakEfOhNRG6o06DQb0_mtuPxZ2O0bsQcfNmgZJT0wpmyl5f0KlZfm6UsKj-HyTuv/20260225/vQ7P/1000X1000/IMG_2995.png" 
-                     @click="showPublish = true" 
-                     class="w-6 h-6 moment-camera-icon cursor-pointer">
-            </div>
-        </div>
-
         <div v-if="activeTab !== 'discover' || currentChatPartner" class="wechat-header">
             <div class="w-8 flex">
                 <button v-if="activeTab === 'contacts' && !currentChatPartner" @click="chatVisible = false" class="text-[#1a1a1a] pb-1">
@@ -406,7 +406,7 @@
                     <svg v-if="!isMultiSelect" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                     <span v-else class="text-[15px]">取消</span>
                 </button>
-                <div v-if="activeTab === 'me' && !currentChatPartner" class="w-8"></div>
+                <div v-if="(activeTab === 'discover' || activeTab === 'me') && !currentChatPartner" class="w-8"></div>
             </div>
             <span class="font-bold text-[17px] pb-1">{{ currentChatPartner ? (isMultiSelect ? '已选择' : currentChatPartner.name) : navTitle }}</span>
             <div class="w-8 flex justify-end">
@@ -498,6 +498,13 @@
             </div>
 
             <div v-if="activeTab === 'discover'" class="discover-page">
+                <div class="absolute top-0 left-0 right-0 h-14 flex items-center justify-between px-4 z-[100] text-white pt-[calc(env(safe-area-inset-top))]">
+                   <div @click="activeTab = 'contacts'" class="flex items-center"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg></div>
+                   <div @click="showPostModal = true" class="active:scale-90 transition-transform">
+                       <img src="https://test.fukit.cn/autoupload/fr/qakEfOhNRG6o06DQb0_mtuPxZ2O0bsQcfNmgZJT0wpmyl5f0KlZfm6UsKj-HyTuv/20260225/vQ7P/1000X1000/IMG_2995.png" class="w-6 h-6">
+                   </div>
+                </div>
+
                 <div class="moment-cover-wrap" @click="changeMomentCover">
                     <img :src="widget.momentCover || 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=1000'" class="w-full h-full object-cover">
                     <div class="absolute -bottom-6 right-4 flex items-center gap-3 z-50">
@@ -507,18 +514,21 @@
                              class="w-16 h-16 rounded-lg border-2 border-white object-cover bg-white shadow-md">
                     </div>
                 </div>
-                <div class="mt-12 bg-white flex-1">
-                    <div v-if="moments.length === 0" class="p-4 text-center text-gray-400 text-sm">暂无新动态</div>
-                    <div v-else v-for="(m, idx) in moments" :key="idx" class="moment-item">
+                
+                <div class="mt-10">
+                    <div v-if="moments.length === 0" class="p-12 text-center text-gray-400 text-sm">暂无新动态</div>
+                    <div v-for="(m, idx) in moments" :key="idx" class="moment-item">
                         <img :src="m.avatar" class="moment-avatar">
-                        <div class="moment-body">
-                            <div class="moment-nick">{{ m.name }}</div>
-                            <div class="moment-text">{{ m.content }}</div>
-                            <div v-if="m.images && m.images.length > 0" class="moment-imgs">
+                        <div class="moment-main">
+                            <div class="moment-nickname">{{ m.author }}</div>
+                            <div v-if="m.text" class="moment-text">{{ m.text }}</div>
+                            <div v-if="m.images && m.images.length" class="moment-img-list">
                                 <img v-for="img in m.images" :src="img" class="moment-img">
                             </div>
+                            <div class="moment-time">{{ m.time }}</div>
                         </div>
                     </div>
+                    <div class="h-24"></div>
                 </div>
             </div>
 
@@ -570,18 +580,21 @@
         </div>
     </div>
 
-    <div v-if="showPublish" class="publish-modal">
-        <div class="publish-header">
-            <span @click="showPublish = false" class="text-gray-800">取消</span>
-            <button @click="submitMoment" class="bg-[#07c160] text-white px-4 py-1.5 rounded-md font-bold text-sm">发表</button>
+    <div v-if="showPostModal" class="post-modal">
+        <div class="post-header">
+            <span @click="showPostModal = false" class="text-lg">取消</span>
+            <button @click="submitMoment" :class="['post-submit-btn', (!postText && postImages.length === 0) ? 'disabled' : '']">发表</button>
         </div>
-        <div class="publish-content">
-            <textarea v-model="momentInput" placeholder="这一刻的想法..." class="publish-textarea"></textarea>
-            <div class="publish-img-grid">
-                <div v-for="(img, idx) in momentImages" :key="idx" class="publish-img-item">
-                    <img :src="img">
+        <div class="post-content-area">
+            <textarea v-model="postText" placeholder="这一刻的想法..." class="post-textarea"></textarea>
+            <div class="post-image-grid">
+                <div v-for="(img, i) in postImages" :key="i" class="post-img-box">
+                    <img :src="img" class="post-img-item">
+                    <div @click="postImages.splice(i,1)" class="absolute top-0 right-0 bg-black/50 text-white w-5 h-5 flex items-center justify-center text-xs">✕</div>
                 </div>
-                <div v-if="momentImages.length < 9" @click="triggerPublishImg" class="publish-img-item text-gray-400 text-3xl font-light">+</div>
+                <div v-if="postImages.length < 9" @click="triggerPostImage" class="post-img-box">
+                    <span class="post-add-btn">＋</span>
+                </div>
             </div>
         </div>
     </div>
@@ -649,7 +662,7 @@ createApp({
         const friendsList = ref([...DEFAULT_FRIENDS]);
         const chatHistory = ref({ ...DEFAULT_HISTORY });
         const billRecords = ref([]);
-        const moments = ref([]); // 朋友圈数据
+        const moments = ref([]); // 朋友圈列表
 
         const newAI = ref({ remark: '', realName: '', persona: '' });
 
@@ -659,7 +672,7 @@ createApp({
             localStorage.setItem('friends_list_v5', JSON.stringify(friendsList.value));
             localStorage.setItem('chat_history_v5', JSON.stringify(chatHistory.value));
             localStorage.setItem('bill_records', JSON.stringify(billRecords.value));
-            localStorage.setItem('moments_v1', JSON.stringify(moments.value));
+            localStorage.setItem('moments_data', JSON.stringify(moments.value));
         };
 
         watch([config, widget, friendsList, chatHistory, billRecords, moments], () => {
@@ -685,10 +698,10 @@ createApp({
         const quoteContent = ref(null);
         const currentChatPartner = ref(null);
 
-        // 朋友圈动态相关
-        const showPublish = ref(false);
-        const momentInput = ref('');
-        const momentImages = ref([]);
+        // 发布动态相关
+        const showPostModal = ref(false);
+        const postText = ref('');
+        const postImages = ref([]);
 
         const filteredFriends = computed(() => {
             return [...friendsList.value].sort((a, b) => (b.isTop - a.isTop));
@@ -727,9 +740,9 @@ createApp({
             const newId = 'ai_' + Date.now();
             const friendObj = {
                 id: newId,
-                name: newAI.value.remark,
-                realName: newAI.value.realName,
-                persona: newAI.value.persona,
+                name: newAI.value.remark, 
+                realName: newAI.value.realName, 
+                persona: newAI.value.persona, 
                 avatar: 'https://test.fukit.cn/autoupload/fr/PUOzIkT_hEAqz4elPzgm9kg93R44cerOKVobYyu6bmqyl5f0KlZfm6UsKj-HyTuv/20260224/IR8x/1206X1168/IMG_2714.jpeg',
                 isTop: false
             };
@@ -737,30 +750,6 @@ createApp({
             chatHistory.value[newId] = [{ role: 'assistant', type: 'text', content: `你好，我是${newAI.value.realName}。` }];
             newAI.value = { remark: '', realName: '', persona: '' };
             activeModal.value = null;
-        };
-
-        // 朋友圈逻辑
-        const triggerPublishImg = () => document.getElementById('publishImgPicker').click();
-        const onPublishImgsSelected = (e) => {
-            const files = Array.from(e.target.files);
-            files.forEach(file => {
-                const reader = new FileReader();
-                reader.onload = (ev) => { if(momentImages.value.length < 9) momentImages.value.push(ev.target.result); };
-                reader.readAsDataURL(file);
-            });
-        };
-        const submitMoment = () => {
-            if(!momentInput.value && momentImages.value.length === 0) return;
-            moments.value.unshift({
-                name: widget.value.meName,
-                avatar: widget.value.momentAvatar || widget.value.rightAvatar,
-                content: momentInput.value,
-                images: [...momentImages.value],
-                time: '刚刚'
-            });
-            momentInput.value = '';
-            momentImages.value = [];
-            showPublish.value = false;
         };
 
         const editWidgetName = (side) => {
@@ -909,6 +898,32 @@ createApp({
             if (desc) { sendMsg(desc, 'desc_image'); inventoryOpen.value = false; }
         };
 
+        // 发布动态选图
+        const triggerPostImage = () => document.getElementById('postImagePicker').click();
+        const onPostImagesSelected = (e) => {
+            const files = Array.from(e.target.files);
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (ev) => { postImages.value.push(ev.target.result); };
+                reader.readAsDataURL(file);
+            });
+        };
+        const submitMoment = () => {
+            if(!postText.value && postImages.value.length === 0) return;
+            const now = new Date();
+            const timeStr = `${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')}`;
+            moments.value.unshift({
+                author: widget.value.meName,
+                avatar: widget.value.momentAvatar || widget.value.rightAvatar,
+                text: postText.value,
+                images: [...postImages.value],
+                time: timeStr
+            });
+            postText.value = '';
+            postImages.value = [];
+            showPostModal.value = false;
+        };
+
         const save = () => { 
             const styleEl = document.getElementById('user-custom-css');
             styleEl.innerHTML = (config.value.beautyCss || '') + (config.value.presetCss || '');
@@ -920,8 +935,10 @@ createApp({
             const partnerId = currentChatPartner.value?.id;
             if (!partnerId) return;
             const targetFriend = friendsList.value.find(f => f.id === partnerId);
+            
             let msgContent = content || userInput.value;
             if (!msgContent && type === 'text') return;
+
             let userMsgObj = { role: 'user', type: 'text', content: msgContent, quote: quoteContent.value };
             if (type === 'image') { userMsgObj.type = 'image'; userMsgObj.content = msgContent; }
             else if (type === 'desc_image') {
@@ -929,18 +946,22 @@ createApp({
                 userMsgObj.content = 'https://test.fukit.cn/autoupload/fr/qakEfOhNRG6o06DQb0_mtuPxZ2O0bsQcfNmgZJT0wpmyl5f0KlZfm6UsKj-HyTuv/20260225/n2hK/1000X1000/IMG_2987.png';
                 userMsgObj.rawDesc = msgContent;
             }
+
             chatHistory.value[partnerId].push(userMsgObj);
             if (type === 'text') userInput.value = '';
             quoteContent.value = null;
+
             await nextTick();
             const box = document.getElementById('msg-box');
             if(box) box.scrollTop = box.scrollHeight;
+
             try {
                 let aiSystemPrompt = `你现在是 ${targetFriend.realName}。
 你的备注名（对方看到的）是 ${targetFriend.name}，但你只知道你叫 ${targetFriend.realName}。
 对方叫 ${widget.value.meName}。对方目前的微信状态是“${widget.value.userStatus}”。
-你的核心设定：${targetFriend.persona}
+你的核心设定（必须严格遵守）：${targetFriend.persona}
 额外预设：${config.value.presetCss}`;
+
                 const res = await fetch(`${config.value.baseUrl}/chat/completions`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${config.value.apiKey}`, 'Content-Type': 'application/json' },
@@ -958,6 +979,7 @@ createApp({
                 const data = await res.json();
                 const aiMsg = data.choices[0].message.content;
                 chatHistory.value[partnerId].push({ role: 'assistant', type: 'text', content: aiMsg });
+
                 await nextTick();
                 if(box) box.scrollTop = box.scrollHeight;
             } catch (e) { chatHistory.value[partnerId].push({ role: 'assistant', type: 'text', content: '连接失败，请检查配置。' }); }
@@ -973,7 +995,8 @@ createApp({
             friendsList.value = getLocal('friends_list_v5', friendsList.value);
             chatHistory.value = getLocal('chat_history_v5', chatHistory.value);
             billRecords.value = getLocal('bill_records', billRecords.value);
-            moments.value = getLocal('moments_v1', moments.value);
+            moments.value = getLocal('moments_data', []);
+
             const styleEl = document.getElementById('user-custom-css');
             styleEl.innerHTML = (config.value.beautyCss || '') + (config.value.presetCss || '');
         });
@@ -996,7 +1019,7 @@ createApp({
             changeMomentAvatar, onMomentAvatarSelected,
             handleMeAvatarClick, onMeAvatarSelected, editUserStatus,
             newAI, addNewFriend,
-            showPublish, momentInput, momentImages, triggerPublishImg, onPublishImgsSelected, submitMoment, moments
+            showPostModal, postText, postImages, moments, triggerPostImage, onPostImagesSelected, submitMoment
         };
     }
 }).mount('#app');
