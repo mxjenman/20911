@@ -42,7 +42,6 @@
         .wechat-app { position: fixed; inset: 0; background: #ededed; z-index: 100; display: flex; flex-direction: column; animation: slideUp 0.3s ease-out; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         
-        /* 修改点1：私聊界面顶栏抬高，增加5px间隔 */
         .wechat-header { 
             padding-top: calc(env(safe-area-inset-top) + 5px);
             background: #ededed; 
@@ -76,7 +75,6 @@
         .wallet-page { background: #f6f6f6; position: absolute; inset: 0; z-index: 200; display: flex; flex-direction: column; }
         .wallet-header-bg { background: linear-gradient(to bottom, var(--theme-color), #f6f6f6); height: 260px; position: absolute; top: 0; left: 0; right: 0; z-index: 0; }
         
-        /* 钱包界面顶栏同步抬高 */
         .wallet-nav-bar { 
             padding-top: calc(env(safe-area-inset-top) + 5px);
             display: flex; 
@@ -130,7 +128,6 @@
         .multi-select-btn.danger { color: #fa5151; }
         .quote-preview { background: #f0f0f0; padding: 8px 12px; border-top: 0.5px solid #ddd; display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: #666; }
 
-        /* 修改点2：朋友圈样式调整，背景图触顶，保留状态栏间隔 */
         .discover-page { 
             background: #ededed; 
             height: 100%; 
@@ -138,7 +135,7 @@
             padding-top: calc(env(safe-area-inset-top) + 5px);
         }
         .moment-cover-wrap {
-            margin-top: calc(-1 * (env(safe-area-inset-top) + 5px)); /* 抵消容器padding实现完全顶格 */
+            margin-top: calc(-1 * (env(safe-area-inset-top) + 5px));
             height: 300px;
             position: relative;
         }
@@ -251,11 +248,12 @@
                     <svg v-if="!isMultiSelect" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                     <span v-else class="text-[15px]">取消</span>
                 </button>
+                <div v-if="(activeTab === 'discover' || activeTab === 'me') && !currentChatPartner" class="w-8"></div>
             </div>
             <span class="font-bold text-[17px] pb-1">{{ currentChatPartner ? (isMultiSelect ? '已选择' : currentChatPartner.name) : navTitle }}</span>
             <div class="w-8 flex justify-end">
                 <button v-if="activeTab === 'contacts' && !currentChatPartner" @click="activeModal = 'addFriend'" class="text-[#1a1a1a] pb-1 text-2xl font-light">＋</button>
-                <div v-else class="w-6"></div>
+                <div v-else class="w-8"></div>
             </div>
         </div>
 
@@ -339,11 +337,6 @@
                              @click.stop="changeMomentAvatar"
                              class="w-16 h-16 rounded-lg border-2 border-white object-cover bg-white shadow-md">
                     </div>
-                </div>
-                <div class="absolute left-4 top-2 z-[60]" :style="{marginTop: 'env(safe-area-inset-top)'}">
-                    <button @click="activeTab='contacts'" class="bg-black/20 p-2 rounded-full text-white">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                    </button>
                 </div>
                 <div class="mt-12 p-4 text-center text-gray-400 text-sm">暂无新动态</div>
             </div>
@@ -438,7 +431,7 @@ createApp({
         const chatHistory = ref({ ...DEFAULT_HISTORY });
         const billRecords = ref([]);
 
-        // 核心持久化逻辑：严禁修改
+        // 持久化保存
         const saveAllData = () => {
             localStorage.setItem('ai_config_v4', JSON.stringify(config.value));
             localStorage.setItem('widget_v5', JSON.stringify(widget.value));
@@ -712,7 +705,6 @@ createApp({
             } catch (e) { chatHistory.value[partnerId].push({ role: 'assistant', type: 'text', content: '连接失败，请检查配置。' }); }
         };
 
-        // 持久化读取逻辑：严禁修改
         onMounted(() => {
             const getLocal = (key, def) => {
                 const data = localStorage.getItem(key);
