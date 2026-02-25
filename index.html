@@ -39,6 +39,27 @@
 
         .dock { position: absolute; bottom: calc(-10px + env(safe-area-inset-bottom)); left: 20px; right: 20px; height: 75px; background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(30px); border-radius: 30px; display: flex; justify-content: space-around; align-items: center; border: 1px solid rgba(255,255,255,0.25); }
         
+        /* 全屏应用基础样式 */
+        .fullscreen-app { position: fixed; inset: 0; background: #f2f2f2; z-index: 1000; display: flex; flex-direction: column; animation: appSlideUp 0.35s cubic-bezier(0.32, 0.72, 0, 1); }
+        @keyframes appSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        .app-header { 
+            padding-top: calc(env(safe-area-inset-top) + 5px);
+            background: #f2f2f2; 
+            display: flex; 
+            align-items: flex-end; 
+            justify-content: space-between; 
+            padding-left: 16px; 
+            padding-right: 16px; 
+            padding-bottom: 12px; 
+            border-bottom: 0.5px solid #e0e0e0; 
+            flex-shrink: 0;
+            min-height: 44px;
+        }
+
+        .app-content { flex: 1; overflow-y: auto; background: #f2f2f2; padding-bottom: env(safe-area-inset-bottom); }
+
+        /* 针对微信内部逻辑的样式 */
         .wechat-app { position: fixed; inset: 0; background: #ffffff; z-index: 100; display: flex; flex-direction: column; animation: slideUp 0.3s ease-out; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         
@@ -112,7 +133,6 @@
         .inventory-rotate { animation: twist 0.6s ease-in-out; }
         @keyframes twist { 0% { transform: rotate(0deg); } 33% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
 
-        /* 好友加号按钮点击旋转动画 */
         .plus-icon-container { transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: inline-block; }
         .plus-rotate-active { animation: plus-rotate 0.5s forwards ease-in-out; }
         @keyframes plus-rotate {
@@ -158,12 +178,10 @@
             position: relative;
         }
 
-        /* 强制白色背景覆盖层 */
         .white-fill-layer {
             background-color: #ffffff !important;
         }
 
-        /* --- 新增：添加角色弹窗样式 --- */
         .add-ai-modal {
             background: #fff;
             width: 90%;
@@ -247,6 +265,57 @@
         <div @click="activeModal = 'config'" class="flex flex-col items-center"><span class="text-2xl">⚙️</span><span class="text-[9px] mt-1 font-extrabold text-gray-800">设置</span></div>
         <div @click="activeModal = 'beauty'" class="flex flex-col items-center"><span class="text-2xl">✨</span><span class="text-[9px] mt-1 font-extrabold text-gray-800">美化</span></div>
         <div @click="activeModal = 'preset'" class="flex flex-col items-center"><span class="text-2xl">✍️</span><span class="text-[9px] mt-1 font-extrabold text-gray-800">预设</span></div>
+    </div>
+
+    <div v-if="activeModal && activeModal !== 'addFriend'" class="fullscreen-app">
+        <div class="app-header">
+            <div class="w-12 flex">
+                <button @click="activeModal = null" class="text-[#1a1a1a] pb-1">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+            </div>
+            <span class="font-bold text-[17px] pb-1">{{ modalTitle }}</span>
+            <div class="w-12 flex justify-end">
+                <button @click="save" class="text-[#07c160] font-bold pb-1 text-[15px]">完成</button>
+            </div>
+        </div>
+        
+        <div class="app-content p-5">
+            <div v-if="activeModal==='config'" class="space-y-6">
+                <div class="bg-white rounded-2xl overflow-hidden shadow-sm">
+                    <div class="p-4 border-b text-[13px] text-gray-400 font-bold bg-gray-50/50">核心连接参数</div>
+                    <div class="px-4 py-2">
+                        <label class="text-[12px] text-gray-500 ml-1">API Base URL</label>
+                        <input v-model="config.baseUrl" placeholder="https://api.openai.com/v1" class="w-full py-3 bg-white border-b border-gray-100 outline-none text-[15px]">
+                    </div>
+                    <div class="px-4 py-2">
+                        <label class="text-[12px] text-gray-500 ml-1">API Key</label>
+                        <input v-model="config.apiKey" type="password" placeholder="sk-xxxx..." class="w-full py-3 bg-white border-b border-gray-100 outline-none text-[15px]">
+                    </div>
+                    <div class="px-4 py-2">
+                        <label class="text-[12px] text-gray-500 ml-1">AI Model Name</label>
+                        <input v-model="config.model" placeholder="gpt-4o" class="w-full py-3 bg-white outline-none text-[15px]">
+                    </div>
+                </div>
+                <p class="px-4 text-[12px] text-gray-400">请确保 API Key 拥有访问对应模型的权限，且网络环境畅通。</p>
+            </div>
+
+            <div v-else-if="activeModal==='beauty'" class="h-full flex flex-col">
+                <div class="mb-3 px-2 flex justify-between items-center">
+                    <span class="text-[13px] text-gray-500 font-bold">自定义 CSS 注入</span>
+                    <span class="text-[11px] text-[#07c160]">实时生效</span>
+                </div>
+                <textarea v-model="config.beautyCss" placeholder="/* 在这里输入 CSS 代码美化 UI */" class="flex-1 w-full p-4 bg-white rounded-2xl border-none font-mono text-sm shadow-sm resize-none outline-none focus:ring-1 ring-[#07c160]/20"></textarea>
+            </div>
+
+            <div v-else-if="activeModal==='preset'" class="h-full flex flex-col">
+                <div class="mb-3 px-2 flex justify-between items-center">
+                    <span class="text-[13px] text-gray-500 font-bold">全局系统提示词 (Prompt)</span>
+                </div>
+                <textarea v-model="config.presetCss" placeholder="/* 这里的预设会应用到所有 AI 聊天对话中 */" class="flex-1 w-full p-4 bg-white rounded-2xl border-none font-mono text-sm shadow-sm resize-none outline-none focus:ring-1 ring-[#07c160]/20"></textarea>
+                <p class="mt-3 px-2 text-[11px] text-gray-400">注意：此预设权重极高，会与各联系人的独立人设合并。</p>
+            </div>
+        </div>
     </div>
 
     <div v-if="chatVisible" class="wechat-app" @contextmenu.prevent>
@@ -467,22 +536,6 @@
         </div>
     </div>
 
-    <div v-if="activeModal && activeModal !== 'addFriend'" class="fixed inset-0 bg-black/40 z-[200] flex items-end" @click.self="activeModal = null">
-        <div class="bg-white w-full rounded-t-[30px] p-6 pb-12">
-            <div class="flex justify-between items-center mb-6"><h3 class="font-extrabold">{{modalTitle}}</h3><button @click="activeModal = null">✕</button></div>
-            <div v-if="activeModal==='config'" class="space-y-4">
-                <input v-model="config.baseUrl" placeholder="API 地址" class="w-full p-4 bg-gray-50 rounded-2xl border-none text-sm">
-                <input v-model="config.apiKey" type="password" placeholder="API Key" class="w-full p-4 bg-gray-50 rounded-2xl border-none text-sm">
-                <input v-model="config.model" placeholder="模型名称" class="w-full p-4 bg-gray-50 rounded-2xl border-none text-sm">
-                <button @click="save" class="w-full bg-black text-white py-4 rounded-2xl mt-6 font-bold shadow-lg">保存并应用</button>
-            </div>
-            <div v-else-if="activeModal==='beauty' || activeModal==='preset'" class="space-y-3">
-                <textarea v-model="activeModal==='beauty'?config.beautyCss:config.presetCss" rows="6" class="w-full p-4 bg-gray-50 rounded-2xl border-none font-mono text-xs"></textarea>
-                <button @click="save" class="w-full bg-black text-white py-4 rounded-2xl mt-6 font-bold shadow-lg">保存并应用</button>
-            </div>
-        </div>
-    </div>
-
     <div v-if="activeModal === 'addFriend'" class="fixed inset-0 bg-black/40 z-[2000] flex items-center justify-center" @click.self="activeModal = null">
         <div class="add-ai-modal">
             <div>
@@ -531,7 +584,6 @@ createApp({
         const chatHistory = ref({ ...DEFAULT_HISTORY });
         const billRecords = ref([]);
 
-        // 新增：添加AI的数据容器
         const newAI = ref({ remark: '', realName: '', persona: '' });
 
         const saveAllData = () => {
@@ -575,7 +627,7 @@ createApp({
         const navTitle = computed(() => ({ contacts: '好友', discover: '朋友圈', me: '' }[activeTab.value]));
         
         const modalTitle = computed(() => ({ 
-            config: '参数配置', beauty: '界面美化', preset: '人格预设'
+            config: '参数设置', beauty: '界面美化', preset: '人格预设'
         }[activeModal.value]));
 
         const openWechat = () => { chatVisible.value = true; activeTab.value = 'contacts'; currentChatPartner.value = null; meSubPage.value = null; };
@@ -597,22 +649,19 @@ createApp({
             setTimeout(() => { isPlusRotating.value = false; }, 500);
         };
 
-        // --- 新增：保存新联系人逻辑 ---
         const addNewFriend = () => {
             if(!newAI.value.remark || !newAI.value.realName) return alert("请填写备注和真名");
             const newId = 'ai_' + Date.now();
             const friendObj = {
                 id: newId,
-                name: newAI.value.remark, // 备注作为显示名
-                realName: newAI.value.realName, // 真名存入后台
-                persona: newAI.value.persona, // 人设存入后台
+                name: newAI.value.remark,
+                realName: newAI.value.realName,
+                persona: newAI.value.persona,
                 avatar: 'https://test.fukit.cn/autoupload/fr/PUOzIkT_hEAqz4elPzgm9kg93R44cerOKVobYyu6bmqyl5f0KlZfm6UsKj-HyTuv/20260224/IR8x/1206X1168/IMG_2714.jpeg',
                 isTop: false
             };
             friendsList.value.push(friendObj);
             chatHistory.value[newId] = [{ role: 'assistant', type: 'text', content: `你好，我是${newAI.value.realName}。` }];
-            
-            // 重置并关闭
             newAI.value = { remark: '', realName: '', persona: '' };
             activeModal.value = null;
         };
@@ -795,7 +844,6 @@ createApp({
             if(box) box.scrollTop = box.scrollHeight;
 
             try {
-                // 系统提示词：结合真名和专属人设
                 let aiSystemPrompt = `你现在是 ${targetFriend.realName}。
 你的备注名（对方看到的）是 ${targetFriend.name}，但你只知道你叫 ${targetFriend.realName}。
 对方叫 ${widget.value.meName}。对方目前的微信状态是“${widget.value.userStatus}”。
