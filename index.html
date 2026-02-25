@@ -70,7 +70,6 @@
         
         .quote-box { background: rgba(0,0,0,0.06); border-left: 2px solid #bbb; padding: 2px 8px; font-size: 11px; color: #777; margin-bottom: 4px; border-radius: 2px; line-height: 1.4; }
 
-        /* 修改后的“我”界面样式 */
         .me-profile-section { padding: 25px 24px 30px; background: #ffffff; margin-top: -5px; } 
         .me-avatar-circle { width: 85px; height: 85px; border-radius: 50%; border: 0.5px solid #eee; object-fit: cover; background: #fff; margin-bottom: 15px; cursor: pointer; }
         .me-info-row { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
@@ -159,10 +158,55 @@
             position: relative;
         }
 
-        /* 强制白色背景覆盖层，用于填补导航栏上方的缝隙 */
+        /* 强制白色背景覆盖层 */
         .white-fill-layer {
             background-color: #ffffff !important;
         }
+
+        /* --- 新增：添加角色弹窗样式 --- */
+        .add-ai-modal {
+            background: #fff;
+            width: 90%;
+            max-width: 400px;
+            border-radius: 25px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        }
+        .add-ai-label { font-size: 16px; color: #333; font-weight: 500; margin-left: 4px; }
+        .add-ai-input {
+            width: 100%;
+            border: 1.5px solid #666;
+            border-radius: 50px;
+            padding: 10px 20px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .add-ai-input:focus { border-color: #07c160; }
+        .add-ai-textarea {
+            width: 100%;
+            border: 1.5px solid #666;
+            border-radius: 20px;
+            padding: 15px 20px;
+            font-size: 15px;
+            min-height: 120px;
+            outline: none;
+            resize: none;
+        }
+        .add-ai-textarea:focus { border-color: #07c160; }
+        .save-ai-btn {
+            background: #000;
+            color: #fff;
+            border-radius: 50px;
+            padding: 12px;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .save-ai-btn:active { opacity: 0.8; }
     </style>
 </head>
 <body oncontextmenu="return false;"> 
@@ -246,7 +290,6 @@
                         {{ record.amount > 0 ? '+' : '' }}{{ record.amount }}
                     </div>
                 </div>
-                <div v-if="billRecords.length === 0" class="text-center py-10 text-gray-300 text-sm">暂无转账记录</div>
             </div>
         </div>
 
@@ -287,7 +330,7 @@
             <div v-if="activeTab === 'contacts'" class="h-full relative bg-white">
                 <div v-if="!currentChatPartner" class="bg-white h-full">
                     <div class="p-2 px-4 bg-gray-50 text-[11px] text-gray-400 border-b flex justify-between items-center">
-                        <span>当前用户状态: <span class="text-[#07c160] font-bold">{{ widget.userStatus }}</span></span>
+                        <span>当前状态: <span class="text-[#07c160] font-bold">{{ widget.userStatus }}</span></span>
                         <span class="italic">正在同步至 AI 视野...</span>
                     </div>
                     
@@ -307,7 +350,8 @@
                         </div>
                         <span v-if="f.isTop" class="text-[10px] bg-gray-100 text-gray-400 px-1 rounded">置顶</span>
                     </div>
-                    <div class="h-20 bg-white"></div> </div>
+                    <div class="h-20 bg-white"></div>
+                </div>
                 
                 <div v-else class="flex flex-col h-full bg-[#ededed]">
                     <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-2" id="msg-box" @click="inventoryOpen = false">
@@ -423,7 +467,7 @@
         </div>
     </div>
 
-    <div v-if="activeModal" class="fixed inset-0 bg-black/40 z-[200] flex items-end" @click.self="activeModal = null">
+    <div v-if="activeModal && activeModal !== 'addFriend'" class="fixed inset-0 bg-black/40 z-[200] flex items-end" @click.self="activeModal = null">
         <div class="bg-white w-full rounded-t-[30px] p-6 pb-12">
             <div class="flex justify-between items-center mb-6"><h3 class="font-extrabold">{{modalTitle}}</h3><button @click="activeModal = null">✕</button></div>
             <div v-if="activeModal==='config'" class="space-y-4">
@@ -436,9 +480,24 @@
                 <textarea v-model="activeModal==='beauty'?config.beautyCss:config.presetCss" rows="6" class="w-full p-4 bg-gray-50 rounded-2xl border-none font-mono text-xs"></textarea>
                 <button @click="save" class="w-full bg-black text-white py-4 rounded-2xl mt-6 font-bold shadow-lg">保存并应用</button>
             </div>
-            <div v-else-if="activeModal==='addFriend'" class="min-h-[200px] flex items-center justify-center text-gray-400">
-                开发中，可通过修改 friendsList 数据添加
+        </div>
+    </div>
+
+    <div v-if="activeModal === 'addFriend'" class="fixed inset-0 bg-black/40 z-[2000] flex items-center justify-center" @click.self="activeModal = null">
+        <div class="add-ai-modal">
+            <div>
+                <label class="add-ai-label">备注</label>
+                <input v-model="newAI.remark" type="text" placeholder="给TA的备注" class="add-ai-input">
             </div>
+            <div>
+                <label class="add-ai-label">真名</label>
+                <input v-model="newAI.realName" type="text" placeholder="TA知道自己叫什么" class="add-ai-input">
+            </div>
+            <div>
+                <label class="add-ai-label">人设(AI Persona)</label>
+                <textarea v-model="newAI.persona" placeholder="输入TA的人物设定，TA会严格遵守" class="add-ai-textarea"></textarea>
+            </div>
+            <button @click="addNewFriend" class="save-ai-btn">保存联系人</button>
         </div>
     </div>
 </div>
@@ -455,8 +514,8 @@ const DEFAULT_WIDGET = {
 };
 
 const DEFAULT_FRIENDS = [
-    { id: 'left', name: '雨雨雨～', avatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png', isTop: false },
-    { id: 'ai', name: '哈吉米宝宝', avatar: 'https://test.fukit.cn/autoupload/fr/PUOzIkT_hEAqz4elPzgm9kg93R44cerOKVobYyu6bmqyl5f0KlZfm6UsKj-HyTuv/20260224/IR8x/1206X1168/IMG_2714.jpeg', isTop: false }
+    { id: 'left', name: '雨雨雨～', avatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png', isTop: false, realName: '雨雨雨～', persona: '一个温柔的朋友' },
+    { id: 'ai', name: '哈吉米宝宝', avatar: 'https://test.fukit.cn/autoupload/fr/PUOzIkT_hEAqz4elPzgm9kg93R44cerOKVobYyu6bmqyl5f0KlZfm6UsKj-HyTuv/20260224/IR8x/1206X1168/IMG_2714.jpeg', isTop: false, realName: '哈吉米', persona: '一只可爱的猫咪，说话喜欢带喵' }
 ];
 
 const DEFAULT_HISTORY = {
@@ -471,6 +530,9 @@ createApp({
         const friendsList = ref([...DEFAULT_FRIENDS]);
         const chatHistory = ref({ ...DEFAULT_HISTORY });
         const billRecords = ref([]);
+
+        // 新增：添加AI的数据容器
+        const newAI = ref({ remark: '', realName: '', persona: '' });
 
         const saveAllData = () => {
             localStorage.setItem('ai_config_v4', JSON.stringify(config.value));
@@ -492,7 +554,7 @@ createApp({
         const currentEditSide = ref('');
         const inventoryOpen = ref(false);
         const isRotating = ref(false);
-        const isPlusRotating = ref(false); // 新增：加号旋转状态
+        const isPlusRotating = ref(false); 
         const showFriendMenu = ref(false);
         const selectedFriend = ref(null);
         const showMsgMenu = ref(false);
@@ -513,7 +575,7 @@ createApp({
         const navTitle = computed(() => ({ contacts: '好友', discover: '朋友圈', me: '' }[activeTab.value]));
         
         const modalTitle = computed(() => ({ 
-            config: '参数配置', beauty: '界面美化', preset: '人格预设', addFriend: '添加新角色' 
+            config: '参数配置', beauty: '界面美化', preset: '人格预设'
         }[activeModal.value]));
 
         const openWechat = () => { chatVisible.value = true; activeTab.value = 'contacts'; currentChatPartner.value = null; meSubPage.value = null; };
@@ -528,14 +590,31 @@ createApp({
             else { currentChatPartner.value = null; }
         };
 
-        // 处理加号点击：旋转动画 + 打开弹窗
         const triggerPlusAction = () => {
             if (isPlusRotating.value) return;
             isPlusRotating.value = true;
             activeModal.value = 'addFriend';
-            setTimeout(() => {
-                isPlusRotating.value = false;
-            }, 500); // 与 CSS 动画时长一致
+            setTimeout(() => { isPlusRotating.value = false; }, 500);
+        };
+
+        // --- 新增：保存新联系人逻辑 ---
+        const addNewFriend = () => {
+            if(!newAI.value.remark || !newAI.value.realName) return alert("请填写备注和真名");
+            const newId = 'ai_' + Date.now();
+            const friendObj = {
+                id: newId,
+                name: newAI.value.remark, // 备注作为显示名
+                realName: newAI.value.realName, // 真名存入后台
+                persona: newAI.value.persona, // 人设存入后台
+                avatar: 'https://test.fukit.cn/autoupload/fr/PUOzIkT_hEAqz4elPzgm9kg93R44cerOKVobYyu6bmqyl5f0KlZfm6UsKj-HyTuv/20260224/IR8x/1206X1168/IMG_2714.jpeg',
+                isTop: false
+            };
+            friendsList.value.push(friendObj);
+            chatHistory.value[newId] = [{ role: 'assistant', type: 'text', content: `你好，我是${newAI.value.realName}。` }];
+            
+            // 重置并关闭
+            newAI.value = { remark: '', realName: '', persona: '' };
+            activeModal.value = null;
         };
 
         const editWidgetName = (side) => {
@@ -621,9 +700,7 @@ createApp({
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = (event) => {
-                widget.value[currentEditSide.value + 'Avatar'] = event.target.result;
-            };
+            reader.onload = (event) => { widget.value[currentEditSide.value + 'Avatar'] = event.target.result; };
             reader.readAsDataURL(file);
         };
 
@@ -696,6 +773,8 @@ createApp({
         const sendMsg = async (content = null, type = 'text') => {
             const partnerId = currentChatPartner.value?.id;
             if (!partnerId) return;
+            const targetFriend = friendsList.value.find(f => f.id === partnerId);
+            
             let msgContent = content || userInput.value;
             if (!msgContent && type === 'text') return;
 
@@ -707,19 +786,6 @@ createApp({
                 userMsgObj.rawDesc = msgContent;
             }
 
-            if (type === 'text') {
-                const amountMatch = msgContent.match(/(\d+(\.\d+)?)/);
-                if (amountMatch && (msgContent.includes('转账') || msgContent.includes('红包'))) {
-                    const amount = parseFloat(amountMatch[0]);
-                    billRecords.value.unshift({
-                        name: currentChatPartner.value.name,
-                        avatar: friendsList.value.find(f => f.id === partnerId)?.avatar,
-                        amount: -amount, time: new Date().toLocaleString()
-                    });
-                    widget.value.balance = (parseFloat(widget.value.balance) - amount).toFixed(2);
-                }
-            }
-
             chatHistory.value[partnerId].push(userMsgObj);
             if (type === 'text') userInput.value = '';
             quoteContent.value = null;
@@ -729,7 +795,13 @@ createApp({
             if(box) box.scrollTop = box.scrollHeight;
 
             try {
-                let aiSystemPrompt = `你现在是${currentChatPartner.value.name}，对方叫${widget.value.meName}。对方目前的微信状态是“${widget.value.userStatus}”。${config.value.presetCss}`;
+                // 系统提示词：结合真名和专属人设
+                let aiSystemPrompt = `你现在是 ${targetFriend.realName}。
+你的备注名（对方看到的）是 ${targetFriend.name}，但你只知道你叫 ${targetFriend.realName}。
+对方叫 ${widget.value.meName}。对方目前的微信状态是“${widget.value.userStatus}”。
+你的核心设定（必须严格遵守）：${targetFriend.persona}
+额外预设：${config.value.presetCss}`;
+
                 const res = await fetch(`${config.value.baseUrl}/chat/completions`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${config.value.apiKey}`, 'Content-Type': 'application/json' },
@@ -740,7 +812,7 @@ createApp({
                             ...chatHistory.value[partnerId].map(m => ({
                                 role: m.role,
                                 content: (m.quote ? `[引用: ${m.quote}] ` : '') + (m.rawDesc || (m.type === 'image' ? '[照片]' : m.content))
-                            })).slice(-10)
+                            })).slice(-15)
                         ] 
                     })
                 });
@@ -748,16 +820,6 @@ createApp({
                 const aiMsg = data.choices[0].message.content;
                 chatHistory.value[partnerId].push({ role: 'assistant', type: 'text', content: aiMsg });
 
-                const aiAmountMatch = aiMsg.match(/(\d+(\.\d+)?)/);
-                if (aiAmountMatch && (aiMsg.includes('转账') || aiMsg.includes('收下'))) {
-                    const amount = parseFloat(aiAmountMatch[0]);
-                    billRecords.value.unshift({
-                        name: currentChatPartner.value.name,
-                        avatar: friendsList.value.find(f => f.id === partnerId)?.avatar,
-                        amount: amount, time: new Date().toLocaleString()
-                    });
-                    widget.value.balance = (parseFloat(widget.value.balance) + amount).toFixed(2);
-                }
                 await nextTick();
                 if(box) box.scrollTop = box.scrollHeight;
             } catch (e) { chatHistory.value[partnerId].push({ role: 'assistant', type: 'text', content: '连接失败，请检查配置。' }); }
@@ -794,7 +856,8 @@ createApp({
             triggerAlbum, triggerCamera, onAlbumPhotoSelected, onCameraPhotoSelected, handleDescriptionPhoto,
             selectedFriend, changeMomentCover, onMomentCoverSelected,
             changeMomentAvatar, onMomentAvatarSelected,
-            handleMeAvatarClick, onMeAvatarSelected, editUserStatus
+            handleMeAvatarClick, onMeAvatarSelected, editUserStatus,
+            newAI, addNewFriend
         };
     }
 }).mount('#app');
