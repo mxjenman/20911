@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AI 桌面 - 持久化增强版</title>
+    <title>AI 桌面 - 永续持久化增强版</title>
     
     <link rel="apple-touch-icon" href="https://test.fukit.cn/autoupload/fr/PUOzIkT_hEAqz4elPzgm9kg93R44cerOKVobYyu6bmqyl5f0KlZfm6UsKj-HyTuv/20260224/IR8x/1206X1168/IMG_2714.jpeg">
     <link rel="icon" type="image/jpeg" href="https://test.fukit.cn/autoupload/fr/PUOzIkT_hEAqz4elPzgm9kg93R44cerOKVobYyu6bmqyl5f0KlZfm6UsKj-HyTuv/20260224/IR8x/1206X1168/IMG_2714.jpeg">
@@ -367,10 +367,14 @@
 const { createApp, ref, onMounted, computed, nextTick, watch } = Vue;
 createApp({
     setup() {
-        const config = ref({ baseUrl: '', apiKey: '', model: 'gpt-4o', beautyCss: '', presetCss: '' });
-        
-        // 核心数据模型
-        const widget = ref({
+        // --- 永续持久化核心初始化逻辑 ---
+        const getStored = (key, fallback) => {
+            const val = localStorage.getItem(key);
+            try { return val ? JSON.parse(val) : fallback; } catch(e) { return fallback; }
+        };
+
+        const config = ref(getStored('ai_config_v4', { baseUrl: '', apiKey: '', model: 'gpt-4o', beautyCss: '', presetCss: '' }));
+        const widget = ref(getStored('widget_v5', {
             leftName: '雨雨雨～', 
             leftAvatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png',
             rightName: '雨', 
@@ -379,9 +383,9 @@ createApp({
             wxId: 'AI_Habibi',
             balance: '19.77',
             momentCover: '',
-            momentAvatar: '', // 朋友圈独立头像
-            meAvatar: ''     // “我”界面独立头像
-        });
+            momentAvatar: '',
+            meAvatar: ''
+        }));
         
         const chatVisible = ref(false);
         const activeTab = ref('contacts');
@@ -391,7 +395,7 @@ createApp({
         const currentEditSide = ref('');
         const inventoryOpen = ref(false);
         const isRotating = ref(false);
-        const billRecords = ref([]);
+        const billRecords = ref(getStored('bill_records', []));
         const showFriendMenu = ref(false);
         const selectedFriend = ref(null);
         const showMsgMenu = ref(false);
@@ -402,25 +406,24 @@ createApp({
         const quoteContent = ref(null);
         const currentChatPartner = ref(null);
 
-        const friendsList = ref([
+        const friendsList = ref(getStored('friends_list_v5', [
             { id: 'left', name: '雨雨雨～', avatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png', isTop: false },
             { id: 'ai', name: '哈吉米宝宝', avatar: 'https://test.fukit.cn/autoupload/fr/PUOzIkT_hEAqz4elPzgm9kg93R44cerOKVobYyu6bmqyl5f0KlZfm6UsKj-HyTuv/20260224/IR8x/1206X1168/IMG_2714.jpeg', isTop: false }
-        ]);
+        ]));
 
-        const chatHistory = ref({
+        const chatHistory = ref(getStored('chat_history_v5', {
             left: [{ role: 'assistant', type: 'text', content: '雨雨雨～准备好聊天啦！' }],
             ai: [{ role: 'assistant', type: 'text', content: '我是哈吉米宝宝，你好呀！' }]
-        });
+        }));
 
-        // --- 数据持久化方法 (确保修改后立即可见) ---
+        // 全量数据保存（深度持久化）
         const saveAllData = () => {
             localStorage.setItem('widget_v5', JSON.stringify(widget.value));
             localStorage.setItem('bill_records', JSON.stringify(billRecords.value));
             localStorage.setItem('chat_history_v5', JSON.stringify(chatHistory.value));
             localStorage.setItem('friends_list_v5', JSON.stringify(friendsList.value));
             localStorage.setItem('ai_config_v4', JSON.stringify(config.value));
-            // 调试：控制台确认保存成功
-            console.log('数据已持久化并强制渲染');
+            console.log('%c [System] 数据保存成功，更新已固化。', 'color: #07c160; font-weight: bold;');
         };
 
         const filteredFriends = computed(() => {
@@ -436,13 +439,8 @@ createApp({
             config: '参数配置', beauty: '界面美化', preset: '人格预设', addFriend: '添加新角色' 
         }[activeModal.value]));
 
-        // --- 核心操作函数 ---
-        const openWechat = () => { 
-            chatVisible.value = true; 
-            activeTab.value = 'contacts'; 
-            currentChatPartner.value = null; 
-            meSubPage.value = null; 
-        };
+        // --- 基础交互 ---
+        const openWechat = () => { chatVisible.value = true; activeTab.value = 'contacts'; currentChatPartner.value = null; meSubPage.value = null; };
         const enterChat = (id) => {
             if (showFriendMenu.value) return;
             const f = friendsList.value.find(item => item.id === id);
@@ -454,7 +452,7 @@ createApp({
             else { currentChatPartner.value = null; }
         };
 
-        // --- 交互与长按逻辑 ---
+        // --- 菜单与长按 ---
         let friendTimer = null;
         const handleTouchStart = (e, f) => { friendTimer = setTimeout(() => { selectedFriend.value = f; showFriendMenu.value = true; }, 600); };
         const handleTouchEnd = () => clearTimeout(friendTimer);
@@ -494,10 +492,7 @@ createApp({
             const targetMsg = chatHistory.value[currentChatPartner.value.id][selectedMsgIdx.value];
             if(targetMsg.type === 'image') return alert("图片无法编辑文本");
             const res = prompt("编辑消息：", targetMsg.content);
-            if(res !== null) {
-                targetMsg.content = res;
-                saveAllData();
-            }
+            if(res !== null) { targetMsg.content = res; saveAllData(); }
             showMsgMenu.value = false;
         };
         const quoteMsg = () => {
@@ -517,15 +512,12 @@ createApp({
 
         const closeAllMenus = () => { showFriendMenu.value = false; showMsgMenu.value = false; };
 
-        // --- 编辑名字与头像 (关键修改区：禁止同步，即时渲染) ---
+        // --- 核心编辑逻辑 ---
         const editName = (side) => {
             const newName = prompt("编辑名字：", widget.value[side + 'Name']);
             if (newName) { 
                 widget.value[side + 'Name'] = newName;
-                // 仅当修改的是左边小组件时，才由于联系人列表默认第一个是它而同步一次
-                if(side === 'left') {
-                    friendsList.value[0].name = newName;
-                }
+                if(side === 'left') { friendsList.value[0].name = newName; }
                 saveAllData();
             }
         };
@@ -543,27 +535,21 @@ createApp({
             const reader = new FileReader();
             reader.onload = (event) => {
                 widget.value[currentEditSide.value + 'Avatar'] = event.target.result;
-                // 注意：这里不再自动更新 friendsList[0]，实现彻底解耦
                 saveAllData();
             };
             reader.readAsDataURL(file);
         };
 
-        // “我”界面的独立头像处理
         const handleMeAvatarClick = () => document.getElementById('meAvatarPicker').click();
         const onMeAvatarSelected = (e) => {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = (ev) => {
-                    widget.value.meAvatar = ev.target.result;
-                    saveAllData();
-                };
+                reader.onload = (ev) => { widget.value.meAvatar = ev.target.result; saveAllData(); };
                 reader.readAsDataURL(file);
             }
         };
 
-        // 朋友圈封面与头像
         const changeMomentCover = () => document.getElementById('momentCoverPicker').click();
         const onMomentCoverSelected = (e) => {
             const file = e.target.files[0];
@@ -593,7 +579,6 @@ createApp({
         };
         const developingTip = () => { alert("正在开发中"); };
 
-        // --- 聊天功能逻辑 ---
         const toggleInventory = () => {
             isRotating.value = true;
             inventoryOpen.value = !inventoryOpen.value;
@@ -635,7 +620,6 @@ createApp({
                 userMsgObj.rawDesc = msgContent;
             }
 
-            // 转账/红包 自动化扣费逻辑
             if (type === 'text') {
                 const amountMatch = msgContent.match(/(\d+(\.\d+)?)/);
                 if (amountMatch && (msgContent.includes('转账') || msgContent.includes('红包'))) {
@@ -650,8 +634,7 @@ createApp({
             }
 
             chatHistory.value[partnerId].push(userMsgObj);
-            saveAllData(); // 立即保存发送的消息
-
+            saveAllData(); 
             if (type === 'text') userInput.value = '';
             quoteContent.value = null;
 
@@ -679,7 +662,6 @@ createApp({
                 const aiMsg = data.choices[0].message.content;
                 chatHistory.value[partnerId].push({ role: 'assistant', type: 'text', content: aiMsg });
 
-                // AI 转账/收红包 自动化逻辑
                 const aiAmountMatch = aiMsg.match(/(\d+(\.\d+)?)/);
                 if (aiAmountMatch && (aiMsg.includes('转账') || aiMsg.includes('收下'))) {
                     const amount = parseFloat(aiAmountMatch[0]);
@@ -690,7 +672,7 @@ createApp({
                     });
                     widget.value.balance = (parseFloat(widget.value.balance) + amount).toFixed(2);
                 }
-                saveAllData(); // 保存 AI 回复及账单
+                saveAllData();
                 await nextTick();
                 if(box) box.scrollTop = box.scrollHeight;
             } catch (e) { 
@@ -700,13 +682,7 @@ createApp({
         };
 
         onMounted(() => {
-            const localConfig = localStorage.getItem('ai_config_v4'); if (localConfig) config.value = JSON.parse(localConfig);
-            const localWidget = localStorage.getItem('widget_v5'); if (localWidget) widget.value = JSON.parse(localWidget);
-            const localBill = localStorage.getItem('bill_records'); if (localBill) billRecords.value = JSON.parse(localBill);
-            const localHistory = localStorage.getItem('chat_history_v5'); if (localHistory) chatHistory.value = JSON.parse(localHistory);
-            const localFriends = localStorage.getItem('friends_list_v5'); if (localFriends) friendsList.value = JSON.parse(localFriends);
-            
-            // 应用美化 CSS
+            // 确保页面加载后立即应用美化 CSS
             const styleEl = document.getElementById('user-custom-css');
             styleEl.innerHTML = (config.value.beautyCss || '') + (config.value.presetCss || '');
         });
