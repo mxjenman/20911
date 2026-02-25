@@ -158,23 +158,6 @@
             position: relative;
         }
 
-        /* 朋友圈右上角相机图标 */
-        .moment-camera-icon {
-            position: absolute;
-            top: calc(env(safe-area-inset-top) + 15px);
-            right: 18px;
-            width: 26px;
-            height: 26px;
-            z-index: 100;
-            object-fit: contain;
-            cursor: pointer;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
-        }
-        .moment-camera-icon:active {
-            opacity: 0.7;
-            transform: scale(0.9);
-        }
-
         /* 强制白色背景覆盖层 */
         .white-fill-layer {
             background-color: #ffffff !important;
@@ -344,7 +327,6 @@
         </div>
 
         <div class="wechat-content" :class="{'white-fill-layer': activeTab === 'me' || activeTab === 'contacts'}">
-            
             <div v-if="activeTab === 'contacts'" class="h-full relative bg-white">
                 <div v-if="!currentChatPartner" class="bg-white h-full">
                     <div class="p-2 px-4 bg-gray-50 text-[11px] text-gray-400 border-b flex justify-between items-center">
@@ -427,10 +409,6 @@
             <div v-if="activeTab === 'discover'" class="discover-page">
                 <div class="moment-cover-wrap" @click="changeMomentCover">
                     <img :src="widget.momentCover || 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=1000'" class="w-full h-full object-cover">
-                    <img src="https://test.fukit.cn/autoupload/fr/qakEfOhNRG6o06DQb0_mtuPxZ2O0bsQcfNmgZJT0wpmyl5f0KlZfm6UsKj-HyTuv/20260225/vQ7P/1000X1000/IMG_2995.png" 
-                         class="moment-camera-icon"
-                         @click.stop="developingTip">
-                    
                     <div class="absolute -bottom-6 right-4 flex items-center gap-3 z-50">
                         <span class="text-white font-bold shadow-sm mb-4" @click.stop="editMeName">{{ widget.meName }}</span>
                         <img :src="widget.momentAvatar || widget.rightAvatar" 
@@ -552,6 +530,8 @@ createApp({
         const friendsList = ref([...DEFAULT_FRIENDS]);
         const chatHistory = ref({ ...DEFAULT_HISTORY });
         const billRecords = ref([]);
+
+        // 新增：添加AI的数据容器
         const newAI = ref({ remark: '', realName: '', persona: '' });
 
         const saveAllData = () => {
@@ -593,7 +573,10 @@ createApp({
         });
         
         const navTitle = computed(() => ({ contacts: '好友', discover: '朋友圈', me: '' }[activeTab.value]));
-        const modalTitle = computed(() => ({ config: '参数配置', beauty: '界面美化', preset: '人格预设' }[activeModal.value]));
+        
+        const modalTitle = computed(() => ({ 
+            config: '参数配置', beauty: '界面美化', preset: '人格预设'
+        }[activeModal.value]));
 
         const openWechat = () => { chatVisible.value = true; activeTab.value = 'contacts'; currentChatPartner.value = null; meSubPage.value = null; };
         const enterChat = (id) => {
@@ -614,19 +597,22 @@ createApp({
             setTimeout(() => { isPlusRotating.value = false; }, 500);
         };
 
+        // --- 新增：保存新联系人逻辑 ---
         const addNewFriend = () => {
             if(!newAI.value.remark || !newAI.value.realName) return alert("请填写备注和真名");
             const newId = 'ai_' + Date.now();
             const friendObj = {
                 id: newId,
-                name: newAI.value.remark,
-                realName: newAI.value.realName,
-                persona: newAI.value.persona,
+                name: newAI.value.remark, // 备注作为显示名
+                realName: newAI.value.realName, // 真名存入后台
+                persona: newAI.value.persona, // 人设存入后台
                 avatar: 'https://test.fukit.cn/autoupload/fr/PUOzIkT_hEAqz4elPzgm9kg93R44cerOKVobYyu6bmqyl5f0KlZfm6UsKj-HyTuv/20260224/IR8x/1206X1168/IMG_2714.jpeg',
                 isTop: false
             };
             friendsList.value.push(friendObj);
             chatHistory.value[newId] = [{ role: 'assistant', type: 'text', content: `你好，我是${newAI.value.realName}。` }];
+            
+            // 重置并关闭
             newAI.value = { remark: '', realName: '', persona: '' };
             activeModal.value = null;
         };
@@ -755,7 +741,7 @@ createApp({
             const b = prompt("设置余额：", widget.value.balance);
             if (b !== null) widget.value.balance = b;
         };
-        const developingTip = () => { alert("功能开发中，敬请期待！"); };
+        const developingTip = () => { alert("正在开发中"); };
 
         const toggleInventory = () => {
             isRotating.value = true;
@@ -788,6 +774,7 @@ createApp({
             const partnerId = currentChatPartner.value?.id;
             if (!partnerId) return;
             const targetFriend = friendsList.value.find(f => f.id === partnerId);
+            
             let msgContent = content || userInput.value;
             if (!msgContent && type === 'text') return;
 
@@ -802,25 +789,39 @@ createApp({
             chatHistory.value[partnerId].push(userMsgObj);
             if (type === 'text') userInput.value = '';
             quoteContent.value = null;
+
             await nextTick();
             const box = document.getElementById('msg-box');
             if(box) box.scrollTop = box.scrollHeight;
 
             try {
-                let aiSystemPrompt = `你现在是 ${targetFriend.realName}。备注名是 ${targetFriend.name}。对方叫 ${widget.value.meName}。状态：${widget.value.userStatus}。设定：${targetFriend.persona}。${config.value.presetCss}`;
+                // 系统提示词：结合真名和专属人设
+                let aiSystemPrompt = `你现在是 ${targetFriend.realName}。
+你的备注名（对方看到的）是 ${targetFriend.name}，但你只知道你叫 ${targetFriend.realName}。
+对方叫 ${widget.value.meName}。对方目前的微信状态是“${widget.value.userStatus}”。
+你的核心设定（必须严格遵守）：${targetFriend.persona}
+额外预设：${config.value.presetCss}`;
+
                 const res = await fetch(`${config.value.baseUrl}/chat/completions`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${config.value.apiKey}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         model: config.value.model, 
-                        messages: [{role:'system', content: aiSystemPrompt}, ...chatHistory.value[partnerId].map(m => ({
-                            role: m.role, content: (m.quote ? `[引用: ${m.quote}] ` : '') + (m.rawDesc || (m.type === 'image' ? '[照片]' : m.content))
-                        })).slice(-15)] 
+                        messages: [
+                            {role:'system', content: aiSystemPrompt}, 
+                            ...chatHistory.value[partnerId].map(m => ({
+                                role: m.role,
+                                content: (m.quote ? `[引用: ${m.quote}] ` : '') + (m.rawDesc || (m.type === 'image' ? '[照片]' : m.content))
+                            })).slice(-15)
+                        ] 
                     })
                 });
                 const data = await res.json();
-                chatHistory.value[partnerId].push({ role: 'assistant', type: 'text', content: data.choices[0].message.content });
-                await nextTick(); if(box) box.scrollTop = box.scrollHeight;
+                const aiMsg = data.choices[0].message.content;
+                chatHistory.value[partnerId].push({ role: 'assistant', type: 'text', content: aiMsg });
+
+                await nextTick();
+                if(box) box.scrollTop = box.scrollHeight;
             } catch (e) { chatHistory.value[partnerId].push({ role: 'assistant', type: 'text', content: '连接失败，请检查配置。' }); }
         };
 
@@ -834,11 +835,14 @@ createApp({
             friendsList.value = getLocal('friends_list_v5', friendsList.value);
             chatHistory.value = getLocal('chat_history_v5', chatHistory.value);
             billRecords.value = getLocal('bill_records', billRecords.value);
+
             const styleEl = document.getElementById('user-custom-css');
             styleEl.innerHTML = (config.value.beautyCss || '') + (config.value.presetCss || '');
         });
 
-        let friendTimer = null; let msgTimer = null;
+        let friendTimer = null;
+        let msgTimer = null;
+
         return { 
             config, widget, chatVisible, activeTab, activeModal, meSubPage,
             userInput, currentChatPartner, currentMessages, navTitle, modalTitle,
@@ -850,8 +854,10 @@ createApp({
             save, sendMsg, openWechat, enterChat, exitChat, closeAllMenus,
             developingTip, editBalance, inventoryOpen, isRotating, isPlusRotating, triggerPlusAction, toggleInventory, billRecords,
             triggerAlbum, triggerCamera, onAlbumPhotoSelected, onCameraPhotoSelected, handleDescriptionPhoto,
-            selectedFriend, changeMomentCover, onMomentCoverSelected, changeMomentAvatar, onMomentAvatarSelected,
-            handleMeAvatarClick, onMeAvatarSelected, editUserStatus, newAI, addNewFriend
+            selectedFriend, changeMomentCover, onMomentCoverSelected,
+            changeMomentAvatar, onMomentAvatarSelected,
+            handleMeAvatarClick, onMeAvatarSelected, editUserStatus,
+            newAI, addNewFriend
         };
     }
 }).mount('#app');
