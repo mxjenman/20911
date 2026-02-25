@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AI 桌面 - 持久化增强版</title>
+    <title>AI 桌面 - 高级持久化增强版</title>
     
     <link rel="apple-touch-icon" href="https://test.fukit.cn/autoupload/fr/PUOzIkT_hEAqz4elPzgm9kg93R44cerOKVobYyu6bmqyl5f0KlZfm6UsKj-HyTuv/20260224/IR8x/1206X1168/IMG_2714.jpeg">
     <link rel="icon" type="image/jpeg" href="https://test.fukit.cn/autoupload/fr/PUOzIkT_hEAqz4elPzgm9kg93R44cerOKVobYyu6bmqyl5f0KlZfm6UsKj-HyTuv/20260224/IR8x/1206X1168/IMG_2714.jpeg">
@@ -228,8 +228,8 @@
                          @mouseup="handleMouseUp"
                          class="p-4 border-b flex items-center justify-between active:bg-gray-50 bg-white">
                         <div class="flex items-center gap-3">
-                            <img :src="f.avatar" class="w-10 h-10 rounded">
-                            <span class="font-medium">{{ f.name }}</span>
+                            <img :src="getFriendAvatar(f)" class="w-10 h-10 rounded">
+                            <span class="font-medium">{{ getFriendName(f) }}</span>
                         </div>
                         <span v-if="f.isTop" class="text-[10px] bg-gray-100 text-gray-400 px-1 rounded">置顶</span>
                     </div>
@@ -292,7 +292,7 @@
                 <div class="h-64 bg-gray-300 relative overflow-visible" @click="changeMomentCover">
                     <img :src="widget.momentCover || 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=1000'" class="w-full h-full object-cover">
                     <div class="absolute -bottom-6 right-4 flex items-center gap-3 z-50">
-                        <span class="text-white font-bold shadow-sm mb-4">{{ widget.rightName }}</span>
+                        <span class="text-white font-bold shadow-sm mb-4">{{ widget.momentName || widget.rightName }}</span>
                         <img :src="widget.momentAvatar || widget.rightAvatar" 
                              @click.stop="changeMomentAvatar"
                              class="w-16 h-16 rounded-lg border-2 border-white object-cover bg-white shadow-md">
@@ -303,9 +303,9 @@
 
             <div v-if="activeTab === 'me'" class="bg-[#ededed] h-full">
                 <div class="bg-white p-8 pt-12 flex items-center gap-4">
-                    <img :src="widget.rightAvatar" @click="handleAvatarClick('right')" class="w-16 h-16 rounded-lg object-cover bg-gray-100 border cursor-pointer">
+                    <img :src="widget.momentAvatar || widget.rightAvatar" @click="changeMomentAvatar" class="w-16 h-16 rounded-lg object-cover bg-gray-100 border cursor-pointer">
                     <div class="flex-1">
-                        <div @click="editName('right')" class="text-xl font-bold flex items-center gap-1">{{ widget.rightName }}</div>
+                        <div @click="editMomentName" class="text-xl font-bold flex items-center gap-1">{{ widget.momentName || widget.rightName }}</div>
                         <div @click="editWxId" class="text-gray-500 text-sm mt-1">微信号：{{ widget.wxId || 'AI_Habibi' }}</div>
                     </div>
                 </div>
@@ -374,7 +374,8 @@ createApp({
             wxId: 'AI_Habibi',
             balance: '19.77',
             momentCover: '',
-            momentAvatar: ''
+            momentAvatar: '',
+            momentName: '' // 独立于小组件的名字
         });
         
         const chatVisible = ref(false);
@@ -406,7 +407,6 @@ createApp({
             ai: [{ role: 'assistant', type: 'text', content: '我是哈吉米宝宝，你好呀！' }]
         });
 
-        // --- 数据持久化方法 ---
         const saveAllData = () => {
             localStorage.setItem('widget_v5', JSON.stringify(widget.value));
             localStorage.setItem('bill_records', JSON.stringify(billRecords.value));
@@ -415,7 +415,6 @@ createApp({
             localStorage.setItem('ai_config_v4', JSON.stringify(config.value));
         };
 
-        // 监听 widget 深度变化，自动保存名字头像等信息
         watch(widget, () => saveAllData(), { deep: true });
         watch(friendsList, () => saveAllData(), { deep: true });
         watch(chatHistory, () => saveAllData(), { deep: true });
@@ -423,6 +422,16 @@ createApp({
         const filteredFriends = computed(() => {
             return [...friendsList.value].sort((a, b) => (b.isTop - a.isTop));
         });
+
+        // 修改获取好友名字的逻辑，让左侧好友始终实时关联 widget.leftName
+        const getFriendName = (f) => {
+            if(f.id === 'left') return widget.value.leftName;
+            return f.name;
+        };
+        const getFriendAvatar = (f) => {
+            if(f.id === 'left') return widget.value.leftAvatar;
+            return f.avatar;
+        };
 
         const currentMessages = computed(() => {
             return currentChatPartner.value ? chatHistory.value[currentChatPartner.value.id] : [];
@@ -433,20 +442,21 @@ createApp({
             config: '参数配置', beauty: '界面美化', preset: '人格预设', addFriend: '添加新角色' 
         }[activeModal.value]));
 
-        // --- 核心操作函数 ---
         const openWechat = () => { chatVisible.value = true; activeTab.value = 'contacts'; currentChatPartner.value = null; meSubPage.value = null; };
         const enterChat = (id) => {
             if (showFriendMenu.value) return;
             const f = friendsList.value.find(item => item.id === id);
-            currentChatPartner.value = { id, name: f.name };
-            nextTick(() => { const box = document.getElementById('msg-box'); if(box) box.scrollTop = box.scrollHeight; });
+            currentChatPartner.value = { id, name: getFriendName(f) };
+            nextTick(() => { 
+                const box = document.getElementById('msg-box'); 
+                if(box) box.scrollTop = box.scrollHeight; 
+            });
         };
         const exitChat = () => {
             if(isMultiSelect.value) { isMultiSelect.value = false; selectedMsgs.value = []; } 
             else { currentChatPartner.value = null; }
         };
 
-        // 好友长按/右键菜单逻辑
         let friendTimer = null;
         const handleTouchStart = (e, f) => { friendTimer = setTimeout(() => { selectedFriend.value = f; showFriendMenu.value = true; }, 600); };
         const handleTouchEnd = () => clearTimeout(friendTimer);
@@ -460,7 +470,6 @@ createApp({
             showFriendMenu.value = false;
         };
 
-        // 消息气泡长按逻辑
         let msgTimer = null;
         const handleMsgTouchStart = (e, idx) => { if (isMultiSelect.value) return; msgTimer = setTimeout(() => { calcMsgMenuPos(idx); }, 600); };
         const handleMsgTouchEnd = () => clearTimeout(msgTimer);
@@ -504,14 +513,18 @@ createApp({
 
         const closeAllMenus = () => { showFriendMenu.value = false; showMsgMenu.value = false; };
 
-        // 基础信息编辑
+        // 桌面小组件编辑 (保持独立)
         const editName = (side) => {
             const newName = prompt("编辑名字：", widget.value[side + 'Name']);
-            if (newName) { 
-                widget.value[side + 'Name'] = newName;
-                if(side === 'left') friendsList.value[0].name = newName;
-            }
+            if (newName) widget.value[side + 'Name'] = newName;
         };
+
+        // “我”界面编辑 (朋友圈同步名字)
+        const editMomentName = () => {
+            const res = prompt("编辑名字：", widget.value.momentName || widget.value.rightName);
+            if(res) widget.value.momentName = res;
+        };
+
         const editWxId = () => {
             const newId = prompt("编辑微信号：", widget.value.wxId);
             if (newId) widget.value.wxId = newId;
@@ -526,7 +539,6 @@ createApp({
             const reader = new FileReader();
             reader.onload = (event) => {
                 widget.value[currentEditSide.value + 'Avatar'] = event.target.result;
-                if(currentEditSide.value === 'left') friendsList.value[0].avatar = event.target.result;
             };
             reader.readAsDataURL(file);
         };
@@ -580,7 +592,7 @@ createApp({
 
         const save = () => { 
             const styleEl = document.getElementById('user-custom-css');
-            styleEl.innerHTML = config.value.beautyCss + config.value.presetCss;
+            styleEl.innerHTML = (config.value.beautyCss || '') + (config.value.presetCss || '');
             saveAllData();
             activeModal.value = null; 
         };
@@ -599,14 +611,13 @@ createApp({
                 userMsgObj.rawDesc = msgContent;
             }
 
-            // 转账逻辑
             if (type === 'text') {
                 const amountMatch = msgContent.match(/(\d+(\.\d+)?)/);
                 if (amountMatch && (msgContent.includes('转账') || msgContent.includes('红包'))) {
                     const amount = parseFloat(amountMatch[0]);
                     billRecords.value.unshift({
                         name: currentChatPartner.value.name,
-                        avatar: friendsList.value.find(f => f.id === partnerId)?.avatar,
+                        avatar: getFriendAvatar(friendsList.value.find(f => f.id === partnerId)),
                         amount: -amount, time: new Date().toLocaleString()
                     });
                     widget.value.balance = (parseFloat(widget.value.balance) - amount).toFixed(2);
@@ -641,20 +652,19 @@ createApp({
                 const aiMsg = data.choices[0].message.content;
                 chatHistory.value[partnerId].push({ role: 'assistant', type: 'text', content: aiMsg });
 
-                // AI 转账/收红包
                 const aiAmountMatch = aiMsg.match(/(\d+(\.\d+)?)/);
                 if (aiAmountMatch && (aiMsg.includes('转账') || aiMsg.includes('收下'))) {
                     const amount = parseFloat(aiAmountMatch[0]);
                     billRecords.value.unshift({
                         name: currentChatPartner.value.name,
-                        avatar: friendsList.value.find(f => f.id === partnerId)?.avatar,
+                        avatar: getFriendAvatar(friendsList.value.find(f => f.id === partnerId)),
                         amount: amount, time: new Date().toLocaleString()
                     });
                     widget.value.balance = (parseFloat(widget.value.balance) + amount).toFixed(2);
                 }
                 await nextTick();
                 if(box) box.scrollTop = box.scrollHeight;
-            } catch (e) { chatHistory.value[partnerId].push({ role: 'assistant', type: 'text', content: '连接失败，请检查配置。' }); }
+            } catch (e) { chatHistory.value[partnerId].push({ role: 'assistant', type: 'text', content: '连接超时，请检查 API 设置。' }); }
         };
 
         onMounted(() => {
@@ -664,13 +674,8 @@ createApp({
             const localHistory = localStorage.getItem('chat_history_v5'); if (localHistory) chatHistory.value = JSON.parse(localHistory);
             const localFriends = localStorage.getItem('friends_list_v5'); if (localFriends) friendsList.value = JSON.parse(localFriends);
             
-            // 应用美化 CSS
             const styleEl = document.getElementById('user-custom-css');
             styleEl.innerHTML = (config.value.beautyCss || '') + (config.value.presetCss || '');
-            
-            // 同步初始名字和头像
-            friendsList.value[0].name = widget.value.leftName;
-            friendsList.value[0].avatar = widget.value.leftAvatar;
         });
 
         return { 
@@ -683,9 +688,9 @@ createApp({
             editName, editWxId, handleAvatarClick, onPhotoSelected, editSign, 
             save, sendMsg, openWechat, enterChat, exitChat, closeAllMenus,
             developingTip, editBalance, inventoryOpen, isRotating, toggleInventory, billRecords,
-            triggerAlbum, triggerCamera, onAlbumPhotoSelected, onCameraPhotoSelected, handleDescriptionPhoto,
+            triggerAlbum, triggerCamera, onAlbumPhotoSelected, onCameraPhotoSelected, handleImageUpload, handleDescriptionPhoto,
             selectedFriend, changeMomentCover, onMomentCoverSelected,
-            changeMomentAvatar, onMomentAvatarSelected
+            changeMomentAvatar, onMomentAvatarSelected, editMomentName, getFriendName, getFriendAvatar
         };
     }
 }).mount('#app');
