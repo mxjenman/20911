@@ -42,7 +42,8 @@
         .wechat-app { position: fixed; inset: 0; background: #ededed; z-index: 100; display: flex; flex-direction: column; animation: slideUp 0.3s ease-out; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         
-        .wechat-header { height: 88px; background: #ededed; display: flex; align-items: flex-end; justify-content: space-between; padding: 0 16px 12px; border-bottom: 0.5px solid #ddd; }
+        /* 1. 抬高顶栏高度并调整对齐 */
+        .wechat-header { height: 110px; background: #ededed; display: flex; align-items: flex-end; justify-content: space-between; padding: 0 16px 15px; border-bottom: 0.5px solid #ddd; }
         .wechat-content { flex: 1; overflow-y: auto; }
         
         .wechat-nav { height: 60px; background: #f7f7f7; border-top: 0.5px solid #ddd; display: flex; justify-content: space-around; align-items: center; padding-bottom: env(safe-area-inset-bottom); }
@@ -62,7 +63,7 @@
 
         .wallet-page { background: #f6f6f6; position: absolute; inset: 0; z-index: 200; display: flex; flex-direction: column; }
         .wallet-header-bg { background: linear-gradient(to bottom, var(--theme-color), #f6f6f6); height: 260px; position: absolute; top: 0; left: 0; right: 0; z-index: 0; }
-        .wallet-nav-bar { height: 88px; display: flex; align-items: flex-end; justify-content: space-between; padding: 0 16px 12px; color: white; position: relative; z-index: 10; }
+        .wallet-nav-bar { height: 110px; display: flex; align-items: flex-end; justify-content: space-between; padding: 0 16px 15px; color: white; position: relative; z-index: 10; }
         .wallet-main-card { background: white; border-radius: 12px; margin: 0 16px; padding: 20px; position: relative; z-index: 10; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .wallet-btn-group { display: flex; gap: 12px; margin-top: 40px; }
         .wallet-btn { flex: 1; height: 54px; border-radius: 27px; display: flex; justify-content: center; align-items: center; font-size: 17px; font-weight: 500; cursor: pointer; }
@@ -102,6 +103,11 @@
         .multi-select-btn { flex: 1; text-align: center; font-size: 16px; color: #1a1a1a; font-weight: 500; }
         .multi-select-btn.danger { color: #fa5151; }
         .quote-preview { background: #f0f0f0; padding: 8px 12px; border-top: 0.5px solid #ddd; display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: #666; }
+
+        /* 2. 朋友圈沉浸式样式调整 */
+        .discover-container { position: relative; height: 100%; overflow-y: auto; background: #ededed; }
+        .discover-header-btn { position: absolute; top: 15px; left: 16px; z-index: 100; color: white; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+        .discover-cover-box { margin-top: 5px; height: 320px; width: 100%; position: relative; }
     </style>
 </head>
 <body oncontextmenu="return false;"> 
@@ -202,7 +208,7 @@
             <div class="wechat-content"></div>
         </div>
 
-        <div class="wechat-header">
+        <div class="wechat-header" v-if="activeTab !== 'discover'">
             <div class="w-8 flex">
                 <button v-if="activeTab === 'contacts' && !currentChatPartner" @click="chatVisible = false" class="text-[#1a1a1a] pb-1">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
@@ -290,8 +296,11 @@
                 </div>
             </div>
 
-            <div v-if="activeTab === 'discover'" class="bg-[#ededed] h-full">
-                <div class="h-64 bg-gray-300 relative overflow-visible" @click="changeMomentCover">
+            <div v-if="activeTab === 'discover'" class="discover-container">
+                <div class="discover-header-btn" @click="activeTab='contacts'">
+                   <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+                </div>
+                <div class="discover-cover-box" @click="changeMomentCover">
                     <img :src="widget.momentCover || 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=1000'" class="w-full h-full object-cover">
                     <div class="absolute -bottom-6 right-4 flex items-center gap-3 z-50">
                         <span class="text-white font-bold shadow-sm mb-4" @click.stop="editMeName">{{ widget.meName }}</span>
@@ -300,7 +309,7 @@
                              class="w-16 h-16 rounded-lg border-2 border-white object-cover bg-white shadow-md">
                     </div>
                 </div>
-                <div class="mt-12 p-4 text-center text-gray-400 text-sm">暂无新动态</div>
+                <div class="mt-16 p-4 text-center text-gray-400 text-sm">暂无新动态</div>
             </div>
 
             <div v-if="activeTab === 'me'" class="bg-[#ededed] h-full">
@@ -370,7 +379,7 @@ const { createApp, ref, onMounted, computed, nextTick, watch } = Vue;
 const DEFAULT_WIDGET = {
     leftName: '雨雨雨～', leftAvatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png',
     rightName: '雨', rightAvatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png',
-    meName: '雨', // 微信内部独立人格名字
+    meName: '雨', 
     signature: '我不想隔着屏幕和你说话', wxId: 'AI_Habibi', balance: '19.77',
     momentCover: '', momentAvatar: '', meAvatar: ''
 };
@@ -393,7 +402,6 @@ createApp({
         const chatHistory = ref({ ...DEFAULT_HISTORY });
         const billRecords = ref([]);
 
-        // 持久化逻辑：合并监听，任何改动立即入库
         const saveAllData = () => {
             localStorage.setItem('ai_config_v4', JSON.stringify(config.value));
             localStorage.setItem('widget_v5', JSON.stringify(widget.value));
@@ -447,12 +455,10 @@ createApp({
             else { currentChatPartner.value = null; }
         };
 
-        // 姓名修改逻辑：解耦桌面与内部
         const editWidgetName = (side) => {
             const newName = prompt("编辑小组件显示名字：", widget.value[side + 'Name']);
             if (newName) { 
                 widget.value[side + 'Name'] = newName;
-                // 如果是左侧，则同步更新好友列表里的对应角色名
                 if(side === 'left') {
                     const f = friendsList.value.find(item => item.id === 'left');
                     if(f) f.name = newName;
@@ -462,10 +468,7 @@ createApp({
 
         const editMeName = () => {
             const newName = prompt("修改微信内部昵称：", widget.value.meName);
-            if (newName) {
-                widget.value.meName = newName;
-                // 注意：这里禁止修改 widget.rightName
-            }
+            if (newName) { widget.value.meName = newName; }
         };
 
         const handleTouchStart = (e, f) => { friendTimer = setTimeout(() => { selectedFriend.value = f; showFriendMenu.value = true; }, 600); };
@@ -530,9 +533,7 @@ createApp({
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = (event) => {
-                widget.value[currentEditSide.value + 'Avatar'] = event.target.result;
-            };
+            reader.onload = (event) => { widget.value[currentEditSide.value + 'Avatar'] = event.target.result; };
             reader.readAsDataURL(file);
         };
 
@@ -616,7 +617,6 @@ createApp({
                 userMsgObj.rawDesc = msgContent;
             }
 
-            // 账单即时触发
             if (type === 'text') {
                 const amountMatch = msgContent.match(/(\d+(\.\d+)?)/);
                 if (amountMatch && (msgContent.includes('转账') || msgContent.includes('红包'))) {
