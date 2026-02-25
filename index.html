@@ -58,29 +58,30 @@
 
         .wechat-content { flex: 1; overflow-y: auto; }
         
-        .wechat-nav { height: 60px; background: #f7f7f7; border-top: 0.5px solid #ddd; display: flex; justify-content: space-around; align-items: center; padding-bottom: env(safe-area-inset-bottom); }
-        .nav-item { flex: 1; height: 100%; display: flex; justify-content: center; align-items: center; font-size: 16px; font-weight: 500; color: #1a1a1a; transition: all 0.2s; padding-top: 3px; }
+        .wechat-nav { height: 60px; background: #f2f2f2; border-top: 0.5px solid #ddd; display: flex; justify-content: space-around; align-items: center; padding-bottom: env(safe-area-inset-bottom); }
+        .nav-item { flex: 1; height: 100%; display: flex; justify-content: center; align-items: center; font-size: 14px; font-weight: 500; color: #1a1a1a; transition: all 0.2s; padding-top: 3px; }
         .nav-item.active { color: #07c160; font-weight: 800; }
 
-        .msg-bubble { max-width: 75%; padding: 10px 14px; border-radius: 6px; font-size: 16px; margin: 4px 0; position: relative; word-break: break-all; }
+        .msg-bubble { max-width: 75%; padding: 10px 14px; border-radius: 6px; font-size: 15px; margin: 4px 0; position: relative; word-break: break-all; }
         .msg-user { background: #95ec69; align-self: flex-end; margin-right: 12px; }
         .msg-user::after { content: ''; position: absolute; right: -5px; top: 12px; border-left: 6px solid #95ec69; border-top: 6px solid transparent; border-bottom: 6px solid transparent; }
         .msg-ai { background: #ffffff; align-self: flex-start; margin-left: 12px; }
         .msg-ai::before { content: ''; position: absolute; left: -5px; top: 12px; border-right: 6px solid #ffffff; border-top: 6px solid transparent; border-bottom: 6px solid transparent; }
         
-        .quote-box { background: rgba(0,0,0,0.06); border-left: 2px solid #bbb; padding: 2px 8px; font-size: 12px; color: #777; margin-bottom: 4px; border-radius: 2px; line-height: 1.4; }
+        .quote-box { background: rgba(0,0,0,0.06); border-left: 2px solid #bbb; padding: 2px 8px; font-size: 11px; color: #777; margin-bottom: 4px; border-radius: 2px; line-height: 1.4; }
 
         /* 修改后的“我”界面样式 */
-        .me-profile-section { padding: 30px 24px; background: #f2f2f2; }
-        .me-avatar-circle { width: 100px; height: 100px; border-radius: 50%; border: 0.5px solid #ccc; object-fit: cover; background: #fff; margin-bottom: 20px; }
-        .me-info-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-        .me-id-label { font-size: 24px; font-weight: 500; color: #444; }
-        .me-status-tag { border: 0.5px solid #999; padding: 2px 8px; font-size: 14px; color: #444; }
-        .me-at-account { font-size: 22px; font-weight: 600; color: #555; margin-top: 4px; }
+        .me-profile-section { padding: 25px 24px 30px; background: #ffffff; margin-top: -5px; } /* 背景改白色，头像上移效果 */
+        .me-avatar-circle { width: 85px; height: 85px; border-radius: 50%; border: 0.5px solid #eee; object-fit: cover; background: #fff; margin-bottom: 15px; cursor: pointer; }
+        .me-info-row { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+        .me-id-label { font-size: 20px; font-weight: 600; color: #333; cursor: pointer; }
+        .me-status-tag { border: 0.5px solid #ccc; padding: 2px 14px; font-size: 12px; color: #666; border-radius: 30px; display: flex; align-items: center; cursor: pointer; }
+        .me-status-tag::before { content: '●'; color: #07c160; margin-right: 4px; font-size: 8px; }
+        .me-at-account { font-size: 18px; font-weight: 500; color: #888; margin-top: 2px; cursor: pointer; }
 
-        .me-menu-list { border-top: 0.5px solid #ddd; }
-        .me-menu-item { background: #f2f2f2; padding: 14px 20px; font-size: 20px; color: #333; border-bottom: 0.5px solid #ddd; display: flex; align-items: center; justify-content: flex-start; }
-        .me-menu-item:active { background: #e6e6e6; }
+        .me-menu-list { border-top: 0.5px solid #eee; background: #fff; flex: 1; }
+        .me-menu-item { background: #fff; padding: 14px 24px; font-size: 16px; color: #111; border-bottom: 0.5px solid #f0f0f0; display: flex; align-items: center; justify-content: flex-start; }
+        .me-menu-item:active { background: #f9f9f9; }
 
         .wallet-page { background: #f6f6f6; position: absolute; inset: 0; z-index: 200; display: flex; flex-direction: column; }
         .wallet-header-bg { background: linear-gradient(to bottom, var(--theme-color), #f6f6f6); height: 260px; position: absolute; top: 0; left: 0; right: 0; z-index: 0; }
@@ -270,6 +271,11 @@
         <div class="wechat-content">
             <div v-if="activeTab === 'contacts'" class="h-full relative">
                 <div v-if="!currentChatPartner" class="bg-white h-full">
+                    <div class="p-2 px-4 bg-gray-50 text-[11px] text-gray-400 border-b flex justify-between items-center">
+                        <span>当前用户状态: <span class="text-[#07c160] font-bold">{{ widget.userStatus }}</span></span>
+                        <span class="italic">正在同步至 AI 视野...</span>
+                    </div>
+                    
                     <div v-for="f in filteredFriends" :key="f.id" 
                          @click="enterChat(f.id)"
                          @touchstart="handleTouchStart($event, f)"
@@ -279,7 +285,10 @@
                          class="p-4 border-b flex items-center justify-between active:bg-gray-50 bg-white">
                         <div class="flex items-center gap-3">
                             <img :src="f.avatar" class="w-10 h-10 rounded">
-                            <span class="font-medium">{{ f.name }}</span>
+                            <div class="flex flex-col">
+                                <span class="font-medium">{{ f.name }}</span>
+                                <span class="text-[10px] text-gray-400">来自 AI 的特别问候</span>
+                            </div>
                         </div>
                         <span v-if="f.isTop" class="text-[10px] bg-gray-100 text-gray-400 px-1 rounded">置顶</span>
                     </div>
@@ -351,15 +360,15 @@
                 <div class="mt-12 p-4 text-center text-gray-400 text-sm">暂无新动态</div>
             </div>
 
-            <div v-if="activeTab === 'me'" class="bg-[#f2f2f2] h-full">
+            <div v-if="activeTab === 'me'" class="bg-[#f2f2f2] h-full flex flex-col">
                 <div class="me-profile-section">
                     <img :src="widget.meAvatar || widget.rightAvatar" 
                          @click="handleMeAvatarClick" 
                          class="me-avatar-circle">
                     
-                    <div class="me-info-row" @click="editMeName">
-                        <span class="me-id-label">ID</span>
-                        <div class="me-status-tag">状态栏</div>
+                    <div class="me-info-row">
+                        <span class="me-id-label" @click="editMeName">{{ widget.meName }}</span>
+                        <div class="me-status-tag" @click="editUserStatus">{{ widget.userStatus }}</div>
                     </div>
                     
                     <div @click="editWxId" class="me-at-account">
@@ -372,6 +381,7 @@
                     <div class="me-menu-item" @click="meSubPage = '个人资料'">个人资料</div>
                     <div class="me-menu-item" @click="meSubPage = '设置'">设置</div>
                 </div>
+                <div class="flex-1 bg-[#f2f2f2]"></div>
             </div>
         </div>
 
@@ -424,7 +434,7 @@ const { createApp, ref, onMounted, computed, nextTick, watch } = Vue;
 const DEFAULT_WIDGET = {
     leftName: '雨雨雨～', leftAvatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png',
     rightName: '雨', rightAvatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png',
-    meName: '雨', 
+    meName: '雨', userStatus: '在线中',
     signature: '我不想隔着屏幕和你说话', wxId: 'AI_Habibi', balance: '19.77',
     momentCover: '', momentAvatar: '', meAvatar: ''
 };
@@ -514,8 +524,13 @@ createApp({
         };
 
         const editMeName = () => {
-            const newName = prompt("修改微信内部昵称：", widget.value.meName);
+            const newName = prompt("修改 ID 昵称：", widget.value.meName);
             if (newName) { widget.value.meName = newName; }
+        };
+
+        const editUserStatus = () => {
+            const newStatus = prompt("修改当前状态 (AI 将会看到此状态)：", widget.value.userStatus);
+            if (newStatus) { widget.value.userStatus = newStatus; }
         };
 
         const handleTouchStart = (e, f) => { friendTimer = setTimeout(() => { selectedFriend.value = f; showFriendMenu.value = true; }, 600); };
@@ -569,7 +584,7 @@ createApp({
         const closeAllMenus = () => { showFriendMenu.value = false; showMsgMenu.value = false; };
 
         const editWxId = () => {
-            const newId = prompt("编辑微信号：", widget.value.wxId);
+            const newId = prompt("编辑账号 (带@符号)：", widget.value.wxId);
             if (newId) widget.value.wxId = newId;
         };
         const handleAvatarClick = (side) => {
@@ -688,7 +703,8 @@ createApp({
             if(box) box.scrollTop = box.scrollHeight;
 
             try {
-                let aiSystemPrompt = `你现在是${currentChatPartner.value.name}，对方叫${widget.value.meName}。${config.value.presetCss}`;
+                // AI 视野扩展：加入用户的当前状态感知
+                let aiSystemPrompt = `你现在是${currentChatPartner.value.name}，对方叫${widget.value.meName}。对方目前的微信状态是“${widget.value.userStatus}”。${config.value.presetCss}`;
                 const res = await fetch(`${config.value.baseUrl}/chat/completions`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${config.value.apiKey}`, 'Content-Type': 'application/json' },
@@ -753,7 +769,7 @@ createApp({
             triggerAlbum, triggerCamera, onAlbumPhotoSelected, onCameraPhotoSelected, handleDescriptionPhoto,
             selectedFriend, changeMomentCover, onMomentCoverSelected,
             changeMomentAvatar, onMomentAvatarSelected,
-            handleMeAvatarClick, onMeAvatarSelected
+            handleMeAvatarClick, onMeAvatarSelected, editUserStatus
         };
     }
 }).mount('#app');
