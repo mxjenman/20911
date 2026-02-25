@@ -16,7 +16,6 @@
     <style>
         :root { --bg-image: url('https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2070'); --theme-color: #424243; }
         
-        /* 核心防选区代码 */
         * {
             -webkit-tap-highlight-color: transparent;
             -webkit-touch-callout: none;
@@ -367,20 +366,50 @@
 </div>
 
 <script>
-const { createApp, ref, onMounted, computed, nextTick } = Vue;
-createApp({
-    setup() {
-        const config = ref({ baseUrl: '', apiKey: '', model: 'gpt-4o', beautyCss: '', presetCss: '' });
-        const widget = ref({
-            leftName: '雨雨雨～', leftAvatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png',
-            rightName: '雨', rightAvatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png',
+const { createApp, ref, onMounted, computed, nextTick, watch } = Vue;
+
+const STORAGE_KEY = 'WECHAT_SIM_DATA_V1';
+
+const getInitialData = () => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+        return JSON.parse(saved);
+    }
+    return {
+        widget: {
+            leftName: '雨雨雨～',
+            leftAvatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png',
+            rightName: '雨',
+            rightAvatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png',
             signature: '我不想隔着屏幕和你说话',
             wxId: 'AI_Habibi',
             balance: '19.77',
             momentCover: '',
-            momentAvatar: '' // 朋友圈独立头像
-        });
+            momentAvatar: ''
+        },
+        chatHistory: {
+            left: [{ role: 'assistant', type: 'text', content: '雨雨雨～准备好聊天啦！' }],
+            ai: [{ role: 'assistant', type: 'text', content: '我是哈吉米宝宝，你好呀！' }]
+        },
+        billRecords: [],
+        friendsList: [
+            { id: 'left', name: '雨雨雨～', avatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png', isTop: false },
+            { id: 'ai', name: '哈吉米宝宝', avatar: 'https://test.fukit.cn/autoupload/fr/PUOzIkT_hEAqz4elPzgm9kg93R44cerOKVobYyu6bmqyl5f0KlZfm6UsKj-HyTuv/20260224/IR8x/1206X1168/IMG_2714.jpeg', isTop: false }
+        ]
+    };
+};
+
+createApp({
+    setup() {
+        const config = ref({ baseUrl: '', apiKey: '', model: 'gpt-4o', beautyCss: '', presetCss: '' });
         
+        const allData = ref(getInitialData());
+
+        const widget = computed(() => allData.value.widget);
+        const chatHistory = computed(() => allData.value.chatHistory);
+        const billRecords = computed(() => allData.value.billRecords);
+        const friendsList = computed(() => allData.value.friendsList);
+
         const chatVisible = ref(false);
         const activeTab = ref('contacts');
         const activeModal = ref(null);
@@ -390,7 +419,6 @@ createApp({
 
         const inventoryOpen = ref(false);
         const isRotating = ref(false);
-        const billRecords = ref([]);
 
         const showFriendMenu = ref(false);
         const selectedFriend = ref(null);
@@ -404,17 +432,15 @@ createApp({
         const quoteContent = ref(null);
         let msgTimer = null;
 
-        const friendsList = ref([
-            { id: 'left', name: '雨雨雨～', avatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png', isTop: false },
-            { id: 'ai', name: '哈吉米宝宝', avatar: 'https://test.fukit.cn/autoupload/fr/PUOzIkT_hEAqz4elPzgm9kg93R44cerOKVobYyu6bmqyl5f0KlZfm6UsKj-HyTuv/20260224/IR8x/1206X1168/IMG_2714.jpeg', isTop: false }
-        ]);
-
-        const chatHistory = ref({
-            left: [{ role: 'assistant', type: 'text', content: '雨雨雨～准备好聊天啦！' }],
-            ai: [{ role: 'assistant', type: 'text', content: '我是哈吉米宝宝，你好呀！' }]
-        });
-
         const currentChatPartner = ref(null);
+
+        const saveAllToLocal = () => {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allData.value));
+        };
+
+        watch(allData, () => {
+            saveAllToLocal();
+        }, { deep: true });
 
         const filteredFriends = computed(() => {
             return [...friendsList.value].sort((a, b) => (b.isTop - a.isTop));
@@ -465,7 +491,7 @@ createApp({
         const toggleTop = () => { selectedFriend.value.isTop = !selectedFriend.value.isTop; showFriendMenu.value = false; };
         const deleteFriend = () => {
             if(confirm(`确定删除 ${selectedFriend.value.name}？`)) {
-                friendsList.value = friendsList.value.filter(f => f.id !== selectedFriend.value.id);
+                allData.value.friendsList = allData.value.friendsList.filter(f => f.id !== selectedFriend.value.id);
             }
             showFriendMenu.value = false;
         };
@@ -501,7 +527,6 @@ createApp({
         const deleteMsg = () => {
             const partnerId = currentChatPartner.value.id;
             chatHistory.value[partnerId].splice(selectedMsgIdx.value, 1);
-            saveHistory();
             showMsgMenu.value = false;
         };
         const editMsg = () => {
@@ -511,7 +536,6 @@ createApp({
             const res = prompt("编辑消息：", targetMsg.content);
             if(res !== null) {
                 targetMsg.content = res;
-                saveHistory();
             }
             showMsgMenu.value = false;
         };
@@ -532,7 +556,6 @@ createApp({
             sortedIdx.forEach(i => chatHistory.value[partnerId].splice(i, 1));
             isMultiSelect.value = false;
             selectedMsgs.value = [];
-            saveHistory();
         };
 
         const closeAllMenus = () => { 
@@ -542,11 +565,15 @@ createApp({
 
         const editName = (side) => {
             const newName = prompt("编辑名字：", widget.value[side + 'Name']);
-            if (newName) { widget.value[side + 'Name'] = newName; saveWidget(); }
+            if (newName) { 
+                allData.value.widget[side + 'Name'] = newName; 
+                const friend = allData.value.friendsList.find(f => f.id === side);
+                if(friend) friend.name = newName;
+            }
         };
         const editWxId = () => {
             const newId = prompt("编辑微信号：", widget.value.wxId);
-            if (newId) { widget.value.wxId = newId; saveWidget(); }
+            if (newId) { allData.value.widget.wxId = newId; }
         };
         const handleAvatarClick = (side) => {
             currentEditSide.value = side;
@@ -557,12 +584,12 @@ createApp({
             if (!file) return;
             const reader = new FileReader();
             reader.onload = (event) => {
-                widget.value[currentEditSide.value + 'Avatar'] = event.target.result;
-                saveWidget();
+                allData.value.widget[currentEditSide.value + 'Avatar'] = event.target.result;
+                const friend = allData.value.friendsList.find(f => f.id === currentEditSide.value);
+                if(friend) friend.avatar = event.target.result;
             };
             reader.readAsDataURL(file);
         };
-        // 朋友圈封面更换
         const changeMomentCover = () => {
             document.getElementById('momentCoverPicker').click();
         };
@@ -571,12 +598,10 @@ createApp({
             if (!file) return;
             const reader = new FileReader();
             reader.onload = (event) => {
-                widget.value.momentCover = event.target.result;
-                saveWidget();
+                allData.value.widget.momentCover = event.target.result;
             };
             reader.readAsDataURL(file);
         };
-        // 朋友圈独立头像更换
         const changeMomentAvatar = () => {
             document.getElementById('momentAvatarPicker').click();
         };
@@ -585,21 +610,20 @@ createApp({
             if (!file) return;
             const reader = new FileReader();
             reader.onload = (event) => {
-                widget.value.momentAvatar = event.target.result;
-                saveWidget();
+                allData.value.widget.momentAvatar = event.target.result;
             };
             reader.readAsDataURL(file);
         };
 
         const editSign = () => {
             const s = prompt("编辑个人签名：", widget.value.signature);
-            if (s) { widget.value.signature = s; saveWidget(); }
+            if (s) { allData.value.widget.signature = s; }
         };
 
         const developingTip = () => { alert("正在开发中"); };
         const editBalance = () => {
             const b = prompt("设置余额：", widget.value.balance);
-            if (b !== null) { widget.value.balance = b; saveWidget(); }
+            if (b !== null) { allData.value.widget.balance = b; }
         };
 
         const toggleInventory = () => {
@@ -631,13 +655,6 @@ createApp({
             }
         };
 
-        const saveWidget = () => { 
-            localStorage.setItem('widget_v5', JSON.stringify(widget.value)); 
-            localStorage.setItem('bill_records', JSON.stringify(billRecords.value));
-        };
-        const saveHistory = () => {
-            localStorage.setItem('chat_history_v5', JSON.stringify(chatHistory.value));
-        };
         const save = () => { 
             localStorage.setItem('ai_config_v4', JSON.stringify(config.value)); 
             const styleEl = document.getElementById('user-custom-css');
@@ -672,14 +689,13 @@ createApp({
                 const amountMatch = msgContent.match(/(\d+(\.\d+)?)/);
                 if (amountMatch && (msgContent.includes('转账') || msgContent.includes('红包'))) {
                     const amount = parseFloat(amountMatch[0]);
-                    billRecords.value.unshift({
+                    allData.value.billRecords.unshift({
                         name: currentChatPartner.value.name,
                         avatar: friendsList.value.find(f => f.id === partnerId)?.avatar,
                         amount: -amount,
                         time: new Date().toLocaleString()
                     });
-                    widget.value.balance = (parseFloat(widget.value.balance) - amount).toFixed(2);
-                    saveWidget();
+                    allData.value.widget.balance = (parseFloat(widget.value.balance) - amount).toFixed(2);
                 }
             }
 
@@ -715,16 +731,14 @@ createApp({
                 const aiAmountMatch = aiMsg.match(/(\d+(\.\d+)?)/);
                 if (aiAmountMatch && (aiMsg.includes('转账') || aiMsg.includes('收下'))) {
                     const amount = parseFloat(aiAmountMatch[0]);
-                    billRecords.value.unshift({
+                    allData.value.billRecords.unshift({
                         name: currentChatPartner.value.name,
                         avatar: friendsList.value.find(f => f.id === partnerId)?.avatar,
                         amount: amount,
                         time: new Date().toLocaleString()
                     });
-                    widget.value.balance = (parseFloat(widget.value.balance) + amount).toFixed(2);
-                    saveWidget();
+                    allData.value.widget.balance = (parseFloat(widget.value.balance) + amount).toFixed(2);
                 }
-                saveHistory();
                 await nextTick();
                 if(box) box.scrollTop = box.scrollHeight;
             } catch (e) { chatHistory.value[partnerId].push({ role: 'assistant', type: 'text', content: '连接超时。' }); }
@@ -732,16 +746,11 @@ createApp({
 
         onMounted(() => {
             const s = localStorage.getItem('ai_config_v4'); if (s) config.value = JSON.parse(s);
-            const w = localStorage.getItem('widget_v5'); if (w) widget.value = JSON.parse(w);
-            const b = localStorage.getItem('bill_records'); if (b) billRecords.value = JSON.parse(b);
-            const h = localStorage.getItem('chat_history_v5'); if (h) chatHistory.value = JSON.parse(h);
             save();
-            friendsList.value[0].name = widget.value.leftName;
-            friendsList.value[0].avatar = widget.value.leftAvatar;
         });
 
         return { 
-            config, widget, chatVisible, activeTab, activeModal, meSubPage,
+            allData, config, widget, chatVisible, activeTab, activeModal, meSubPage,
             userInput, currentChatPartner, currentMessages, navTitle, modalTitle,
             filteredFriends,
             showFriendMenu, handleTouchStart, handleTouchEnd, handleMouseDown, handleMouseUp, toggleTop, deleteFriend,
