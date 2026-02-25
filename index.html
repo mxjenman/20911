@@ -112,7 +112,6 @@
         .inventory-rotate { animation: twist 0.6s ease-in-out; }
         @keyframes twist { 0% { transform: rotate(0deg); } 33% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
 
-        /* 好友加号按钮点击旋转动画 */
         .plus-icon-container { transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: inline-block; }
         .plus-rotate-active { animation: plus-rotate 0.5s forwards ease-in-out; }
         @keyframes plus-rotate {
@@ -150,33 +149,32 @@
             background: #ededed; 
             height: 100%; 
             overflow-y: auto; 
-            padding-top: 0;
-            position: relative;
+            padding-top: calc(env(safe-area-inset-top) + 5px);
         }
         .moment-cover-wrap {
+            margin-top: calc(-1 * (env(safe-area-inset-top) + 5px));
             height: 300px;
             position: relative;
-            background: #333;
         }
-        
-        /* 朋友圈右上角相机图标定位 */
+
         .moment-camera-icon {
             position: absolute;
-            top: calc(env(safe-area-inset-top) + 10px);
-            right: 16px;
-            width: 28px;
-            height: 28px;
-            z-index: 100;
+            top: calc(env(safe-area-inset-top) + 15px);
+            right: 18px;
+            width: 26px;
+            height: 26px;
+            z-index: 60;
+            object-fit: contain;
             cursor: pointer;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+            filter: drop-shadow(0 1px 4px rgba(0,0,0,0.3));
+        }
+        .moment-camera-icon:active {
+            opacity: 0.7;
+            transform: scale(0.9);
         }
 
-        /* 强制白色背景覆盖层 */
-        .white-fill-layer {
-            background-color: #ffffff !important;
-        }
+        .white-fill-layer { background-color: #ffffff !important; }
 
-        /* --- 新增：添加角色弹窗样式 --- */
         .add-ai-modal {
             background: #fff;
             width: 90%;
@@ -420,12 +418,14 @@
             </div>
 
             <div v-if="activeTab === 'discover'" class="discover-page">
-                <img src="https://test.fukit.cn/autoupload/fr/qakEfOhNRG6o06DQb0_mtuPxZ2O0bsQcfNmgZJT0wpmyl5f0KlZfm6UsKj-HyTuv/20260225/vQ7P/1000X1000/IMG_2995.png" 
-                     class="moment-camera-icon" 
-                     @click="developingTip">
-
-                <div class="moment-cover-wrap" @click="changeMomentCover">
-                    <img :src="widget.momentCover || 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=1000'" class="w-full h-full object-cover">
+                <div class="moment-cover-wrap">
+                    <img :src="widget.momentCover || 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=1000'" 
+                         @click="changeMomentCover"
+                         class="w-full h-full object-cover">
+                    <img src="https://test.fukit.cn/autoupload/fr/qakEfOhNRG6o06DQb0_mtuPxZ2O0bsQcfNmgZJT0wpmyl5f0KlZfm6UsKj-HyTuv/20260225/vQ7P/1000X1000/IMG_2995.png" 
+                         class="moment-camera-icon"
+                         @click.stop="developingTip">
+                    
                     <div class="absolute -bottom-6 right-4 flex items-center gap-3 z-50">
                         <span class="text-white font-bold shadow-sm mb-4" @click.stop="editMeName">{{ widget.meName }}</span>
                         <img :src="widget.momentAvatar || widget.rightAvatar" 
@@ -547,7 +547,6 @@ createApp({
         const friendsList = ref([...DEFAULT_FRIENDS]);
         const chatHistory = ref({ ...DEFAULT_HISTORY });
         const billRecords = ref([]);
-
         const newAI = ref({ remark: '', realName: '', persona: '' });
 
         const saveAllData = () => {
@@ -558,9 +557,7 @@ createApp({
             localStorage.setItem('bill_records', JSON.stringify(billRecords.value));
         };
 
-        watch([config, widget, friendsList, chatHistory, billRecords], () => {
-            saveAllData();
-        }, { deep: true });
+        watch([config, widget, friendsList, chatHistory, billRecords], () => { saveAllData(); }, { deep: true });
 
         const chatVisible = ref(false);
         const activeTab = ref('contacts');
@@ -581,18 +578,10 @@ createApp({
         const quoteContent = ref(null);
         const currentChatPartner = ref(null);
 
-        const filteredFriends = computed(() => {
-            return [...friendsList.value].sort((a, b) => (b.isTop - a.isTop));
-        });
-        const currentMessages = computed(() => {
-            return currentChatPartner.value ? chatHistory.value[currentChatPartner.value.id] : [];
-        });
-        
+        const filteredFriends = computed(() => [...friendsList.value].sort((a, b) => (b.isTop - a.isTop)));
+        const currentMessages = computed(() => currentChatPartner.value ? chatHistory.value[currentChatPartner.value.id] : []);
         const navTitle = computed(() => ({ contacts: '好友', discover: '朋友圈', me: '' }[activeTab.value]));
-        
-        const modalTitle = computed(() => ({ 
-            config: '参数配置', beauty: '界面美化', preset: '人格预设'
-        }[activeModal.value]));
+        const modalTitle = computed(() => ({ config: '参数配置', beauty: '界面美化', preset: '人格预设' }[activeModal.value]));
 
         const openWechat = () => { chatVisible.value = true; activeTab.value = 'contacts'; currentChatPartner.value = null; meSubPage.value = null; };
         const enterChat = (id) => {
@@ -601,10 +590,7 @@ createApp({
             currentChatPartner.value = { id, name: f.name };
             nextTick(() => { const box = document.getElementById('msg-box'); if(box) box.scrollTop = box.scrollHeight; });
         };
-        const exitChat = () => {
-            if(isMultiSelect.value) { isMultiSelect.value = false; selectedMsgs.value = []; } 
-            else { currentChatPartner.value = null; }
-        };
+        const exitChat = () => { if(isMultiSelect.value) { isMultiSelect.value = false; selectedMsgs.value = []; } else { currentChatPartner.value = null; } };
 
         const triggerPlusAction = () => {
             if (isPlusRotating.value) return;
@@ -616,15 +602,11 @@ createApp({
         const addNewFriend = () => {
             if(!newAI.value.remark || !newAI.value.realName) return alert("请填写备注和真名");
             const newId = 'ai_' + Date.now();
-            const friendObj = {
-                id: newId,
-                name: newAI.value.remark,
-                realName: newAI.value.realName,
-                persona: newAI.value.persona,
-                avatar: 'https://test.fukit.cn/autoupload/fr/PUOzIkT_hEAqz4elPzgm9kg93R44cerOKVobYyu6bmqyl5f0KlZfm6UsKj-HyTuv/20260224/IR8x/1206X1168/IMG_2714.jpeg',
+            friendsList.value.push({
+                id: newId, name: newAI.value.remark, realName: newAI.value.realName, 
+                persona: newAI.value.persona, avatar: 'https://test.fukit.cn/autoupload/fr/PUOzIkT_hEAqz4elPzgm9kg93R44cerOKVobYyu6bmqyl5f0KlZfm6UsKj-HyTuv/20260224/IR8x/1206X1168/IMG_2714.jpeg',
                 isTop: false
-            };
-            friendsList.value.push(friendObj);
+            });
             chatHistory.value[newId] = [{ role: 'assistant', type: 'text', content: `你好，我是${newAI.value.realName}。` }];
             newAI.value = { remark: '', realName: '', persona: '' };
             activeModal.value = null;
@@ -634,22 +616,12 @@ createApp({
             const newName = prompt("编辑小组件显示名字：", widget.value[side + 'Name']);
             if (newName) { 
                 widget.value[side + 'Name'] = newName;
-                if(side === 'left') {
-                    const f = friendsList.value.find(item => item.id === 'left');
-                    if(f) f.name = newName;
-                }
+                if(side === 'left') { const f = friendsList.value.find(item => item.id === 'left'); if(f) f.name = newName; }
             }
         };
 
-        const editMeName = () => {
-            const newName = prompt("修改 ID 昵称：", widget.value.meName);
-            if (newName) { widget.value.meName = newName; }
-        };
-
-        const editUserStatus = () => {
-            const newStatus = prompt("修改当前状态 (AI 将会看到此状态)：", widget.value.userStatus);
-            if (newStatus) { widget.value.userStatus = newStatus; }
-        };
+        const editMeName = () => { const newName = prompt("修改 ID 昵称：", widget.value.meName); if (newName) { widget.value.meName = newName; } };
+        const editUserStatus = () => { const newStatus = prompt("修改当前状态 (AI 将会看到此状态)：", widget.value.userStatus); if (newStatus) { widget.value.userStatus = newStatus; } };
 
         const handleTouchStart = (e, f) => { friendTimer = setTimeout(() => { selectedFriend.value = f; showFriendMenu.value = true; }, 600); };
         const handleTouchEnd = () => clearTimeout(friendTimer);
@@ -657,9 +629,7 @@ createApp({
         const handleMouseUp = () => clearTimeout(friendTimer);
         const toggleTop = () => { selectedFriend.value.isTop = !selectedFriend.value.isTop; showFriendMenu.value = false; };
         const deleteFriend = () => {
-            if(confirm(`确定删除 ${selectedFriend.value.name}？`)) {
-                friendsList.value = friendsList.value.filter(f => f.id !== selectedFriend.value.id);
-            }
+            if(confirm(`确定删除 ${selectedFriend.value.name}？`)) { friendsList.value = friendsList.value.filter(f => f.id !== selectedFriend.value.id); }
             showFriendMenu.value = false;
         };
 
@@ -700,15 +670,8 @@ createApp({
         };
 
         const closeAllMenus = () => { showFriendMenu.value = false; showMsgMenu.value = false; };
-
-        const editWxId = () => {
-            const newId = prompt("编辑账号 (带@符号)：", widget.value.wxId);
-            if (newId) widget.value.wxId = newId;
-        };
-        const handleAvatarClick = (side) => {
-            currentEditSide.value = side;
-            document.getElementById('avatarPicker').click();
-        };
+        const editWxId = () => { const newId = prompt("编辑账号 (带@符号)：", widget.value.wxId); if (newId) widget.value.wxId = newId; };
+        const handleAvatarClick = (side) => { currentEditSide.value = side; document.getElementById('avatarPicker').click(); };
         const onPhotoSelected = (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -746,14 +709,8 @@ createApp({
             }
         };
 
-        const editSign = () => {
-            const s = prompt("编辑个人签名：", widget.value.signature);
-            if (s) widget.value.signature = s;
-        };
-        const editBalance = () => {
-            const b = prompt("设置余额：", widget.value.balance);
-            if (b !== null) widget.value.balance = b;
-        };
+        const editSign = () => { const s = prompt("编辑个人签名：", widget.value.signature); if (s) widget.value.signature = s; };
+        const editBalance = () => { const b = prompt("设置余额：", widget.value.balance); if (b !== null) widget.value.balance = b; };
         const developingTip = () => { alert("正在开发中"); };
 
         const toggleInventory = () => {
@@ -803,7 +760,11 @@ createApp({
             const box = document.getElementById('msg-box');
             if(box) box.scrollTop = box.scrollHeight;
             try {
-                let aiSystemPrompt = `你现在是 ${targetFriend.realName}。你的备注名是 ${targetFriend.name}，对方叫 ${widget.value.meName}。状态“${widget.value.userStatus}”。设定：${targetFriend.persona}。预设：${config.value.presetCss}`;
+                let aiSystemPrompt = `你现在是 ${targetFriend.realName}。
+你的备注名是 ${targetFriend.name}，但你只知道你叫 ${targetFriend.realName}。
+对方叫 ${widget.value.meName}。对方目前的微信状态是“${widget.value.userStatus}”。
+你的核心设定：${targetFriend.persona}
+额外预设：${config.value.presetCss}`;
                 const res = await fetch(`${config.value.baseUrl}/chat/completions`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${config.value.apiKey}`, 'Content-Type': 'application/json' },
@@ -813,18 +774,14 @@ createApp({
                     })
                 });
                 const data = await res.json();
-                const aiMsg = data.choices[0].message.content;
-                chatHistory.value[partnerId].push({ role: 'assistant', type: 'text', content: aiMsg });
+                chatHistory.value[partnerId].push({ role: 'assistant', type: 'text', content: data.choices[0].message.content });
                 await nextTick();
                 if(box) box.scrollTop = box.scrollHeight;
             } catch (e) { chatHistory.value[partnerId].push({ role: 'assistant', type: 'text', content: '连接失败，请检查配置。' }); }
         };
 
         onMounted(() => {
-            const getLocal = (key, def) => {
-                const data = localStorage.getItem(key);
-                return data ? JSON.parse(data) : def;
-            };
+            const getLocal = (key, def) => { const data = localStorage.getItem(key); return data ? JSON.parse(data) : def; };
             config.value = getLocal('ai_config_v4', config.value);
             widget.value = getLocal('widget_v5', widget.value);
             friendsList.value = getLocal('friends_list_v5', friendsList.value);
@@ -834,24 +791,15 @@ createApp({
             styleEl.innerHTML = (config.value.beautyCss || '') + (config.value.presetCss || '');
         });
 
-        let friendTimer = null;
-        let msgTimer = null;
-
+        let friendTimer = null; let msgTimer = null;
         return { 
-            config, widget, chatVisible, activeTab, activeModal, meSubPage,
-            userInput, currentChatPartner, currentMessages, navTitle, modalTitle,
+            config, widget, chatVisible, activeTab, activeModal, meSubPage, userInput, currentChatPartner, currentMessages, navTitle, modalTitle,
             filteredFriends, showFriendMenu, handleTouchStart, handleTouchEnd, handleMouseDown, handleMouseUp, toggleTop, deleteFriend,
-            showMsgMenu, msgMenuPos, isMultiSelect, selectedMsgs, quoteContent,
-            handleMsgTouchStart, handleMsgTouchEnd, handleMsgMouseDown, handleMsgMouseUp,
-            deleteMsg, editMsg, quoteMsg, enterMultiSelect, batchDeleteMsgs,
-            editWidgetName, editMeName, editWxId, handleAvatarClick, onPhotoSelected, editSign, 
-            save, sendMsg, openWechat, enterChat, exitChat, closeAllMenus,
-            developingTip, editBalance, inventoryOpen, isRotating, isPlusRotating, triggerPlusAction, toggleInventory, billRecords,
-            triggerAlbum, triggerCamera, onAlbumPhotoSelected, onCameraPhotoSelected, handleDescriptionPhoto,
-            selectedFriend, changeMomentCover, onMomentCoverSelected,
-            changeMomentAvatar, onMomentAvatarSelected,
-            handleMeAvatarClick, onMeAvatarSelected, editUserStatus,
-            newAI, addNewFriend
+            showMsgMenu, msgMenuPos, isMultiSelect, selectedMsgs, quoteContent, handleMsgTouchStart, handleMsgTouchEnd, handleMsgMouseDown, handleMsgMouseUp,
+            deleteMsg, editMsg, quoteMsg, enterMultiSelect, batchDeleteMsgs, editWidgetName, editMeName, editWxId, handleAvatarClick, onPhotoSelected, editSign, 
+            save, sendMsg, openWechat, enterChat, exitChat, closeAllMenus, developingTip, editBalance, inventoryOpen, isRotating, isPlusRotating, triggerPlusAction, toggleInventory, billRecords,
+            triggerAlbum, triggerCamera, onAlbumPhotoSelected, onCameraPhotoSelected, handleDescriptionPhoto, selectedFriend, changeMomentCover, onMomentCoverSelected,
+            changeMomentAvatar, onMomentAvatarSelected, handleMeAvatarClick, onMeAvatarSelected, editUserStatus, newAI, addNewFriend
         };
     }
 }).mount('#app');
