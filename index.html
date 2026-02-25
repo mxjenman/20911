@@ -53,6 +53,13 @@
             padding-bottom: 12px; 
             border-bottom: 0.5px solid #ddd; 
             flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+
+        /* "我" 界面顶栏上挪 */
+        .header-me-offset {
+            margin-top: -40px;
+            padding-bottom: 8px;
         }
 
         .wechat-content { flex: 1; overflow-y: auto; }
@@ -239,7 +246,8 @@
             <div class="wechat-content"></div>
         </div>
 
-        <div v-if="activeTab !== 'discover' || currentChatPartner" class="wechat-header">
+        <div v-if="activeTab !== 'discover' || currentChatPartner" 
+             :class="['wechat-header', (activeTab === 'me' && !currentChatPartner) ? 'header-me-offset' : '']">
             <div class="w-8 flex">
                 <button v-if="activeTab === 'contacts' && !currentChatPartner" @click="chatVisible = false" class="text-[#1a1a1a] pb-1">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
@@ -250,7 +258,7 @@
                 </button>
                 <div v-if="(activeTab === 'discover' || activeTab === 'me') && !currentChatPartner" class="w-8"></div>
             </div>
-            <span class="font-bold text-[17px] pb-1">{{ currentChatPartner ? (isMultiSelect ? '已选择' : currentChatPartner.name) : navTitle }}</span>
+            <span class="font-bold text-[17px] pb-1">{{ currentChatPartner ? (isMultiSelect ? '已选择' : currentChatPartner.name) : (activeTab === 'me' ? '' : navTitle) }}</span>
             <div class="w-8 flex justify-end">
                 <button v-if="activeTab === 'contacts' && !currentChatPartner" @click="activeModal = 'addFriend'" class="text-[#1a1a1a] pb-1 text-2xl font-light">＋</button>
                 <div v-else class="w-8"></div>
@@ -431,7 +439,6 @@ createApp({
         const chatHistory = ref({ ...DEFAULT_HISTORY });
         const billRecords = ref([]);
 
-        // 持久化保存
         const saveAllData = () => {
             localStorage.setItem('ai_config_v4', JSON.stringify(config.value));
             localStorage.setItem('widget_v5', JSON.stringify(widget.value));
