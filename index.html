@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AI 桌面 - 持久化增强版</title>
+    <title>AI 桌面 - 独立命名增强版</title>
     
     <link rel="apple-touch-icon" href="https://test.fukit.cn/autoupload/fr/PUOzIkT_hEAqz4elPzgm9kg93R44cerOKVobYyu6bmqyl5f0KlZfm6UsKj-HyTuv/20260224/IR8x/1206X1168/IMG_2714.jpeg">
     <link rel="icon" type="image/jpeg" href="https://test.fukit.cn/autoupload/fr/PUOzIkT_hEAqz4elPzgm9kg93R44cerOKVobYyu6bmqyl5f0KlZfm6UsKj-HyTuv/20260224/IR8x/1206X1168/IMG_2714.jpeg">
@@ -115,11 +115,11 @@
     <div class="widget-card">
         <div class="flex gap-6 mb-3 px-2">
             <div class="avatar-wrap" @click="handleAvatarClick('left')">
-                <div class="name-tag" @click.stop="editWidgetName('left')">{{ widget.leftName }}</div>
+                <div class="name-tag" @click.stop="editName('widgetLeft')">{{ widget.widgetLeftName }}</div>
                 <img :src="widget.leftAvatar" class="avatar-img">
             </div>
             <div class="avatar-wrap" @click="handleAvatarClick('right')">
-                <div class="name-tag" @click.stop="editWidgetName('right')">{{ widget.rightName }}</div>
+                <div class="name-tag" @click.stop="editName('widgetRight')">{{ widget.widgetRightName }}</div>
                 <img :src="widget.rightAvatar" class="avatar-img">
             </div>
         </div>
@@ -293,7 +293,7 @@
                 <div class="h-64 bg-gray-300 relative overflow-visible" @click="changeMomentCover">
                     <img :src="widget.momentCover || 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=1000'" class="w-full h-full object-cover">
                     <div class="absolute -bottom-6 right-4 flex items-center gap-3 z-50">
-                        <span class="text-white font-bold shadow-sm mb-4">{{ widget.meName }}</span>
+                        <span class="text-white font-bold shadow-sm mb-4">{{ widget.rightName }}</span>
                         <img :src="widget.momentAvatar || widget.rightAvatar" 
                              @click.stop="changeMomentAvatar"
                              class="w-16 h-16 rounded-lg border-2 border-white object-cover bg-white shadow-md">
@@ -306,7 +306,7 @@
                 <div class="bg-white p-8 pt-12 flex items-center gap-4">
                     <img :src="widget.meAvatar || widget.rightAvatar" @click="handleMeAvatarClick" class="w-16 h-16 rounded-lg object-cover bg-gray-100 border cursor-pointer">
                     <div class="flex-1">
-                        <div @click="editMeName" class="text-xl font-bold flex items-center gap-1">{{ widget.meName }}</div>
+                        <div @click="editName('right')" class="text-xl font-bold flex items-center gap-1">{{ widget.rightName }}</div>
                         <div @click="editWxId" class="text-gray-500 text-sm mt-1">微信号：{{ widget.wxId || 'AI_Habibi' }}</div>
                     </div>
                 </div>
@@ -366,11 +366,14 @@
 <script>
 const { createApp, ref, onMounted, computed, nextTick, watch } = Vue;
 
-// 定义初始默认值
+// 定义初始默认值，增加桌面名字独立字段
 const DEFAULT_WIDGET = {
-    leftName: '雨雨雨～', leftAvatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png',
-    rightName: '雨', rightAvatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png',
-    meName: '雨', // 专门给 微信我->朋友圈 用的名字
+    widgetLeftName: '雨雨雨～', // 桌面左侧专属
+    widgetRightName: '雨',      // 桌面右侧专属
+    leftName: '雨雨雨～',       // 私聊/好友列表对应
+    rightName: '雨',            // “我”/朋友圈名字
+    leftAvatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png',
+    rightAvatar: 'https://img.js.design/assets/static/7db8006d64b1509a2f66be951336a546.png',
     signature: '我不想隔着屏幕和你说话', wxId: 'AI_Habibi', balance: '19.77',
     momentCover: '', momentAvatar: '', meAvatar: ''
 };
@@ -400,18 +403,19 @@ createApp({
                 return data ? JSON.parse(data) : def;
             };
             config.value = getLocal('ai_config_v4', config.value);
-            widget.value = getLocal('widget_v5', widget.value);
-            // 补丁：确保旧数据中也有 meName
-            if(!widget.value.meName) widget.value.meName = widget.value.rightName || '雨';
-            
+            widget.value = getLocal('widget_v6', widget.value); // 升级版本号以应用新结构
             friendsList.value = getLocal('friends_list_v5', friendsList.value);
             chatHistory.value = getLocal('chat_history_v5', chatHistory.value);
             billRecords.value = getLocal('bill_records', billRecords.value);
+            
+            // 兼容性检查：如果旧数据没有 widgetLeftName，则从 leftName 初始化
+            if(!widget.value.widgetLeftName) widget.value.widgetLeftName = widget.value.leftName;
+            if(!widget.value.widgetRightName) widget.value.widgetRightName = widget.value.rightName;
         };
 
         const saveAllData = () => {
             localStorage.setItem('ai_config_v4', JSON.stringify(config.value));
-            localStorage.setItem('widget_v5', JSON.stringify(widget.value));
+            localStorage.setItem('widget_v6', JSON.stringify(widget.value));
             localStorage.setItem('friends_list_v5', JSON.stringify(friendsList.value));
             localStorage.setItem('chat_history_v5', JSON.stringify(chatHistory.value));
             localStorage.setItem('bill_records', JSON.stringify(billRecords.value));
@@ -515,29 +519,31 @@ createApp({
 
         const closeAllMenus = () => { showFriendMenu.value = false; showMsgMenu.value = false; };
 
-        // --- 名字修改逻辑重构 ---
-        
-        // 1. 桌面小组件修改名字：不影响“我”和朋友圈
-        const editWidgetName = (side) => {
-            const newName = prompt("编辑桌面名字：", widget.value[side + 'Name']);
-            if (newName) { 
-                widget.value[side + 'Name'] = newName;
-                // 如果是修改左侧(对方)，为了逻辑一致，通常同步给好友列表里那个角色
-                if(side === 'left') {
-                    const f = friendsList.value.find(item => item.id === 'left');
-                    if(f) f.name = newName;
-                }
+        // 核心修改：名字编辑逻辑解耦
+        const editName = (type) => {
+            const currentVal = type === 'widgetLeft' ? widget.value.widgetLeftName :
+                               type === 'widgetRight' ? widget.value.widgetRightName :
+                               widget.value[type + 'Name'];
+            
+            const newName = prompt("编辑名字：", currentVal);
+            if (!newName) return;
+
+            if (type === 'widgetLeft') {
+                // 仅修改桌面左侧名字
+                widget.value.widgetLeftName = newName;
+            } else if (type === 'widgetRight') {
+                // 仅修改桌面右侧名字
+                widget.value.widgetRightName = newName;
+            } else if (type === 'left') {
+                // 修改私聊-对方 名字，同步好友列表
+                widget.value.leftName = newName;
+                const f = friendsList.value.find(item => item.id === 'left');
+                if(f) f.name = newName;
+            } else if (type === 'right') {
+                // 修改私聊-我 名字，同步朋友圈（不影响桌面）
+                widget.value.rightName = newName;
             }
         };
-
-        // 2. 微信「我」页面修改名字：同步给朋友圈，不影响桌面
-        const editMeName = () => {
-            const newName = prompt("编辑微信号昵称：", widget.value.meName);
-            if (newName) {
-                widget.value.meName = newName;
-                // 此时不触碰 widget.rightName，确保桌面不受影响
-            }
-        }
 
         const editWxId = () => {
             const newId = prompt("编辑微信号：", widget.value.wxId);
@@ -659,7 +665,7 @@ createApp({
             if(box) box.scrollTop = box.scrollHeight;
 
             try {
-                let aiSystemPrompt = `你现在是${currentChatPartner.value.name}，对方叫${widget.value.meName}。${config.value.presetCss}`;
+                let aiSystemPrompt = `你现在是${currentChatPartner.value.name}，对方叫${widget.value.rightName}。${config.value.presetCss}`;
                 const res = await fetch(`${config.value.baseUrl}/chat/completions`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${config.value.apiKey}`, 'Content-Type': 'application/json' },
@@ -709,7 +715,7 @@ createApp({
             showMsgMenu, msgMenuPos, isMultiSelect, selectedMsgs, quoteContent,
             handleMsgTouchStart, handleMsgTouchEnd, handleMsgMouseDown, handleMsgMouseUp,
             deleteMsg, editMsg, quoteMsg, enterMultiSelect, batchDeleteMsgs,
-            editWidgetName, editMeName, editWxId, handleAvatarClick, onPhotoSelected, editSign, 
+            editName, editWxId, handleAvatarClick, onPhotoSelected, editSign, 
             save, sendMsg, openWechat, enterChat, exitChat, closeAllMenus,
             developingTip, editBalance, inventoryOpen, isRotating, toggleInventory, billRecords,
             triggerAlbum, triggerCamera, onAlbumPhotoSelected, onCameraPhotoSelected, handleDescriptionPhoto,
