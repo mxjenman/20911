@@ -113,6 +113,14 @@
         .inventory-rotate { animation: twist 0.6s ease-in-out; }
         @keyframes twist { 0% { transform: rotate(0deg); } 33% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
 
+        /* 好友加号按钮点击旋转动画 */
+        .plus-icon-container { transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: inline-block; }
+        .plus-rotate-active { animation: plus-rotate 0.5s forwards ease-in-out; }
+        @keyframes plus-rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(180deg); }
+        }
+
         .inventory-panel { position: absolute; bottom: 70px; left: 12px; width: 180px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 16px; padding: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 50; border: 1px solid rgba(0,0,0,0.05); transform-origin: bottom left; animation: popIn 0.2s ease-out; }
         @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         
@@ -268,7 +276,9 @@
             </div>
             <span class="font-bold text-[17px] pb-1">{{ currentChatPartner ? (isMultiSelect ? '已选择' : currentChatPartner.name) : navTitle }}</span>
             <div class="w-8 flex justify-end">
-                <button v-if="activeTab === 'contacts' && !currentChatPartner" @click="activeModal = 'addFriend'" class="text-[#1a1a1a] pb-1 text-2xl font-light">＋</button>
+                <button v-if="activeTab === 'contacts' && !currentChatPartner" @click="triggerPlusAction" class="text-[#1a1a1a] pb-1 text-2xl font-light">
+                   <div class="plus-icon-container" :class="{'plus-rotate-active': isPlusRotating}">＋</div>
+                </button>
                 <div v-else class="w-8"></div>
             </div>
         </div>
@@ -482,6 +492,7 @@ createApp({
         const currentEditSide = ref('');
         const inventoryOpen = ref(false);
         const isRotating = ref(false);
+        const isPlusRotating = ref(false); // 新增：加号旋转状态
         const showFriendMenu = ref(false);
         const selectedFriend = ref(null);
         const showMsgMenu = ref(false);
@@ -515,6 +526,16 @@ createApp({
         const exitChat = () => {
             if(isMultiSelect.value) { isMultiSelect.value = false; selectedMsgs.value = []; } 
             else { currentChatPartner.value = null; }
+        };
+
+        // 处理加号点击：旋转动画 + 打开弹窗
+        const triggerPlusAction = () => {
+            if (isPlusRotating.value) return;
+            isPlusRotating.value = true;
+            activeModal.value = 'addFriend';
+            setTimeout(() => {
+                isPlusRotating.value = false;
+            }, 500); // 与 CSS 动画时长一致
         };
 
         const editWidgetName = (side) => {
@@ -769,7 +790,7 @@ createApp({
             deleteMsg, editMsg, quoteMsg, enterMultiSelect, batchDeleteMsgs,
             editWidgetName, editMeName, editWxId, handleAvatarClick, onPhotoSelected, editSign, 
             save, sendMsg, openWechat, enterChat, exitChat, closeAllMenus,
-            developingTip, editBalance, inventoryOpen, isRotating, toggleInventory, billRecords,
+            developingTip, editBalance, inventoryOpen, isRotating, isPlusRotating, triggerPlusAction, toggleInventory, billRecords,
             triggerAlbum, triggerCamera, onAlbumPhotoSelected, onCameraPhotoSelected, handleDescriptionPhoto,
             selectedFriend, changeMomentCover, onMomentCoverSelected,
             changeMomentAvatar, onMomentAvatarSelected,
