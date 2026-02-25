@@ -14,10 +14,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style id="user-custom-css">/* 用户美化注入 */</style>
     <style>
-        :root { 
-            --bg-image: url('https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2070'); 
-            --theme-color: #424243; 
-        }
+        :root { --bg-image: url('https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2070'); --theme-color: #424243; }
         
         * {
             -webkit-tap-highlight-color: transparent;
@@ -45,21 +42,21 @@
         .wechat-app { position: fixed; inset: 0; background: #ededed; z-index: 100; display: flex; flex-direction: column; animation: slideUp 0.3s ease-out; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         
-        /* 1. 顶栏抬高优化：增加系统状态栏高度感应 + 5px 额外间隔 */
+        /* 修改点1：私聊界面顶栏抬高，增加5px间隔 */
         .wechat-header { 
-            padding-top: calc(env(safe-area-inset-top) + 5px); 
+            padding-top: calc(env(safe-area-inset-top) + 5px);
             background: #ededed; 
             display: flex; 
-            align-items: center; 
+            align-items: flex-end; 
             justify-content: space-between; 
             padding-left: 16px; 
             padding-right: 16px; 
-            padding-bottom: 12px;
-            border-bottom: 0.5px solid #ddd;
+            padding-bottom: 12px; 
+            border-bottom: 0.5px solid #ddd; 
             flex-shrink: 0;
         }
 
-        .wechat-content { flex: 1; overflow-y: auto; position: relative; }
+        .wechat-content { flex: 1; overflow-y: auto; }
         
         .wechat-nav { height: 60px; background: #f7f7f7; border-top: 0.5px solid #ddd; display: flex; justify-content: space-around; align-items: center; padding-bottom: env(safe-area-inset-bottom); }
         .nav-item { flex: 1; height: 100%; display: flex; justify-content: center; align-items: center; font-size: 16px; font-weight: 500; color: #1a1a1a; transition: all 0.2s; padding-top: 3px; }
@@ -83,11 +80,11 @@
         .wallet-nav-bar { 
             padding-top: calc(env(safe-area-inset-top) + 5px);
             display: flex; 
-            align-items: center; 
+            align-items: flex-end; 
             justify-content: space-between; 
             padding-left: 16px; 
             padding-right: 16px; 
-            padding-bottom: 12px;
+            padding-bottom: 12px; 
             color: white; 
             position: relative; 
             z-index: 10; 
@@ -133,20 +130,17 @@
         .multi-select-btn.danger { color: #fa5151; }
         .quote-preview { background: #f0f0f0; padding: 8px 12px; border-top: 0.5px solid #ddd; display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: #666; }
 
-        /* 2. 朋友圈全屏化：去掉顶栏，图片触顶并保留 5px 状态栏间隔 */
-        .discover-container { 
-            position: relative; 
-            padding-top: calc(env(safe-area-inset-top) + 5px); 
-            background: #ededed;
-            height: 100%;
-            overflow-y: auto;
+        /* 修改点2：朋友圈样式调整，背景图触顶，保留状态栏间隔 */
+        .discover-page { 
+            background: #ededed; 
+            height: 100%; 
+            overflow-y: auto; 
+            padding-top: calc(env(safe-area-inset-top) + 5px);
         }
-        .moment-cover-box { 
-            width: 100%;
+        .moment-cover-wrap {
+            margin-top: calc(-1 * (env(safe-area-inset-top) + 5px)); /* 抵消容器padding实现完全顶格 */
             height: 300px;
             position: relative;
-            background: #333;
-            margin-top: calc(-1 * (env(safe-area-inset-top) + 5px)); /* 抵消容器padding实现触顶 */
         }
     </style>
 </head>
@@ -238,32 +232,29 @@
         <div v-if="meSubPage && meSubPage !== '钱包'" class="sub-page">
             <div class="wechat-header">
                 <div class="w-8 flex">
-                    <button @click="meSubPage = null" class="text-[#1a1a1a]">
+                    <button @click="meSubPage = null" class="text-[#1a1a1a] pb-1">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                     </button>
                 </div>
-                <span class="font-bold text-[17px]">{{ meSubPage }}</span>
+                <span class="font-bold text-[17px] pb-1">{{ meSubPage }}</span>
                 <div class="w-8"></div>
             </div>
             <div class="wechat-content"></div>
         </div>
 
-        <div class="wechat-header" v-if="activeTab !== 'discover' || currentChatPartner">
+        <div v-if="activeTab !== 'discover' || currentChatPartner" class="wechat-header">
             <div class="w-8 flex">
-                <button v-if="activeTab === 'contacts' && !currentChatPartner" @click="chatVisible = false" class="text-[#1a1a1a]">
+                <button v-if="activeTab === 'contacts' && !currentChatPartner" @click="chatVisible = false" class="text-[#1a1a1a] pb-1">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                 </button>
-                <button v-if="currentChatPartner" @click="exitChat" class="text-[#1a1a1a]">
+                <button v-if="currentChatPartner" @click="exitChat" class="text-[#1a1a1a] pb-1">
                     <svg v-if="!isMultiSelect" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                     <span v-else class="text-[15px]">取消</span>
                 </button>
-                <button v-if="activeTab === 'me' && !meSubPage" @click="activeTab='contacts'" class="text-[#1a1a1a]">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                </button>
             </div>
-            <span class="font-bold text-[17px]">{{ currentChatPartner ? (isMultiSelect ? '已选择' : currentChatPartner.name) : navTitle }}</span>
+            <span class="font-bold text-[17px] pb-1">{{ currentChatPartner ? (isMultiSelect ? '已选择' : currentChatPartner.name) : navTitle }}</span>
             <div class="w-8 flex justify-end">
-                <button v-if="activeTab === 'contacts' && !currentChatPartner" @click="activeModal = 'addFriend'" class="text-[#1a1a1a] text-2xl font-light">＋</button>
+                <button v-if="activeTab === 'contacts' && !currentChatPartner" @click="activeModal = 'addFriend'" class="text-[#1a1a1a] pb-1 text-2xl font-light">＋</button>
                 <div v-else class="w-6"></div>
             </div>
         </div>
@@ -339,8 +330,8 @@
                 </div>
             </div>
 
-            <div v-if="activeTab === 'discover'" class="discover-container">
-                <div class="moment-cover-box" @click="changeMomentCover">
+            <div v-if="activeTab === 'discover'" class="discover-page">
+                <div class="moment-cover-wrap" @click="changeMomentCover">
                     <img :src="widget.momentCover || 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=1000'" class="w-full h-full object-cover">
                     <div class="absolute -bottom-6 right-4 flex items-center gap-3 z-50">
                         <span class="text-white font-bold shadow-sm mb-4" @click.stop="editMeName">{{ widget.meName }}</span>
@@ -349,10 +340,10 @@
                              class="w-16 h-16 rounded-lg border-2 border-white object-cover bg-white shadow-md">
                     </div>
                 </div>
-                <div class="absolute left-4 z-[60]" :style="{top: 'calc(env(safe-area-inset-top) + 10px)'}">
-                    <div @click="activeTab = 'contacts'" class="w-8 h-8 bg-black/20 backdrop-blur rounded-full flex items-center justify-center text-white">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
-                    </div>
+                <div class="absolute left-4 top-2 z-[60]" :style="{marginTop: 'env(safe-area-inset-top)'}">
+                    <button @click="activeTab='contacts'" class="bg-black/20 p-2 rounded-full text-white">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                    </button>
                 </div>
                 <div class="mt-12 p-4 text-center text-gray-400 text-sm">暂无新动态</div>
             </div>
@@ -447,6 +438,7 @@ createApp({
         const chatHistory = ref({ ...DEFAULT_HISTORY });
         const billRecords = ref([]);
 
+        // 核心持久化逻辑：严禁修改
         const saveAllData = () => {
             localStorage.setItem('ai_config_v4', JSON.stringify(config.value));
             localStorage.setItem('widget_v5', JSON.stringify(widget.value));
@@ -513,7 +505,7 @@ createApp({
 
         const editMeName = () => {
             const newName = prompt("修改微信内部昵称：", widget.value.meName);
-            if (newName) widget.value.meName = newName;
+            if (newName) { widget.value.meName = newName; }
         };
 
         const handleTouchStart = (e, f) => { friendTimer = setTimeout(() => { selectedFriend.value = f; showFriendMenu.value = true; }, 600); };
@@ -720,6 +712,7 @@ createApp({
             } catch (e) { chatHistory.value[partnerId].push({ role: 'assistant', type: 'text', content: '连接失败，请检查配置。' }); }
         };
 
+        // 持久化读取逻辑：严禁修改
         onMounted(() => {
             const getLocal = (key, def) => {
                 const data = localStorage.getItem(key);
