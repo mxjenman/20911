@@ -39,7 +39,7 @@
 
         .dock { position: absolute; bottom: calc(-10px + env(safe-area-inset-bottom)); left: 20px; right: 20px; height: 75px; background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(30px); border-radius: 30px; display: flex; justify-content: space-around; align-items: center; border: 1px solid rgba(255,255,255,0.25); }
         
-        .wechat-app { position: fixed; inset: 0; background: #f2f2f2; z-index: 100; display: flex; flex-direction: column; animation: slideUp 0.3s ease-out; }
+        .wechat-app { position: fixed; inset: 0; background: #ffffff; z-index: 100; display: flex; flex-direction: column; animation: slideUp 0.3s ease-out; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         
         .wechat-header { 
@@ -56,7 +56,7 @@
             min-height: 44px;
         }
 
-        .wechat-content { flex: 1; overflow-y: auto; }
+        .wechat-content { flex: 1; overflow-y: auto; background: #ffffff; }
         
         .wechat-nav { height: 60px; background: #f2f2f2; border-top: 0.5px solid #ddd; display: flex; justify-content: space-around; align-items: center; padding-bottom: env(safe-area-inset-bottom); }
         .nav-item { flex: 1; height: 100%; display: flex; justify-content: center; align-items: center; font-size: 14px; font-weight: 500; color: #1a1a1a; transition: all 0.2s; padding-top: 3px; }
@@ -71,7 +71,7 @@
         .quote-box { background: rgba(0,0,0,0.06); border-left: 2px solid #bbb; padding: 2px 8px; font-size: 11px; color: #777; margin-bottom: 4px; border-radius: 2px; line-height: 1.4; }
 
         /* 修改后的“我”界面样式 */
-        .me-profile-section { padding: 25px 24px 30px; background: #ffffff; margin-top: -5px; } /* 背景改白色，头像上移效果 */
+        .me-profile-section { padding: 25px 24px 30px; background: #ffffff; margin-top: -5px; } 
         .me-avatar-circle { width: 85px; height: 85px; border-radius: 50%; border: 0.5px solid #eee; object-fit: cover; background: #fff; margin-bottom: 15px; cursor: pointer; }
         .me-info-row { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
         .me-id-label { font-size: 20px; font-weight: 600; color: #333; cursor: pointer; }
@@ -149,6 +149,11 @@
             margin-top: calc(-1 * (env(safe-area-inset-top) + 5px));
             height: 300px;
             position: relative;
+        }
+
+        /* 强制白色背景覆盖层，用于填补导航栏上方的缝隙 */
+        .white-fill-layer {
+            background-color: #ffffff !important;
         }
     </style>
 </head>
@@ -268,8 +273,8 @@
             </div>
         </div>
 
-        <div class="wechat-content">
-            <div v-if="activeTab === 'contacts'" class="h-full relative">
+        <div class="wechat-content" :class="{'white-fill-layer': activeTab === 'me' || activeTab === 'contacts'}">
+            <div v-if="activeTab === 'contacts'" class="h-full relative bg-white">
                 <div v-if="!currentChatPartner" class="bg-white h-full">
                     <div class="p-2 px-4 bg-gray-50 text-[11px] text-gray-400 border-b flex justify-between items-center">
                         <span>当前用户状态: <span class="text-[#07c160] font-bold">{{ widget.userStatus }}</span></span>
@@ -292,7 +297,7 @@
                         </div>
                         <span v-if="f.isTop" class="text-[10px] bg-gray-100 text-gray-400 px-1 rounded">置顶</span>
                     </div>
-                </div>
+                    <div class="h-20 bg-white"></div> </div>
                 
                 <div v-else class="flex flex-col h-full bg-[#ededed]">
                     <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-2" id="msg-box" @click="inventoryOpen = false">
@@ -360,7 +365,7 @@
                 <div class="mt-12 p-4 text-center text-gray-400 text-sm">暂无新动态</div>
             </div>
 
-            <div v-if="activeTab === 'me'" class="bg-[#f2f2f2] h-full flex flex-col">
+            <div v-if="activeTab === 'me'" class="bg-white h-full flex flex-col">
                 <div class="me-profile-section">
                     <img :src="widget.meAvatar || widget.rightAvatar" 
                          @click="handleMeAvatarClick" 
@@ -381,7 +386,7 @@
                     <div class="me-menu-item" @click="meSubPage = '个人资料'">个人资料</div>
                     <div class="me-menu-item" @click="meSubPage = '设置'">设置</div>
                 </div>
-                <div class="flex-1 bg-[#f2f2f2]"></div>
+                <div class="flex-1 bg-white"></div>
             </div>
         </div>
 
@@ -703,7 +708,6 @@ createApp({
             if(box) box.scrollTop = box.scrollHeight;
 
             try {
-                // AI 视野扩展：加入用户的当前状态感知
                 let aiSystemPrompt = `你现在是${currentChatPartner.value.name}，对方叫${widget.value.meName}。对方目前的微信状态是“${widget.value.userStatus}”。${config.value.presetCss}`;
                 const res = await fetch(`${config.value.baseUrl}/chat/completions`, {
                     method: 'POST',
